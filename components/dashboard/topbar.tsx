@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   Bell,
   ChevronDown,
@@ -14,27 +15,31 @@ import { cn } from "@/lib/utils";
 
 type TopbarProps = {
   title?: string;
+  mobileNavigation?: ReactNode;
   className?: string;
 };
 
 export function Topbar({
   title = "Dashboard",
+  mobileNavigation,
   className,
 }: TopbarProps) {
   return (
     <header
       className={cn(
-        "flex h-16 shrink-0 items-center justify-between gap-4 border-b bg-background px-6",
+        "flex h-16 shrink-0 items-center justify-between gap-3 border-b bg-background px-4 sm:px-6",
         className,
       )}
     >
-      <div className="min-w-0">
+      <div className="flex min-w-0 items-center gap-2">
+        {mobileNavigation}
+
         <h1 className="truncate text-lg font-semibold tracking-tight">
           {title}
         </h1>
       </div>
 
-      <div className="flex flex-1 items-center justify-end gap-2">
+      <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
         <div className="relative hidden w-full max-w-sm md:block">
           <Search
             aria-hidden="true"
@@ -55,6 +60,7 @@ export function Topbar({
           size="icon"
           aria-label="Change language"
           title="Change language"
+          className="hidden sm:inline-flex"
         >
           <Globe2 className="size-4" />
         </Button>
@@ -65,6 +71,7 @@ export function Topbar({
           size="icon"
           aria-label="Change theme"
           title="Change theme"
+          className="hidden sm:inline-flex"
         >
           <Moon className="size-4" />
         </Button>

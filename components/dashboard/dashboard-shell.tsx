@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { MobileSidebar } from "@/components/dashboard/mobile-sidebar";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topbar } from "@/components/dashboard/topbar";
 
@@ -13,10 +14,12 @@ export function DashboardShell({ children }: DashboardShellProps) {
       <Sidebar className="hidden lg:flex" />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar />
+        <Topbar mobileNavigation={<MobileSidebar />} />
 
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-7xl p-6">{children}</div>
+          <div className="mx-auto w-full max-w-7xl p-4 sm:p-6">
+            {children}
+          </div>
         </main>
       </div>
     </div>
