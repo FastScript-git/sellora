@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   Ban,
   CheckCircle2,
@@ -11,10 +11,14 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { FormSection } from "@/components/forms/form-section";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { FormSection } from "@/components/forms/form-section";
+import {
+  updateInstructionsAction,
+  type UpdateInstructionsActionState,
+} from "@/features/ai-employees/actions/update-instructions";
 
 type InstructionsFormValues = {
   identity: string;
@@ -61,21 +65,43 @@ type InstructionsFormTranslations = {
     hint: string;
   };
   save: string;
-  savingUnavailable: string;
+  saving: string;
+  saved: string;
 };
 
 type InstructionsFormProps = {
+  employeeId: string;
+  locale: string;
   initialValues: InstructionsFormValues;
   translations: InstructionsFormTranslations;
 };
 
 const MAX_FIELD_LENGTH = 4000;
 
+const initialActionState: UpdateInstructionsActionState = {
+  success: false,
+  message: null,
+  fieldErrors: {},
+};
+
 export function InstructionsForm({
+  employeeId,
+  locale,
   initialValues,
   translations,
 }: InstructionsFormProps) {
   const [values, setValues] = useState(initialValues);
+
+  const [state, formAction, isPending] = useActionState(
+    updateInstructionsAction,
+    initialActionState,
+  );
+
+  useEffect(() => {
+    if (state.success) {
+      setValues((currentValues) => ({ ...currentValues }));
+    }
+  }, [state.success]);
 
   function updateField(
     field: keyof InstructionsFormValues,
@@ -87,8 +113,26 @@ export function InstructionsForm({
     }));
   }
 
+  const fieldErrors = state.fieldErrors ?? {};
+
   return (
-    <div className="space-y-6">
+    <form action={formAction} className="space-y-6">
+      <input type="hidden" name="employeeId" value={employeeId} />
+      <input type="hidden" name="locale" value={locale} />
+
+      {state.message ? (
+        <div
+          role="status"
+          className={
+            state.success
+              ? "rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400"
+              : "rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          }
+        >
+          {state.message}
+        </div>
+      ) : null}
+
       <FormSection
         title={translations.identity.title}
         description={translations.identity.description}
@@ -100,8 +144,10 @@ export function InstructionsForm({
           placeholder={translations.identity.placeholder}
           hint={translations.identity.hint}
           value={values.identity}
+          error={fieldErrors.identity}
           onChange={(value) => updateField("identity", value)}
           rows={7}
+          disabled={isPending}
         />
       </FormSection>
 
@@ -116,8 +162,10 @@ export function InstructionsForm({
           placeholder={translations.goals.placeholder}
           hint={translations.goals.hint}
           value={values.goals}
+          error={fieldErrors.goals}
           onChange={(value) => updateField("goals", value)}
           rows={7}
+          disabled={isPending}
         />
       </FormSection>
 
@@ -132,8 +180,10 @@ export function InstructionsForm({
           placeholder={translations.rules.placeholder}
           hint={translations.rules.hint}
           value={values.rules}
+          error={fieldErrors.rules}
           onChange={(value) => updateField("rules", value)}
           rows={8}
+          disabled={isPending}
         />
       </FormSection>
 
@@ -148,8 +198,10 @@ export function InstructionsForm({
           placeholder={translations.responseStyle.placeholder}
           hint={translations.responseStyle.hint}
           value={values.responseStyle}
+          error={fieldErrors.responseStyle}
           onChange={(value) => updateField("responseStyle", value)}
           rows={6}
+          disabled={isPending}
         />
       </FormSection>
 
@@ -164,8 +216,10 @@ export function InstructionsForm({
           placeholder={translations.restrictions.placeholder}
           hint={translations.restrictions.hint}
           value={values.restrictions}
+          error={fieldErrors.restrictions}
           onChange={(value) => updateField("restrictions", value)}
           rows={7}
+          disabled={isPending}
         />
       </FormSection>
 
@@ -177,28 +231,30 @@ export function InstructionsForm({
             </span>
 
             <p className="text-xs leading-5 text-muted-foreground">
-              {translations.savingUnavailable}
+              {state.success ? translations.saved : translations.save}
             </p>
           </div>
 
-          <Button type="button" disabled>
+          <Button type="submit" disabled={isPending}>
             <Save className="size-4" />
-            {translations.save}
+            {isPending ? translations.saving : translations.save}
           </Button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }
 
 type InstructionFieldProps = {
-  id: string;
+  id: keyof InstructionsFormValues;
   icon: React.ReactNode;
   label: string;
   placeholder: string;
   hint: string;
   value: string;
+  error?: string;
   rows: number;
+  disabled: boolean;
   onChange: (value: string) => void;
 };
 
@@ -209,9 +265,14 @@ function InstructionField({
   placeholder,
   hint,
   value,
+  error,
   rows,
+  disabled,
   onChange,
 }: InstructionFieldProps) {
+  const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+
   return (
     <div className="grid gap-3">
       <div className="flex items-center justify-between gap-4">
@@ -233,12 +294,21 @@ function InstructionField({
         maxLength={MAX_FIELD_LENGTH}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : hintId}
+        disabled={disabled}
         className="min-h-36 resize-y leading-6"
       />
 
-      <p className="text-xs leading-5 text-muted-foreground">
-        {hint}
-      </p>
+      {error ? (
+        <p id={errorId} className="text-xs leading-5 text-destructive">
+          {error}
+        </p>
+      ) : (
+        <p id={hintId} className="text-xs leading-5 text-muted-foreground">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

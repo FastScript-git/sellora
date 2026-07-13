@@ -7,6 +7,7 @@ import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 type InstructionsPageProps = {
   params: Promise<{
+    locale: string;
     employeeId: string;
   }>;
 };
@@ -14,7 +15,7 @@ type InstructionsPageProps = {
 export default async function InstructionsPage({
   params,
 }: InstructionsPageProps) {
-  const { employeeId } = await params;
+  const { locale, employeeId } = await params;
 
   const t = await getTranslations("aiEmployeeInstructions");
   const workspace = await getCurrentWorkspace();
@@ -41,6 +42,8 @@ export default async function InstructionsPage({
       </section>
 
       <InstructionsForm
+        employeeId={employee.id}
+        locale={locale}
         initialValues={{
           identity: employee.identity ?? "",
           goals: employee.goals ?? "",
@@ -85,7 +88,8 @@ export default async function InstructionsPage({
             hint: t("restrictions.hint"),
           },
           save: t("save"),
-          savingUnavailable: t("savingUnavailable"),
+          saving: t("saving"),
+          saved: t("saved"),
         }}
       />
     </div>

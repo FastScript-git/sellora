@@ -210,6 +210,7 @@
     "hint": "Include safety limits, prohibited topics and situations that require human escalation."
   },
   "save": "Save changes",
-  "savingUnavailable": "The editor UI is ready. Database saving will be connected in the next step."
+  "saving": "Saving...",
+  "saved": "All changes are saved."
 }
 }
