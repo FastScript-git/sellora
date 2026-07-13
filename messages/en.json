@@ -51,4 +51,14 @@
       }
     }
   }
+  ,
+"aiEmployees": {
+  "title": "AI Employees",
+  "description": "Create and manage digital AI Employees for your business.",
+  "create": "Create AI Employee",
+  "searchPlaceholder": "Search AI Employees...",
+  "emptyTitle": "Create your first AI Employee",
+  "emptyDescription": "Build a digital employee that can answer customers, use your business knowledge and work across connected channels.",
+  "createFirst": "Create first AI Employee"
+}
 }
