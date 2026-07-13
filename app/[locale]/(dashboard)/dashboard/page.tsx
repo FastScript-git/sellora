@@ -1,3 +1,4 @@
+import { WorkspaceHeader } from "@/components/dashboard/workspace-header";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -114,29 +115,22 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-8">
-      <section className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-sm font-medium text-primary">
-            {t("overview")}
-          </p>
+      <div className="space-y-6">
+  <WorkspaceHeader
+    title={t("welcome")}
+    description={t("description")}
+  />
 
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-            {t("welcome")}
-          </h2>
-
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            {t("description")}
-          </p>
-        </div>
-
-        <Button
-          nativeButton={false}
-          render={<Link href={createEmployeeHref} />}
-        >
-          <Plus className="size-4" />
-          {t("createEmployee")}
-        </Button>
-      </section>
+  <div className="flex justify-end">
+    <Button
+      nativeButton={false}
+      render={<Link href={createEmployeeHref} />}
+    >
+      <Plus className="size-4" />
+      {t("createEmployee")}
+    </Button>
+  </div>
+</div>
 
       <section
         aria-label={t("metricsLabel")}
