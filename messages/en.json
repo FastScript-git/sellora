@@ -61,4 +61,49 @@
   "emptyDescription": "Build a digital employee that can answer customers, use your business knowledge and work across connected channels.",
   "createFirst": "Create first AI Employee"
 }
+,
+"aiEmployeeCreate": {
+  "back": "Back to AI Employees",
+  "title": "Create AI Employee",
+  "description": "Set up the core identity and communication style of your new digital employee.",
+  "basicInformation": {
+    "title": "Basic information",
+    "description": "Define who this AI Employee is and what role they perform."
+  },
+  "communication": {
+    "title": "Communication",
+    "description": "Choose the default language and tone used in customer conversations."
+  },
+  "fields": {
+    "name": {
+      "label": "Name",
+      "placeholder": "For example, Alex",
+      "hint": "Use a clear and recognizable name."
+    },
+    "role": {
+      "label": "Role",
+      "placeholder": "For example, Customer Support Specialist",
+      "hint": "Describe the employee's primary business role."
+    },
+    "description": {
+      "label": "Primary goal",
+      "placeholder": "Describe what this AI Employee should help customers accomplish...",
+      "hint": "You will add detailed instructions after creating the employee."
+    },
+    "language": {
+      "label": "Default language",
+      "english": "English",
+      "ukrainian": "Ukrainian"
+    },
+    "tone": {
+      "label": "Tone of voice",
+      "professional": "Professional",
+      "friendly": "Friendly",
+      "concise": "Concise",
+      "empathetic": "Empathetic"
+    }
+  },
+  "cancel": "Cancel",
+  "createDraft": "Create draft"
+}
 }
