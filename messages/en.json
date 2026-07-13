@@ -106,5 +106,38 @@
   "cancel": "Cancel",
   "createDraft": "Create draft",
   "creating": "Creating..."
+},
+"aiEmployeeDetails": {
+  "back": "Back to AI Employees",
+  "navigationLabel": "AI Employee navigation",
+  "statuses": {
+    "draft": "Draft",
+    "active": "Active",
+    "paused": "Paused",
+    "archived": "Archived"
+  },
+  "tabs": {
+    "overview": "Overview",
+    "instructions": "Instructions",
+    "knowledge": "Knowledge",
+    "channels": "Channels",
+    "tools": "Tools",
+    "testChat": "Test Chat",
+    "conversations": "Conversations",
+    "analytics": "Analytics",
+    "settings": "Settings"
+  },
+  "overview": {
+    "title": "Overview",
+    "noDescription": "No description added yet."
+  },
+  "configuration": {
+    "title": "Configuration",
+    "language": "Language",
+    "tone": "Tone",
+    "created": "Created",
+    "updated": "Updated",
+    "notSet": "Not set"
+  }
 }
 }

@@ -106,5 +106,38 @@
   "cancel": "Скасувати",
   "createDraft": "Створити чернетку",
   "creating": "Створення..."
+},
+"aiEmployeeDetails": {
+  "back": "Назад до ШІ-співробітників",
+  "navigationLabel": "Навігація ШІ-співробітника",
+  "statuses": {
+    "draft": "Чернетка",
+    "active": "Активний",
+    "paused": "Призупинений",
+    "archived": "Архівований"
+  },
+  "tabs": {
+    "overview": "Огляд",
+    "instructions": "Інструкції",
+    "knowledge": "Знання",
+    "channels": "Канали",
+    "tools": "Інструменти",
+    "testChat": "Тестовий чат",
+    "conversations": "Розмови",
+    "analytics": "Аналітика",
+    "settings": "Налаштування"
+  },
+  "overview": {
+    "title": "Огляд",
+    "noDescription": "Опис ще не додано."
+  },
+  "configuration": {
+    "title": "Конфігурація",
+    "language": "Мова",
+    "tone": "Тон",
+    "created": "Створено",
+    "updated": "Оновлено",
+    "notSet": "Не налаштовано"
+  }
 }
 }
