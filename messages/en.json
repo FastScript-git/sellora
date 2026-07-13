@@ -1,1 +1,54 @@
-{}
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "aiEmployees": "AI Employees",
+    "knowledgeBase": "Knowledge Base",
+    "conversations": "Conversations",
+    "channels": "Channels",
+    "automations": "Automations",
+    "contacts": "Contacts",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "billing": "Billing"
+  },
+  "sidebar": {
+    "freePlan": "Free plan",
+    "upgradeDescription": "Upgrade your workspace to unlock more AI Employees.",
+    "upgradePlan": "Upgrade plan"
+  },
+  "topbar": {
+    "searchPlaceholder": "Search Sellora...",
+    "changeLanguage": "Change language",
+    "changeTheme": "Change theme",
+    "notifications": "Notifications",
+    "openUserMenu": "Open user menu",
+    "workspaceOwner": "Workspace owner"
+  },
+  "dashboard": {
+    "overview": "Overview",
+    "welcome": "Welcome to Sellora",
+    "description": "Create and manage AI Employees that support your business around the clock.",
+    "metrics": {
+      "aiEmployees": {
+        "title": "AI Employees",
+        "value": "0",
+        "description": "No employees created yet"
+      },
+      "conversations": {
+        "title": "Conversations",
+        "value": "0",
+        "description": "No conversations yet"
+      },
+      "resolutionRate": {
+        "title": "AI Resolution Rate",
+        "value": "—",
+        "description": "Not enough data"
+      },
+      "knowledgeSources": {
+        "title": "Knowledge Sources",
+        "value": "0",
+        "description": "No sources connected"
+      }
+    }
+  }
+}

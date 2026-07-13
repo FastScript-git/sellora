@@ -1,1 +1,54 @@
-{}
+{
+  "navigation": {
+    "dashboard": "Панель керування",
+    "aiEmployees": "ШІ-співробітники",
+    "knowledgeBase": "База знань",
+    "conversations": "Розмови",
+    "channels": "Канали",
+    "automations": "Автоматизації",
+    "contacts": "Контакти",
+    "analytics": "Аналітика",
+    "settings": "Налаштування",
+    "billing": "Оплата"
+  },
+  "sidebar": {
+    "freePlan": "Безкоштовний тариф",
+    "upgradeDescription": "Оновіть тариф, щоб створювати більше ШІ-співробітників.",
+    "upgradePlan": "Оновити тариф"
+  },
+  "topbar": {
+    "searchPlaceholder": "Пошук у Sellora...",
+    "changeLanguage": "Змінити мову",
+    "changeTheme": "Змінити тему",
+    "notifications": "Сповіщення",
+    "openUserMenu": "Відкрити меню користувача",
+    "workspaceOwner": "Власник простору"
+  },
+  "dashboard": {
+    "overview": "Огляд",
+    "welcome": "Ласкаво просимо до Sellora",
+    "description": "Створюйте та керуйте ШІ-співробітниками, які підтримують ваш бізнес цілодобово.",
+    "metrics": {
+      "aiEmployees": {
+        "title": "ШІ-співробітники",
+        "value": "0",
+        "description": "Ще не створено жодного співробітника"
+      },
+      "conversations": {
+        "title": "Розмови",
+        "value": "0",
+        "description": "Розмов поки немає"
+      },
+      "resolutionRate": {
+        "title": "Рівень вирішення ШІ",
+        "value": "—",
+        "description": "Недостатньо даних"
+      },
+      "knowledgeSources": {
+        "title": "Джерела знань",
+        "value": "0",
+        "description": "Джерела ще не підключені"
+      }
+    }
+  }
+}
