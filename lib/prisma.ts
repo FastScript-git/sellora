@@ -1,4 +1,4 @@
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
 
 import { PrismaClient } from "@/lib/generated/prisma/client";
 
@@ -12,7 +12,7 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not configured");
 }
 
-const adapter = new PrismaPg({
+const adapter = new PrismaNeon({
   connectionString,
 });
 
