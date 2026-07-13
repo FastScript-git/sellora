@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { AIEmployeeCreateInput } from "@/lib/validations/ai-employee";
+import type { AIEmployeeCreateInput } from "@/features/ai-employees/schema";
 
 type CreateAIEmployeeParams = {
   workspaceId: string;
