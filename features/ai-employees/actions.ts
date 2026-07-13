@@ -2,8 +2,8 @@
 
 import { redirect } from "next/navigation";
 
-import { createAIEmployee } from "@/features/ai-employees/service";
 import { aiEmployeeCreateSchema } from "@/features/ai-employees/schema";
+import { createAIEmployee } from "@/features/ai-employees/service";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 export type CreateAIEmployeeActionState = {
@@ -15,12 +15,6 @@ export type CreateAIEmployeeActionState = {
       string
     >
   >;
-};
-
-export const initialCreateAIEmployeeState: CreateAIEmployeeActionState = {
-  success: false,
-  message: null,
-  fieldErrors: {},
 };
 
 export async function createAIEmployeeAction(

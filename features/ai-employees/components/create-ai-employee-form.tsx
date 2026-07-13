@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   createAIEmployeeAction,
-  initialCreateAIEmployeeState,
+  type CreateAIEmployeeActionState,
 } from "@/features/ai-employees/actions";
 
 type CreateAIEmployeeFormTranslations = {
@@ -52,6 +52,12 @@ type CreateAIEmployeeFormProps = {
   translations: CreateAIEmployeeFormTranslations;
 };
 
+const initialCreateAIEmployeeState: CreateAIEmployeeActionState = {
+  success: false,
+  message: null,
+  fieldErrors: {},
+};
+
 export function CreateAIEmployeeForm({
   locale,
   translations,
@@ -62,12 +68,13 @@ export function CreateAIEmployeeForm({
   );
 
   const employeesHref = `/${locale}/dashboard/employees`;
+  const fieldErrors = state?.fieldErrors ?? {};
 
   return (
     <form action={formAction} className="space-y-6">
       <input type="hidden" name="locale" value={locale} />
 
-      {state.message ? (
+      {state?.message ? (
         <div
           role="alert"
           className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
@@ -94,17 +101,17 @@ export function CreateAIEmployeeForm({
               name="name"
               placeholder={translations.namePlaceholder}
               autoComplete="off"
-              aria-invalid={Boolean(state.fieldErrors.name)}
+              aria-invalid={Boolean(fieldErrors.name)}
               aria-describedby={
-                state.fieldErrors.name ? "name-error" : "name-hint"
+                fieldErrors.name ? "name-error" : "name-hint"
               }
               disabled={isPending}
               required
             />
 
-            {state.fieldErrors.name ? (
+            {fieldErrors.name ? (
               <p id="name-error" className="text-xs text-destructive">
-                {state.fieldErrors.name}
+                {fieldErrors.name}
               </p>
             ) : (
               <p id="name-hint" className="text-xs text-muted-foreground">
@@ -121,17 +128,17 @@ export function CreateAIEmployeeForm({
               name="role"
               placeholder={translations.rolePlaceholder}
               autoComplete="off"
-              aria-invalid={Boolean(state.fieldErrors.role)}
+              aria-invalid={Boolean(fieldErrors.role)}
               aria-describedby={
-                state.fieldErrors.role ? "role-error" : "role-hint"
+                fieldErrors.role ? "role-error" : "role-hint"
               }
               disabled={isPending}
               required
             />
 
-            {state.fieldErrors.role ? (
+            {fieldErrors.role ? (
               <p id="role-error" className="text-xs text-destructive">
-                {state.fieldErrors.role}
+                {fieldErrors.role}
               </p>
             ) : (
               <p id="role-hint" className="text-xs text-muted-foreground">
@@ -150,18 +157,18 @@ export function CreateAIEmployeeForm({
               name="description"
               placeholder={translations.descriptionPlaceholder}
               rows={5}
-              aria-invalid={Boolean(state.fieldErrors.description)}
+              aria-invalid={Boolean(fieldErrors.description)}
               aria-describedby={
-                state.fieldErrors.description
+                fieldErrors.description
                   ? "description-error"
                   : "description-hint"
               }
               disabled={isPending}
             />
 
-            {state.fieldErrors.description ? (
+            {fieldErrors.description ? (
               <p id="description-error" className="text-xs text-destructive">
-                {state.fieldErrors.description}
+                {fieldErrors.description}
               </p>
             ) : (
               <p
@@ -193,16 +200,16 @@ export function CreateAIEmployeeForm({
               name="language"
               defaultValue={locale === "uk" ? "UK" : "EN"}
               disabled={isPending}
-              aria-invalid={Boolean(state.fieldErrors.language)}
+              aria-invalid={Boolean(fieldErrors.language)}
               className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="EN">{translations.english}</option>
               <option value="UK">{translations.ukrainian}</option>
             </select>
 
-            {state.fieldErrors.language ? (
+            {fieldErrors.language ? (
               <p className="text-xs text-destructive">
-                {state.fieldErrors.language}
+                {fieldErrors.language}
               </p>
             ) : null}
           </div>
@@ -215,7 +222,7 @@ export function CreateAIEmployeeForm({
               name="tone"
               defaultValue="professional"
               disabled={isPending}
-              aria-invalid={Boolean(state.fieldErrors.tone)}
+              aria-invalid={Boolean(fieldErrors.tone)}
               className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="professional">{translations.professional}</option>
@@ -224,9 +231,9 @@ export function CreateAIEmployeeForm({
               <option value="empathetic">{translations.empathetic}</option>
             </select>
 
-            {state.fieldErrors.tone ? (
+            {fieldErrors.tone ? (
               <p className="text-xs text-destructive">
-                {state.fieldErrors.tone}
+                {fieldErrors.tone}
               </p>
             ) : null}
           </div>
