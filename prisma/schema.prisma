@@ -64,19 +64,32 @@ model WorkspaceMember {
 }
 
 model AIEmployee {
-  id           String             @id @default(cuid())
-  workspaceId  String
-  workspace    Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name         String
-  role         String
-  description  String?
-  status       AIEmployeeStatus   @default(DRAFT)
-  language     AIEmployeeLanguage @default(EN)
-  tone         String?
-  instructions String?
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  id          String   @id @default(cuid())
+  workspaceId String
+
+  name        String
+  role        String
+  description String?
+
+  status      AIEmployeeStatus @default(DRAFT)
+
+  language    String
+  tone        String?
+
+  // ===== Instructions =====
+
+  identity       String?
+  goals          String?
+  rules          String?
+  responseStyle  String?
+  restrictions   String?
+
+  // ========================
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
-  @@index([workspaceId, status])
 }
