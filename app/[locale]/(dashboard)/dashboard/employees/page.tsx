@@ -21,6 +21,7 @@ export default async function AIEmployeesPage({
   const t = await getTranslations("aiEmployees");
 
   const workspace = await getCurrentWorkspace();
+
   const employees = await getAIEmployees({
     workspaceId: workspace.id,
   });
@@ -92,47 +93,57 @@ export default async function AIEmployeesPage({
           aria-label={t("title")}
           className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
         >
-          {employees.map((employee) => (
-            <Card key={employee.id}>
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/50">
-                    <Bot className="size-5 text-muted-foreground" />
-                  </span>
+          {employees.map((employee) => {
+            const employeeHref = `/${locale}/dashboard/employees/${employee.id}`;
 
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-semibold">
-                      {employee.name}
-                    </h3>
+            return (
+              <Link
+                key={employee.id}
+                href={employeeHref}
+                className="group rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Card className="h-full transition-colors group-hover:border-foreground/20 group-hover:bg-muted/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/50 transition-colors group-hover:bg-muted">
+                        <Bot className="size-5 text-muted-foreground" />
+                      </span>
 
-                    <p className="mt-1 truncate text-sm text-muted-foreground">
-                      {employee.role}
-                    </p>
-                  </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate font-semibold">
+                          {employee.name}
+                        </h3>
 
-                  <span className="rounded-full border px-2.5 py-1 text-xs font-medium">
-                    {employee.status}
-                  </span>
-                </div>
+                        <p className="mt-1 truncate text-sm text-muted-foreground">
+                          {employee.role}
+                        </p>
+                      </div>
 
-                {employee.description ? (
-                  <p className="mt-5 line-clamp-3 text-sm leading-6 text-muted-foreground">
-                    {employee.description}
-                  </p>
-                ) : null}
+                      <span className="rounded-full border px-2.5 py-1 text-xs font-medium">
+                        {employee.status}
+                      </span>
+                    </div>
 
-                <div className="mt-6 flex items-center justify-between border-t pt-4 text-xs text-muted-foreground">
-                  <span>{employee.language}</span>
+                    {employee.description ? (
+                      <p className="mt-5 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                        {employee.description}
+                      </p>
+                    ) : null}
 
-                  <time dateTime={employee.updatedAt.toISOString()}>
-                    {new Intl.DateTimeFormat(locale, {
-                      dateStyle: "medium",
-                    }).format(employee.updatedAt)}
-                  </time>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    <div className="mt-6 flex items-center justify-between border-t pt-4 text-xs text-muted-foreground">
+                      <span>{employee.language}</span>
+
+                      <time dateTime={employee.updatedAt.toISOString()}>
+                        {new Intl.DateTimeFormat(locale, {
+                          dateStyle: "medium",
+                        }).format(employee.updatedAt)}
+                      </time>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </section>
       )}
     </div>
