@@ -104,6 +104,7 @@
     }
   },
   "cancel": "Cancel",
-  "createDraft": "Create draft"
+  "createDraft": "Create draft",
+  "creating": "Creating..."
 }
 }
