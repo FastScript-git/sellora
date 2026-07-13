@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import {
   BarChart3,
   BookOpen,
@@ -21,69 +23,87 @@ import { cn } from "@/lib/utils";
 
 const navigationItems = [
   {
-    label: "Dashboard",
-    href: "/dashboard",
+    labelKey: "dashboard",
+    path: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    label: "AI Employees",
-    href: "/dashboard/employees",
+    labelKey: "aiEmployees",
+    path: "/dashboard/employees",
     icon: Bot,
   },
   {
-    label: "Knowledge Base",
-    href: "/dashboard/knowledge",
+    labelKey: "knowledgeBase",
+    path: "/dashboard/knowledge",
     icon: BookOpen,
   },
   {
-    label: "Conversations",
-    href: "/dashboard/conversations",
+    labelKey: "conversations",
+    path: "/dashboard/conversations",
     icon: MessageSquare,
   },
   {
-    label: "Channels",
-    href: "/dashboard/channels",
+    labelKey: "channels",
+    path: "/dashboard/channels",
     icon: Radio,
   },
   {
-    label: "Automations",
-    href: "/dashboard/automations",
+    labelKey: "automations",
+    path: "/dashboard/automations",
     icon: Workflow,
   },
   {
-    label: "Contacts",
-    href: "/dashboard/contacts",
+    labelKey: "contacts",
+    path: "/dashboard/contacts",
     icon: Users,
   },
   {
-    label: "Analytics",
-    href: "/dashboard/analytics",
+    labelKey: "analytics",
+    path: "/dashboard/analytics",
     icon: BarChart3,
   },
-];
+] as const;
 
 const secondaryNavigationItems = [
   {
-    label: "Settings",
-    href: "/dashboard/settings",
+    labelKey: "settings",
+    path: "/dashboard/settings",
     icon: Settings,
   },
   {
-    label: "Billing",
-    href: "/dashboard/billing",
+    labelKey: "billing",
+    path: "/dashboard/billing",
     icon: CreditCard,
   },
-];
+] as const;
 
 type SidebarProps = {
   activePath?: string;
   className?: string;
 };
 
-export function Sidebar({
-  activePath = "/dashboard",
-  className,
-}: SidebarProps) {
+export function Sidebar({ activePath, className }: SidebarProps) {
+  const locale = useLocale();
+  const pathname = usePathname();
+  const navigation = useTranslations("navigation");
+  const sidebar = useTranslations("sidebar");
+
+  const currentPath = activePath ?? pathname;
+
+  function createLocalizedHref(path: string) {
+    return `/${locale}${path}`;
+  }
+
+  function isItemActive(path: string) {
+    const localizedPath = createLocalizedHref(path);
+
+    if (path === "/dashboard") {
+      return currentPath === localizedPath;
+    }
+
+    return currentPath.startsWith(localizedPath);
+  }
+
   return (
     <aside
       className={cn(
@@ -93,7 +113,7 @@ export function Sidebar({
     >
       <div className="flex h-16 items-center px-5">
         <Link
-          href="/dashboard"
+          href={createLocalizedHref("/dashboard")}
           className="flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -112,12 +132,13 @@ export function Sidebar({
       >
         {navigationItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activePath === item.href;
+          const href = createLocalizedHref(item.path);
+          const isActive = isItemActive(item.path);
 
           return (
             <Link
-              key={item.href}
-              href={item.href}
+              key={item.path}
+              href={href}
               aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors",
@@ -128,7 +149,7 @@ export function Sidebar({
               )}
             >
               <Icon className="size-4 shrink-0" />
-              <span>{item.label}</span>
+              <span>{navigation(item.labelKey)}</span>
             </Link>
           );
         })}
@@ -144,12 +165,13 @@ export function Sidebar({
       >
         {secondaryNavigationItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activePath === item.href;
+          const href = createLocalizedHref(item.path);
+          const isActive = isItemActive(item.path);
 
           return (
             <Link
-              key={item.href}
-              href={item.href}
+              key={item.path}
+              href={href}
               aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors",
@@ -160,7 +182,7 @@ export function Sidebar({
               )}
             >
               <Icon className="size-4 shrink-0" />
-              <span>{item.label}</span>
+              <span>{navigation(item.labelKey)}</span>
             </Link>
           );
         })}
@@ -168,14 +190,14 @@ export function Sidebar({
 
       <div className="p-3 pt-0">
         <div className="rounded-xl border bg-card p-3">
-          <p className="text-sm font-medium">Free plan</p>
+          <p className="text-sm font-medium">{sidebar("freePlan")}</p>
 
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            Upgrade your workspace to unlock more AI Employees.
+            {sidebar("upgradeDescription")}
           </p>
 
           <Button className="mt-3 w-full" size="sm">
-            Upgrade plan
+            {sidebar("upgradePlan")}
           </Button>
         </div>
       </div>
