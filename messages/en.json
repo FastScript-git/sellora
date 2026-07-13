@@ -25,32 +25,63 @@
     "workspaceOwner": "Workspace owner"
   },
   "dashboard": {
-    "overview": "Overview",
-    "welcome": "Welcome to Sellora",
-    "description": "Create and manage AI Employees that support your business around the clock.",
-    "metrics": {
-      "aiEmployees": {
-        "title": "AI Employees",
-        "value": "0",
-        "description": "No employees created yet"
-      },
-      "conversations": {
-        "title": "Conversations",
-        "value": "0",
-        "description": "No conversations yet"
-      },
-      "resolutionRate": {
-        "title": "AI Resolution Rate",
-        "value": "—",
-        "description": "Not enough data"
-      },
-      "knowledgeSources": {
-        "title": "Knowledge Sources",
-        "value": "0",
-        "description": "No sources connected"
-      }
+  "overview": "Overview",
+  "welcome": "Welcome to Sellora",
+  "description": "Manage your AI workforce, knowledge and customer operations from one workspace.",
+  "createEmployee": "Create AI Employee",
+  "metricsLabel": "Workspace metrics",
+  "metrics": {
+    "aiEmployees": {
+      "title": "AI Employees",
+      "description": "{active} currently active"
+    },
+    "conversations": {
+      "title": "Conversations",
+      "description": "No conversations yet"
+    },
+    "resolutionRate": {
+      "title": "AI Resolution Rate",
+      "description": "Not enough data"
+    },
+    "knowledgeSources": {
+      "title": "Knowledge Sources",
+      "description": "No sources connected"
     }
+  },
+  "employees": {
+    "title": "AI Employees",
+    "description": "Your recently created digital employees.",
+    "viewAll": "View all",
+    "emptyTitle": "No AI Employees yet",
+    "emptyDescription": "Create your first AI Employee to start building your digital workforce."
+  },
+  "quickActions": {
+    "title": "Quick actions",
+    "description": "Continue setting up your Sellora workspace.",
+    "createEmployee": {
+      "title": "Create AI Employee",
+      "description": "Add a new digital employee to your workspace."
+    },
+    "addKnowledge": {
+      "title": "Add knowledge",
+      "description": "Connect business information and verified sources."
+    },
+    "connectChannel": {
+      "title": "Connect a channel",
+      "description": "Prepare your website or API integration."
+    },
+    "createAutomation": {
+      "title": "Create automation",
+      "description": "Build a workflow for repetitive business tasks."
+    }
+  },
+  "activity": {
+    "title": "Recent activity",
+    "description": "Important events across your workspace.",
+    "emptyTitle": "No activity yet",
+    "emptyDescription": "Employee activity, conversations and knowledge updates will appear here."
   }
+}
   ,
 "aiEmployees": {
   "title": "AI Employees",
