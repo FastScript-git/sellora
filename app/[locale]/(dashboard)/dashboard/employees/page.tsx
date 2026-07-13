@@ -1,12 +1,31 @@
+import Link from "next/link";
 import { Bot, Plus, Search } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { getAIEmployees } from "@/features/ai-employees/queries";
+import { getCurrentWorkspace } from "@/lib/current-workspace";
 
-export default async function AIEmployeesPage() {
+type AIEmployeesPageProps = {
+  params: Promise<{
+    locale: string;
+  }>;
+};
+
+export default async function AIEmployeesPage({
+  params,
+}: AIEmployeesPageProps) {
+  const { locale } = await params;
   const t = await getTranslations("aiEmployees");
+
+  const workspace = await getCurrentWorkspace();
+  const employees = await getAIEmployees({
+    workspaceId: workspace.id,
+  });
+
+  const createHref = `/${locale}/dashboard/employees/new`;
 
   return (
     <div className="space-y-8">
@@ -21,7 +40,7 @@ export default async function AIEmployeesPage() {
           </p>
         </div>
 
-        <Button>
+        <Button nativeButton={false} render={<Link href={createHref} />}>
           <Plus className="size-4" />
           {t("create")}
         </Button>
@@ -43,26 +62,79 @@ export default async function AIEmployeesPage() {
         </div>
       </section>
 
-      <Card className="border-dashed">
-        <CardContent className="flex min-h-96 flex-col items-center justify-center px-6 py-16 text-center">
-          <span className="flex size-12 items-center justify-center rounded-xl border bg-muted/50">
-            <Bot className="size-5 text-muted-foreground" />
-          </span>
+      {employees.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="flex min-h-96 flex-col items-center justify-center px-6 py-16 text-center">
+            <span className="flex size-12 items-center justify-center rounded-xl border bg-muted/50">
+              <Bot className="size-5 text-muted-foreground" />
+            </span>
 
-          <h3 className="mt-5 text-lg font-semibold">
-            {t("emptyTitle")}
-          </h3>
+            <h3 className="mt-5 text-lg font-semibold">
+              {t("emptyTitle")}
+            </h3>
 
-          <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-            {t("emptyDescription")}
-          </p>
+            <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+              {t("emptyDescription")}
+            </p>
 
-          <Button className="mt-6">
-            <Plus className="size-4" />
-            {t("createFirst")}
-          </Button>
-        </CardContent>
-      </Card>
+            <Button
+              className="mt-6"
+              nativeButton={false}
+              render={<Link href={createHref} />}
+            >
+              <Plus className="size-4" />
+              {t("createFirst")}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <section
+          aria-label={t("title")}
+          className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+        >
+          {employees.map((employee) => (
+            <Card key={employee.id}>
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/50">
+                    <Bot className="size-5 text-muted-foreground" />
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate font-semibold">
+                      {employee.name}
+                    </h3>
+
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
+                      {employee.role}
+                    </p>
+                  </div>
+
+                  <span className="rounded-full border px-2.5 py-1 text-xs font-medium">
+                    {employee.status}
+                  </span>
+                </div>
+
+                {employee.description ? (
+                  <p className="mt-5 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                    {employee.description}
+                  </p>
+                ) : null}
+
+                <div className="mt-6 flex items-center justify-between border-t pt-4 text-xs text-muted-foreground">
+                  <span>{employee.language}</span>
+
+                  <time dateTime={employee.updatedAt.toISOString()}>
+                    {new Intl.DateTimeFormat(locale, {
+                      dateStyle: "medium",
+                    }).format(employee.updatedAt)}
+                  </time>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      )}
     </div>
   );
 }
