@@ -1,18 +1,22 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Ban,
-  CheckCircle2,
   MessageSquareText,
-  Save,
   ShieldCheck,
   Target,
   UserRound,
 } from "lucide-react";
 
+import { FormSaveBar } from "@/components/forms/form-save-bar";
 import { FormSection } from "@/components/forms/form-section";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -76,6 +80,19 @@ type InstructionsFormProps = {
   translations: InstructionsFormTranslations;
 };
 
+type InstructionFieldProps = {
+  id: keyof InstructionsFormValues;
+  icon: React.ReactNode;
+  label: string;
+  placeholder: string;
+  hint: string;
+  value: string;
+  error?: string;
+  rows: number;
+  disabled: boolean;
+  onChange: (value: string) => void;
+};
+
 const MAX_FIELD_LENGTH = 4000;
 
 const initialActionState: UpdateInstructionsActionState = {
@@ -84,24 +101,52 @@ const initialActionState: UpdateInstructionsActionState = {
   fieldErrors: {},
 };
 
+function areValuesEqual(
+  first: InstructionsFormValues,
+  second: InstructionsFormValues,
+) {
+  return (
+    first.identity === second.identity &&
+    first.goals === second.goals &&
+    first.rules === second.rules &&
+    first.responseStyle === second.responseStyle &&
+    first.restrictions === second.restrictions
+  );
+}
+
 export function InstructionsForm({
   employeeId,
   locale,
   initialValues,
   translations,
 }: InstructionsFormProps) {
-  const [values, setValues] = useState(initialValues);
+  const [values, setValues] =
+    useState<InstructionsFormValues>(initialValues);
+
+  const [savedValues, setSavedValues] =
+    useState<InstructionsFormValues>(initialValues);
+
+  const valuesRef = useRef(values);
 
   const [state, formAction, isPending] = useActionState(
     updateInstructionsAction,
     initialActionState,
   );
 
+  valuesRef.current = values;
+
   useEffect(() => {
     if (state.success) {
-      setValues((currentValues) => ({ ...currentValues }));
+      setSavedValues(valuesRef.current);
     }
-  }, [state.success]);
+  }, [state]);
+
+  const isDirty = useMemo(
+    () => !areValuesEqual(values, savedValues),
+    [values, savedValues],
+  );
+
+  const fieldErrors = state.fieldErrors ?? {};
 
   function updateField(
     field: keyof InstructionsFormValues,
@@ -113,7 +158,9 @@ export function InstructionsForm({
     }));
   }
 
-  const fieldErrors = state.fieldErrors ?? {};
+  function cancelChanges() {
+    setValues(savedValues);
+  }
 
   return (
     <form action={formAction} className="space-y-6">
@@ -122,7 +169,7 @@ export function InstructionsForm({
 
       {state.message ? (
         <div
-          role="status"
+          role={state.success ? "status" : "alert"}
           className={
             state.success
               ? "rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400"
@@ -199,7 +246,9 @@ export function InstructionsForm({
           hint={translations.responseStyle.hint}
           value={values.responseStyle}
           error={fieldErrors.responseStyle}
-          onChange={(value) => updateField("responseStyle", value)}
+          onChange={(value) =>
+            updateField("responseStyle", value)
+          }
           rows={6}
           disabled={isPending}
         />
@@ -217,46 +266,22 @@ export function InstructionsForm({
           hint={translations.restrictions.hint}
           value={values.restrictions}
           error={fieldErrors.restrictions}
-          onChange={(value) => updateField("restrictions", value)}
+          onChange={(value) =>
+            updateField("restrictions", value)
+          }
           rows={7}
           disabled={isPending}
         />
       </FormSection>
 
-      <div className="sticky bottom-4 z-20 rounded-xl border bg-background/90 p-4 shadow-lg backdrop-blur">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-muted">
-              <CheckCircle2 className="size-4 text-muted-foreground" />
-            </span>
-
-            <p className="text-xs leading-5 text-muted-foreground">
-              {state.success ? translations.saved : translations.save}
-            </p>
-          </div>
-
-          <Button type="submit" disabled={isPending}>
-            <Save className="size-4" />
-            {isPending ? translations.saving : translations.save}
-          </Button>
-        </div>
-      </div>
+      <FormSaveBar
+        dirty={isDirty}
+        pending={isPending}
+        onCancel={cancelChanges}
+      />
     </form>
   );
 }
-
-type InstructionFieldProps = {
-  id: keyof InstructionsFormValues;
-  icon: React.ReactNode;
-  label: string;
-  placeholder: string;
-  hint: string;
-  value: string;
-  error?: string;
-  rows: number;
-  disabled: boolean;
-  onChange: (value: string) => void;
-};
 
 function InstructionField({
   id,
@@ -281,9 +306,11 @@ function InstructionField({
           {label}
         </Label>
 
-        <span className="text-xs tabular-nums text-muted-foreground">
-          {value.length}/{MAX_FIELD_LENGTH}
-        </span>
+        {value.length > 0 ? (
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {value.length}/{MAX_FIELD_LENGTH}
+          </span>
+        ) : null}
       </div>
 
       <Textarea
@@ -301,11 +328,17 @@ function InstructionField({
       />
 
       {error ? (
-        <p id={errorId} className="text-xs leading-5 text-destructive">
+        <p
+          id={errorId}
+          className="text-xs leading-5 text-destructive"
+        >
           {error}
         </p>
       ) : (
-        <p id={hintId} className="text-xs leading-5 text-muted-foreground">
+        <p
+          id={hintId}
+          className="text-xs leading-5 text-muted-foreground"
+        >
           {hint}
         </p>
       )}
