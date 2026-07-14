@@ -27,6 +27,13 @@ enum KnowledgeSourceType {
   NOTE
 }
 
+enum KnowledgeSourceStatus {
+  PENDING
+  INDEXING
+  INDEXED
+  FAILED
+}
+
 enum AIEmployeeLanguage {
   EN
   UK
@@ -114,7 +121,7 @@ model KnowledgeSource {
 
   content String?
 
-  status String @default("PENDING")
+  status KnowledgeSourceStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
