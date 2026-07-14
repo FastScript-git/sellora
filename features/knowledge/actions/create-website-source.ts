@@ -14,12 +14,6 @@ export type CreateWebsiteSourceState = {
   fieldErrors: Partial<Record<"title" | "sourceUrl", string>>;
 };
 
-export const initialCreateWebsiteSourceState: CreateWebsiteSourceState = {
-  success: false,
-  message: null,
-  fieldErrors: {},
-};
-
 export async function createWebsiteSourceAction(
   _previousState: CreateWebsiteSourceState,
   formData: FormData,
