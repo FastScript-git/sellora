@@ -11,6 +11,8 @@ import type {
   KnowledgeSourceType,
 } from "@/lib/generated/prisma/client";
 
+import { KnowledgeStatusBadge } from "@/features/knowledge/components/knowledge-status-badge";
+
 type KnowledgeListProps = {
   sources: KnowledgeSource[];
 };
@@ -63,9 +65,9 @@ export function KnowledgeList({
                   </p>
                 ) : null}
 
-                <div className="mt-3 inline-flex rounded-full border px-2.5 py-1 text-xs font-medium">
-                  {source.status}
-                </div>
+                <div className="mt-3">
+                 <KnowledgeStatusBadge status={source.status} />
+               </div>
               </div>
             </div>
           </article>
