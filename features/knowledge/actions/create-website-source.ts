@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { KnowledgeSourceType } from "@/lib/generated/prisma/client";
 
+import { aiEmployeeBelongsToWorkspace } from "@/features/knowledge/repositories/knowledge-access.repository";
 import { createWebsiteSourceSchema } from "@/features/knowledge/schemas/create-website-source-schema";
 import { createKnowledge } from "@/features/knowledge/services/knowledge.service";
+import { KnowledgeSourceType } from "@/lib/generated/prisma/client";
+import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 export type CreateWebsiteSourceState = {
   success: boolean;
@@ -36,7 +38,7 @@ export async function createWebsiteSourceAction(
       const field = issue.path[0];
 
       if (field === "title" || field === "sourceUrl") {
-        fieldErrors[field] = issue.message;
+        fieldErrors[field] ??= issue.message;
       }
     }
 
@@ -48,6 +50,21 @@ export async function createWebsiteSourceAction(
   }
 
   try {
+    const workspace = await getCurrentWorkspace();
+
+    const hasAccess = await aiEmployeeBelongsToWorkspace({
+      employeeId: parsed.data.employeeId,
+      workspaceId: workspace.id,
+    });
+
+    if (!hasAccess) {
+      return {
+        success: false,
+        message: "AI Employee was not found in this workspace.",
+        fieldErrors: {},
+      };
+    }
+
     await createKnowledge({
       employeeId: parsed.data.employeeId,
       type: KnowledgeSourceType.WEBSITE,
@@ -65,7 +82,7 @@ export async function createWebsiteSourceAction(
       fieldErrors: {},
     };
   } catch (error) {
-    console.error(error);
+    console.error("Failed to create website knowledge source:", error);
 
     return {
       success: false,
