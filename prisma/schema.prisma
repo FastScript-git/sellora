@@ -20,6 +20,13 @@ enum AIEmployeeStatus {
   ARCHIVED
 }
 
+enum KnowledgeSourceType {
+  WEBSITE
+  PDF
+  FAQ
+  NOTE
+}
+
 enum AIEmployeeLanguage {
   EN
   UK
@@ -84,9 +91,34 @@ model AIEmployee {
   responseStyle String?
   restrictions  String?
 
+  knowledgeSources KnowledgeSource[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([workspaceId])
   @@index([workspaceId, status])
+}
+
+model KnowledgeSource {
+  id String @id @default(cuid())
+
+  employeeId String
+  employee   AIEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  type KnowledgeSourceType
+
+  title String
+
+  sourceUrl String?
+
+  content String?
+
+  status String @default("PENDING")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([employeeId, type])
 }

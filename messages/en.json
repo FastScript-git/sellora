@@ -212,5 +212,9 @@
   "save": "Save changes",
   "saving": "Saving...",
   "saved": "All changes are saved."
+},
+"knowledge": {
+  "title": "Knowledge",
+  "description": "Connect the knowledge your AI Employee should use."
 }
 }

@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   Ban,
+  CheckCircle2,
   MessageSquareText,
   ShieldCheck,
   Target,
@@ -126,6 +127,10 @@ export function InstructionsForm({
   const [savedValues, setSavedValues] =
     useState<InstructionsFormValues>(initialValues);
 
+  const [successMessage, setSuccessMessage] = useState<string | null>(
+    null,
+  );
+
   const valuesRef = useRef(values);
 
   const [state, formAction, isPending] = useActionState(
@@ -136,10 +141,21 @@ export function InstructionsForm({
   valuesRef.current = values;
 
   useEffect(() => {
-    if (state.success) {
-      setSavedValues(valuesRef.current);
+    if (!state.success) {
+      return;
     }
-  }, [state]);
+
+    setSavedValues(valuesRef.current);
+    setSuccessMessage(translations.saved);
+
+    const timeoutId = window.setTimeout(() => {
+      setSuccessMessage(null);
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [state, translations.saved]);
 
   const isDirty = useMemo(
     () => !areValuesEqual(values, savedValues),
@@ -147,6 +163,7 @@ export function InstructionsForm({
   );
 
   const fieldErrors = state.fieldErrors ?? {};
+  const errorMessage = !state.success ? state.message : null;
 
   function updateField(
     field: keyof InstructionsFormValues,
@@ -163,123 +180,137 @@ export function InstructionsForm({
   }
 
   return (
-    <form action={formAction} className="space-y-6">
-      <input type="hidden" name="employeeId" value={employeeId} />
-      <input type="hidden" name="locale" value={locale} />
-
-      {state.message ? (
+    <>
+      {successMessage ? (
         <div
-          role={state.success ? "status" : "alert"}
-          className={
-            state.success
-              ? "rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400"
-              : "rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-          }
+          role="status"
+          aria-live="polite"
+          className="fixed right-6 top-6 z-50 flex max-w-sm items-center gap-3 rounded-xl border border-emerald-500/30 bg-background/95 px-4 py-3 text-sm shadow-xl backdrop-blur"
         >
-          {state.message}
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
+            <CheckCircle2 className="size-4 text-emerald-400" />
+          </span>
+
+          <span className="font-medium text-foreground">
+            {successMessage}
+          </span>
         </div>
       ) : null}
 
-      <FormSection
-        title={translations.identity.title}
-        description={translations.identity.description}
-      >
-        <InstructionField
-          id="identity"
-          icon={<UserRound className="size-4" />}
-          label={translations.identity.label}
-          placeholder={translations.identity.placeholder}
-          hint={translations.identity.hint}
-          value={values.identity}
-          error={fieldErrors.identity}
-          onChange={(value) => updateField("identity", value)}
-          rows={7}
-          disabled={isPending}
-        />
-      </FormSection>
+      <form action={formAction} className="space-y-6">
+        <input type="hidden" name="employeeId" value={employeeId} />
+        <input type="hidden" name="locale" value={locale} />
 
-      <FormSection
-        title={translations.goals.title}
-        description={translations.goals.description}
-      >
-        <InstructionField
-          id="goals"
-          icon={<Target className="size-4" />}
-          label={translations.goals.label}
-          placeholder={translations.goals.placeholder}
-          hint={translations.goals.hint}
-          value={values.goals}
-          error={fieldErrors.goals}
-          onChange={(value) => updateField("goals", value)}
-          rows={7}
-          disabled={isPending}
-        />
-      </FormSection>
+        {errorMessage ? (
+          <div
+            role="alert"
+            className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            {errorMessage}
+          </div>
+        ) : null}
 
-      <FormSection
-        title={translations.rules.title}
-        description={translations.rules.description}
-      >
-        <InstructionField
-          id="rules"
-          icon={<ShieldCheck className="size-4" />}
-          label={translations.rules.label}
-          placeholder={translations.rules.placeholder}
-          hint={translations.rules.hint}
-          value={values.rules}
-          error={fieldErrors.rules}
-          onChange={(value) => updateField("rules", value)}
-          rows={8}
-          disabled={isPending}
-        />
-      </FormSection>
+        <FormSection
+          title={translations.identity.title}
+          description={translations.identity.description}
+        >
+          <InstructionField
+            id="identity"
+            icon={<UserRound className="size-4" />}
+            label={translations.identity.label}
+            placeholder={translations.identity.placeholder}
+            hint={translations.identity.hint}
+            value={values.identity}
+            error={fieldErrors.identity}
+            onChange={(value) => updateField("identity", value)}
+            rows={7}
+            disabled={isPending}
+          />
+        </FormSection>
 
-      <FormSection
-        title={translations.responseStyle.title}
-        description={translations.responseStyle.description}
-      >
-        <InstructionField
-          id="responseStyle"
-          icon={<MessageSquareText className="size-4" />}
-          label={translations.responseStyle.label}
-          placeholder={translations.responseStyle.placeholder}
-          hint={translations.responseStyle.hint}
-          value={values.responseStyle}
-          error={fieldErrors.responseStyle}
-          onChange={(value) =>
-            updateField("responseStyle", value)
-          }
-          rows={6}
-          disabled={isPending}
-        />
-      </FormSection>
+        <FormSection
+          title={translations.goals.title}
+          description={translations.goals.description}
+        >
+          <InstructionField
+            id="goals"
+            icon={<Target className="size-4" />}
+            label={translations.goals.label}
+            placeholder={translations.goals.placeholder}
+            hint={translations.goals.hint}
+            value={values.goals}
+            error={fieldErrors.goals}
+            onChange={(value) => updateField("goals", value)}
+            rows={7}
+            disabled={isPending}
+          />
+        </FormSection>
 
-      <FormSection
-        title={translations.restrictions.title}
-        description={translations.restrictions.description}
-      >
-        <InstructionField
-          id="restrictions"
-          icon={<Ban className="size-4" />}
-          label={translations.restrictions.label}
-          placeholder={translations.restrictions.placeholder}
-          hint={translations.restrictions.hint}
-          value={values.restrictions}
-          error={fieldErrors.restrictions}
-          onChange={(value) =>
-            updateField("restrictions", value)
-          }
-          rows={7}
-          disabled={isPending}
-        />
-      </FormSection>
+        <FormSection
+          title={translations.rules.title}
+          description={translations.rules.description}
+        >
+          <InstructionField
+            id="rules"
+            icon={<ShieldCheck className="size-4" />}
+            label={translations.rules.label}
+            placeholder={translations.rules.placeholder}
+            hint={translations.rules.hint}
+            value={values.rules}
+            error={fieldErrors.rules}
+            onChange={(value) => updateField("rules", value)}
+            rows={8}
+            disabled={isPending}
+          />
+        </FormSection>
 
-      <FormSaveBar
-        dirty={isDirty}
-        pending={isPending}
-        onCancel={cancelChanges}
-      />
-    </form>
+        <FormSection
+          title={translations.responseStyle.title}
+          description={translations.responseStyle.description}
+        >
+          <InstructionField
+            id="responseStyle"
+            icon={<MessageSquareText className="size-4" />}
+            label={translations.responseStyle.label}
+            placeholder={translations.responseStyle.placeholder}
+            hint={translations.responseStyle.hint}
+            value={values.responseStyle}
+            error={fieldErrors.responseStyle}
+            onChange={(value) =>
+              updateField("responseStyle", value)
+            }
+            rows={6}
+            disabled={isPending}
+          />
+        </FormSection>
+
+        <FormSection
+          title={translations.restrictions.title}
+          description={translations.restrictions.description}
+        >
+          <InstructionField
+            id="restrictions"
+            icon={<Ban className="size-4" />}
+            label={translations.restrictions.label}
+            placeholder={translations.restrictions.placeholder}
+            hint={translations.restrictions.hint}
+            value={values.restrictions}
+            error={fieldErrors.restrictions}
+            onChange={(value) =>
+              updateField("restrictions", value)
+            }
+            rows={7}
+            disabled={isPending}
+          />
+        </FormSection>
+
+        <FormSaveBar
+          dirty={isDirty}
+          pending={isPending}
+          onCancel={cancelChanges}
+        />
+      </form>
+    </>
   );
 }
 

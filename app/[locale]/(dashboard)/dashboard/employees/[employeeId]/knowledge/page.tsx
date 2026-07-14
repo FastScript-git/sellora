@@ -1,25 +1,34 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getTranslations } from "next-intl/server";
 
-type Props = {
-  title: string;
+import { KnowledgeEmptyState } from "@/features/knowledge/components/knowledge-empty-state";
+
+type KnowledgePageProps = {
+  params: Promise<{
+    locale: string;
+    employeeId: string;
+  }>;
 };
 
-function Placeholder({ title }: Props) {
+export default async function KnowledgePage({
+  params,
+}: KnowledgePageProps) {
+  await params;
+
+  const t = await getTranslations("knowledge");
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
+    <div className="space-y-8">
+      <section className="space-y-2">
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {t("title")}
+        </h1>
 
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          This section will be implemented in a future sprint.
+        <p className="text-muted-foreground">
+          {t("description")}
         </p>
-      </CardContent>
-    </Card>
-  );
-}
+      </section>
 
-export default function Page() {
-  return <Placeholder title="Knowledge" />;
+      <KnowledgeEmptyState />
+    </div>
+  );
 }
