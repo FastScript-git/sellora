@@ -1,5 +1,5 @@
 import { BookOpen, Plus } from "lucide-react";
-
+import { AddKnowledgeSourceDialog } from "./add-knowledge-source-dialog";
 import { Button } from "@/components/ui/button";
 
 export function KnowledgeEmptyState() {
@@ -18,10 +18,7 @@ export function KnowledgeEmptyState() {
         when answering customers.
       </p>
 
-      <Button className="mt-8">
-        <Plus className="mr-2 h-4 w-4" />
-        Add knowledge source
-      </Button>
+      <AddKnowledgeSourceDialog />
     </div>
   );
 }
