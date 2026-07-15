@@ -66,6 +66,7 @@ model Workspace {
   slug        String            @unique
   memberships WorkspaceMember[]
   aiEmployees AIEmployee[]
+  contacts    Contact[]
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 }
@@ -114,6 +115,34 @@ model AIEmployee {
 
   @@index([workspaceId])
   @@index([workspaceId, status])
+}
+
+model Contact {
+  id          String @id @default(cuid())
+  workspaceId String
+
+  firstName String?
+  lastName  String?
+  email     String?
+  phone     String?
+
+  company  String?
+  jobTitle String?
+
+  avatarUrl String?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  conversations Conversation[]
+
+  @@index([workspaceId])
+  @@index([email])
+  @@index([phone])
 }
 
 model KnowledgeSource {
@@ -191,7 +220,9 @@ model Conversation {
   id String @id @default(cuid())
 
   employeeId String
+  contactId  String?
   employee   AIEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  contact    Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
 
   title String?
 
@@ -201,6 +232,7 @@ model Conversation {
   messages ConversationMessage[]
 
   @@index([employeeId])
+  @@index([contactId])
 }
 
 model ConversationMessage {
