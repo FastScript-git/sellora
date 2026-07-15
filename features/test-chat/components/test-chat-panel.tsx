@@ -14,10 +14,12 @@ type ChatMessageItem = {
 };
 
 type TestChatPanelProps = {
+  employeeId: string;
   employeeName: string;
 };
 
 export function TestChatPanel({
+  employeeId,
   employeeName,
 }: TestChatPanelProps) {
   const [message, setMessage] = useState("");
@@ -61,7 +63,10 @@ export function TestChatPanel({
   }
 
   return (
-    <section className="flex min-h-[620px] flex-col overflow-hidden rounded-2xl border bg-card">
+    <section
+      data-employee-id={employeeId}
+      className="flex min-h-[620px] flex-col overflow-hidden rounded-2xl border bg-card"
+    >
       <header className="flex items-center justify-between gap-4 border-b px-5 py-4">
         <div>
           <h2 className="font-semibold">Test Chat</h2>

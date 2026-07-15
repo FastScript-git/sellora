@@ -28,7 +28,10 @@ export default async function TestChatPage({
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <TestChatPanel employeeName={employee.name} />
+      <TestChatPanel
+        employeeId={employee.id}
+        employeeName={employee.name}
+      />
     </div>
   );
 }
