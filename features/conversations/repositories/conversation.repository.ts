@@ -55,6 +55,35 @@ export async function getConversationWithMessages(
   });
 }
 
+type GetEmployeeConversationParams = {
+  conversationId: string;
+  employeeId: string;
+};
+
+export async function getEmployeeConversation({
+  conversationId,
+  employeeId,
+}: GetEmployeeConversationParams) {
+  return prisma.conversation.findFirst({
+    where: {
+      id: conversationId,
+      employeeId,
+    },
+    include: {
+      messages: {
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
+      _count: {
+        select: {
+          messages: true,
+        },
+      },
+    },
+  });
+}
+
 export async function getConversationsByEmployee(
   employeeId: string,
 ) {

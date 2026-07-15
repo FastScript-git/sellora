@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, MessageSquare, Plus } from "lucide-react";
+import {
+  ArrowRight,
+  MessageSquare,
+  Plus,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -55,6 +59,7 @@ export default async function ConversationsPage({
         messages: "повідомлень",
         untitled: "Новий діалог",
         noPreview: "У цьому діалозі ще немає повідомлень.",
+        openConversation: "Відкрити розмову",
       }
     : {
         title: "Conversations",
@@ -68,6 +73,7 @@ export default async function ConversationsPage({
         messages: "messages",
         untitled: "New conversation",
         noPreview: "This conversation does not contain messages yet.",
+        openConversation: "Open conversation",
       };
 
   const testChatHref =
@@ -133,45 +139,56 @@ export default async function ConversationsPage({
           {conversations.map((conversation) => {
             const latestMessage = conversation.messages[0];
 
-            return (
-              <Card
-                key={conversation.id}
-                className="transition-colors hover:border-foreground/15"
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <CardTitle className="truncate text-base">
-                        {conversation.title || copy.untitled}
-                      </CardTitle>
+            const conversationHref =
+              `/${locale}/dashboard/employees/${employee.id}` +
+              `/conversations/${conversation.id}`;
 
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {dateFormatter.format(
-                          conversation.updatedAt,
-                        )}
+            return (
+              <Link
+                key={conversation.id}
+                href={conversationHref}
+                aria-label={copy.openConversation}
+                className="block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Card className="transition-colors hover:border-foreground/20 hover:bg-muted/10">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <CardTitle className="truncate text-base">
+                          {conversation.title || copy.untitled}
+                        </CardTitle>
+
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {dateFormatter.format(
+                            conversation.updatedAt,
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-3">
+                        <span className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
+                          {conversation._count.messages}{" "}
+                          {copy.messages}
+                        </span>
+
+                        <ArrowRight className="size-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent>
+                    <div className="flex items-center gap-4">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
+                        <MessageSquare className="size-4 text-muted-foreground" />
+                      </span>
+
+                      <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+                        {latestMessage?.content || copy.noPreview}
                       </p>
                     </div>
-
-                    <span className="shrink-0 rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
-                      {conversation._count.messages}{" "}
-                      {copy.messages}
-                    </span>
-                  </div>
-                </CardHeader>
-
-                <CardContent>
-                  <div className="flex items-center gap-4">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
-                      <MessageSquare className="size-4 text-muted-foreground" />
-                    </span>
-
-                    <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-                      {latestMessage?.content ||
-                        copy.noPreview}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
         </section>
