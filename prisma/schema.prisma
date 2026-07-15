@@ -107,6 +107,7 @@ model AIEmployee {
 
   knowledgeSources KnowledgeSource[]
   conversations    Conversation[]
+  channels         Channel[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -217,7 +218,37 @@ model ConversationMessage {
   @@index([conversationId, createdAt])
 }
 
+model Channel {
+  id String @id @default(cuid())
+
+  employeeId String
+  employee   AIEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  type ChannelType
+
+  name String
+
+  widgetKey String? @unique
+
+  isEnabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([employeeId, type])
+}
+
 enum ConversationRole {
   USER
   ASSISTANT
+}
+
+enum ChannelType {
+  WEBSITE
+  TELEGRAM
+  WHATSAPP
+  MESSENGER
+  INSTAGRAM
+  API
 }
