@@ -1,4 +1,7 @@
-import type { KnowledgeSourceType } from "@/lib/generated/prisma/client";
+import type {
+  KnowledgeSourceStatus,
+  KnowledgeSourceType,
+} from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type CreateKnowledgeSourceData = {
@@ -24,6 +27,26 @@ export async function getKnowledgeSources(employeeId: string) {
     },
     orderBy: {
       createdAt: "desc",
+    },
+  });
+}
+
+export async function updateKnowledgeSourceStatus({
+  sourceId,
+  status,
+  content,
+}: {
+  sourceId: string;
+  status: KnowledgeSourceStatus;
+  content?: string | null;
+}) {
+  return prisma.knowledgeSource.update({
+    where: {
+      id: sourceId,
+    },
+    data: {
+      status,
+      ...(content !== undefined ? { content } : {}),
     },
   });
 }
