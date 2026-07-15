@@ -106,6 +106,7 @@ model AIEmployee {
   restrictions  String?
 
   knowledgeSources KnowledgeSource[]
+  conversations    Conversation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -183,4 +184,40 @@ model KnowledgeIndexJob {
   @@index([knowledgeSourceId])
   @@index([status, createdAt])
   @@index([knowledgeSourceId, status])
+}
+
+model Conversation {
+  id String @id @default(cuid())
+
+  employeeId String
+  employee   AIEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  title String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages ConversationMessage[]
+
+  @@index([employeeId])
+}
+
+model ConversationMessage {
+  id String @id @default(cuid())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  role ConversationRole
+
+  content String
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+enum ConversationRole {
+  USER
+  ASSISTANT
 }
