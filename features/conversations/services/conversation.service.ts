@@ -1,6 +1,4 @@
-import {
-  ConversationRole,
-} from "@/lib/generated/prisma/client";
+import { ConversationRole } from "@/lib/generated/prisma/client";
 
 import {
   createConversation,
@@ -10,11 +8,13 @@ import {
 
 type StartConversationParams = {
   employeeId: string;
+  contactId?: string | null;
   firstMessage: string;
 };
 
 export async function startConversation({
   employeeId,
+  contactId,
   firstMessage,
 }: StartConversationParams) {
   const title =
@@ -24,6 +24,7 @@ export async function startConversation({
 
   const conversation = await createConversation({
     employeeId,
+    contactId,
     title,
   });
 
