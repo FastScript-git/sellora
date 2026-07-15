@@ -9,6 +9,7 @@
     console.error(
       "[Sellora Widget] Installation script was not found.",
     );
+
     return;
   }
 
@@ -18,6 +19,7 @@
     console.error(
       "[Sellora Widget] data-widget-key is required.",
     );
+
     return;
   }
 
@@ -31,6 +33,21 @@
 
   const scriptUrl = new URL(currentScript.src);
   const apiBaseUrl = scriptUrl.origin;
+  const conversationStorageKey =
+    `sellora-conversation-${widgetKey}`;
+
+  let conversationId = "";
+  let isSending = false;
+
+  try {
+    conversationId =
+      window.localStorage.getItem(conversationStorageKey) || "";
+  } catch (error) {
+    console.warn(
+      "[Sellora Widget] Local storage is unavailable.",
+      error,
+    );
+  }
 
   const root = document.createElement("div");
   root.dataset.selloraWidget = widgetKey;
@@ -127,9 +144,6 @@
         0 28px 80px rgba(0, 0, 0, 0.42),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
       transform-origin: bottom right;
-      transition:
-        opacity 160ms ease,
-        transform 160ms ease;
     }
 
     .sellora-panel[hidden] {
@@ -204,6 +218,7 @@
       overflow-y: auto;
       padding: 18px;
       background: #0d0d0f;
+      scroll-behavior: smooth;
     }
 
     .sellora-message-row {
@@ -235,6 +250,50 @@
       color: #ffffff;
     }
 
+    .sellora-message-row.is-error .sellora-message {
+      border-color: rgba(239, 68, 68, 0.35);
+      background: rgba(239, 68, 68, 0.1);
+      color: #fca5a5;
+    }
+
+    .sellora-typing {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 54px;
+      min-height: 42px;
+    }
+
+    .sellora-typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #a1a1aa;
+      animation: sellora-typing 1.2s infinite ease-in-out;
+    }
+
+    .sellora-typing-dot:nth-child(2) {
+      animation-delay: 160ms;
+    }
+
+    .sellora-typing-dot:nth-child(3) {
+      animation-delay: 320ms;
+    }
+
+    @keyframes sellora-typing {
+      0%,
+      60%,
+      100% {
+        opacity: 0.35;
+        transform: translateY(0);
+      }
+
+      30% {
+        opacity: 1;
+        transform: translateY(-3px);
+      }
+    }
+
     .sellora-footer {
       border-top: 1px solid rgba(255, 255, 255, 0.08);
       padding: 14px;
@@ -264,6 +323,11 @@
 
     .sellora-input::placeholder {
       color: #71717a;
+    }
+
+    .sellora-input:disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
     }
 
     .sellora-send {
@@ -350,6 +414,7 @@
 
   const messages = document.createElement("div");
   messages.className = "sellora-messages";
+  messages.setAttribute("aria-live", "polite");
 
   const welcomeRow = document.createElement("div");
   welcomeRow.className = "sellora-message-row";
@@ -393,13 +458,13 @@
   powered.textContent = "Powered by Sellora";
 
   footer.append(form, powered);
-
   panel.append(header, messages, footer);
 
   const launcher = document.createElement("button");
   launcher.type = "button";
   launcher.className = "sellora-launcher";
   launcher.setAttribute("aria-label", "Open Sellora chat");
+  launcher.setAttribute("aria-expanded", "false");
   launcher.innerHTML = `
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
@@ -408,8 +473,60 @@
     </svg>
   `;
 
+  function scrollMessagesToBottom() {
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function createMessageRow({
+    content,
+    role = "employee",
+    error = false,
+  }) {
+    const row = document.createElement("div");
+
+    row.className = [
+      "sellora-message-row",
+      role === "user" ? "is-user" : "",
+      error ? "is-error" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const bubble = document.createElement("div");
+    bubble.className = "sellora-message";
+    bubble.textContent = content;
+
+    row.append(bubble);
+    messages.append(row);
+    scrollMessagesToBottom();
+
+    return row;
+  }
+
+  function createTypingIndicator() {
+    const row = document.createElement("div");
+    row.className = "sellora-message-row";
+
+    const bubble = document.createElement("div");
+    bubble.className = "sellora-message sellora-typing";
+    bubble.setAttribute("aria-label", "AI Employee is typing");
+
+    bubble.innerHTML = `
+      <span class="sellora-typing-dot"></span>
+      <span class="sellora-typing-dot"></span>
+      <span class="sellora-typing-dot"></span>
+    `;
+
+    row.append(bubble);
+    messages.append(row);
+    scrollMessagesToBottom();
+
+    return row;
+  }
+
   function setOpen(nextOpen) {
     panel.hidden = !nextOpen;
+
     launcher.setAttribute(
       "aria-expanded",
       String(nextOpen),
@@ -418,7 +535,91 @@
     if (nextOpen) {
       window.setTimeout(() => {
         input.focus();
+        scrollMessagesToBottom();
       }, 0);
+    }
+  }
+
+  function updateComposerState() {
+    const hasMessage = Boolean(input.value.trim());
+
+    sendButton.disabled = isSending || !hasMessage;
+    input.disabled = isSending;
+  }
+
+  async function sendMessage(message) {
+    if (isSending) {
+      return;
+    }
+
+    isSending = true;
+    updateComposerState();
+
+    const typingIndicator = createTypingIndicator();
+
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/widget/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            widgetKey,
+            conversationId: conversationId || undefined,
+            message,
+          }),
+        },
+      );
+
+      const payload = await response.json();
+
+      if (!response.ok || !payload.success) {
+        throw new Error(
+          payload.error || "Unable to send message.",
+        );
+      }
+
+      conversationId = payload.conversationId;
+
+      try {
+        window.localStorage.setItem(
+          conversationStorageKey,
+          conversationId,
+        );
+      } catch (error) {
+        console.warn(
+          "[Sellora Widget] Could not save conversation ID.",
+          error,
+        );
+      }
+
+      typingIndicator.remove();
+
+      createMessageRow({
+        content: payload.message,
+        role: "employee",
+      });
+    } catch (error) {
+      typingIndicator.remove();
+
+      console.error(
+        "[Sellora Widget] Failed to send message.",
+        error,
+      );
+
+      createMessageRow({
+        content:
+          "Sorry, something went wrong. Please try again.",
+        role: "employee",
+        error: true,
+      });
+    } finally {
+      isSending = false;
+      updateComposerState();
+      input.focus();
     }
   }
 
@@ -431,10 +632,11 @@
   });
 
   input.addEventListener("input", () => {
-    sendButton.disabled = !input.value.trim();
+    updateComposerState();
 
     input.style.height = "auto";
-    input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
+    input.style.height =
+      `${Math.min(input.scrollHeight, 120)}px`;
   });
 
   input.addEventListener("keydown", (event) => {
@@ -453,25 +655,20 @@
 
     const message = input.value.trim();
 
-    if (!message) {
+    if (!message || isSending) {
       return;
     }
 
-    const row = document.createElement("div");
-    row.className = "sellora-message-row is-user";
-
-    const bubble = document.createElement("div");
-    bubble.className = "sellora-message";
-    bubble.textContent = message;
-
-    row.append(bubble);
-    messages.append(row);
+    createMessageRow({
+      content: message,
+      role: "user",
+    });
 
     input.value = "";
     input.style.height = "auto";
-    sendButton.disabled = true;
+    updateComposerState();
 
-    messages.scrollTop = messages.scrollHeight;
+    void sendMessage(message);
   });
 
   widget.append(panel, launcher);
@@ -529,5 +726,6 @@
     }
   }
 
+  updateComposerState();
   void loadWidgetConfig();
 })();
