@@ -1,10 +1,17 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { Send, Sparkles } from "lucide-react";
+import {
+  type FormEvent,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
+import { Loader2, Send, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { sendMessageAction } from "@/features/test-chat/actions/send-message";
 import { ChatMessage } from "@/features/test-chat/components/chat-message";
 
 type ChatMessageItem = {
@@ -23,6 +30,9 @@ export function TestChatPanel({
   employeeName,
 }: TestChatPanelProps) {
   const [message, setMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
   const [messages, setMessages] = useState<ChatMessageItem[]>([
     {
       id: "welcome",
@@ -31,12 +41,21 @@ export function TestChatPanel({
     },
   ]);
 
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
+  }, [messages, isPending]);
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const trimmedMessage = message.trim();
 
-    if (!trimmedMessage) {
+    if (!trimmedMessage || isPending) {
       return;
     }
 
@@ -46,27 +65,53 @@ export function TestChatPanel({
       content: trimmedMessage,
     };
 
-    const employeeMessage: ChatMessageItem = {
-      id: crypto.randomUUID(),
-      role: "employee",
-      content:
-        "This is a test response. Live AI responses will be connected in the next step.",
-    };
-
     setMessages((currentMessages) => [
       ...currentMessages,
       userMessage,
-      employeeMessage,
     ]);
 
     setMessage("");
+    setError(null);
+
+    startTransition(async () => {
+      const result = await sendMessageAction({
+        employeeId,
+        message: trimmedMessage,
+      });
+
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+
+      const employeeMessage: ChatMessageItem = {
+        id: crypto.randomUUID(),
+        role: "employee",
+        content: result.message,
+      };
+
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        employeeMessage,
+      ]);
+    });
+  }
+
+  function handleKeyDown(
+    event: React.KeyboardEvent<HTMLTextAreaElement>,
+  ) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !event.nativeEvent.isComposing
+    ) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
   }
 
   return (
-    <section
-      data-employee-id={employeeId}
-      className="flex min-h-[620px] flex-col overflow-hidden rounded-2xl border bg-card"
-    >
+    <section className="flex min-h-[620px] flex-col overflow-hidden rounded-2xl border bg-card">
       <header className="flex items-center justify-between gap-4 border-b px-5 py-4">
         <div>
           <h2 className="font-semibold">Test Chat</h2>
@@ -78,7 +123,7 @@ export function TestChatPanel({
 
         <span className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
           <Sparkles className="size-3.5" />
-          Preview mode
+          AI preview
         </span>
       </header>
 
@@ -90,34 +135,74 @@ export function TestChatPanel({
             content={chatMessage.content}
           />
         ))}
+
+        {isPending ? (
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border bg-muted/50">
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            </span>
+
+            <div className="rounded-2xl rounded-tl-md border bg-card px-4 py-3">
+              <p className="text-sm text-muted-foreground">
+                {employeeName} is thinking…
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        <div ref={messagesEndRef} />
       </div>
 
       <form
         onSubmit={handleSubmit}
         className="border-t bg-background/60 p-4"
       >
+        {error ? (
+          <div
+            role="alert"
+            className="mb-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            {error}
+          </div>
+        ) : null}
+
         <div className="flex items-end gap-3">
           <Textarea
             value={message}
             onChange={(event) => setMessage(event.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={`Message ${employeeName}...`}
             rows={2}
+            maxLength={4000}
+            disabled={isPending}
             className="min-h-20 resize-none"
           />
 
           <Button
             type="submit"
             size="icon"
-            disabled={!message.trim()}
+            disabled={!message.trim() || isPending}
             aria-label="Send message"
           >
-            <Send className="size-4" />
+            {isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Send className="size-4" />
+            )}
           </Button>
         </div>
 
-        <p className="mt-2 text-xs text-muted-foreground">
-          Test mode does not contact customers or connected channels.
-        </p>
+        <div className="mt-2 flex items-center justify-between gap-4">
+          <p className="text-xs text-muted-foreground">
+            Enter to send · Shift + Enter for a new line
+          </p>
+
+          {message.length > 0 ? (
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {message.length}/4000
+            </span>
+          ) : null}
+        </div>
       </form>
     </section>
   );
