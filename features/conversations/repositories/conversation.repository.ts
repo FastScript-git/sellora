@@ -3,16 +3,19 @@ import { prisma } from "@/lib/prisma";
 
 type CreateConversationParams = {
   employeeId: string;
+  contactId?: string | null;
   title?: string | null;
 };
 
 export async function createConversation({
   employeeId,
+  contactId,
   title,
 }: CreateConversationParams) {
   return prisma.conversation.create({
     data: {
       employeeId,
+      contactId,
       title,
     },
   });
