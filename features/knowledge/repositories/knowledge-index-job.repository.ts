@@ -1,7 +1,21 @@
 import {
   KnowledgeIndexJobStatus,
+  type KnowledgeSource,
 } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+
+type ClaimedKnowledgeIndexJob = {
+  id: string;
+  knowledgeSourceId: string;
+  attempts: number;
+  knowledgeSource: KnowledgeSource;
+};
+
+type ClaimedJobRow = {
+  id: string;
+  knowledgeSourceId: string;
+  attempts: number;
+};
 
 export async function createKnowledgeIndexJob(
   knowledgeSourceId: string,
@@ -13,34 +27,67 @@ export async function createKnowledgeIndexJob(
   });
 }
 
-export async function getNextPendingKnowledgeIndexJob() {
-  return prisma.knowledgeIndexJob.findFirst({
-    where: {
-      status: KnowledgeIndexJobStatus.PENDING,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-    include: {
-      knowledgeSource: true,
-    },
-  });
-}
+export async function claimNextPendingKnowledgeIndexJob(): Promise<
+  ClaimedKnowledgeIndexJob | null
+> {
+  return prisma.$transaction(async (transaction) => {
+    const rows = await transaction.$queryRaw<ClaimedJobRow[]>`
+      WITH next_job AS (
+        SELECT "id"
+        FROM "KnowledgeIndexJob"
+        WHERE "status" = 'PENDING'::"KnowledgeIndexJobStatus"
+        ORDER BY "createdAt" ASC
+        FOR UPDATE SKIP LOCKED
+        LIMIT 1
+      )
+      UPDATE "KnowledgeIndexJob" AS job
+      SET
+        "status" = 'PROCESSING'::"KnowledgeIndexJobStatus",
+        "startedAt" = NOW(),
+        "finishedAt" = NULL,
+        "error" = NULL,
+        "attempts" = job."attempts" + 1,
+        "updatedAt" = NOW()
+      FROM next_job
+      WHERE job."id" = next_job."id"
+      RETURNING
+        job."id",
+        job."knowledgeSourceId",
+        job."attempts"
+    `;
 
-export async function markKnowledgeIndexJobProcessing(
-  id: string,
-) {
-  return prisma.knowledgeIndexJob.update({
-    where: {
-      id,
-    },
-    data: {
-      status: KnowledgeIndexJobStatus.PROCESSING,
-      startedAt: new Date(),
-      attempts: {
-        increment: 1,
-      },
-    },
+    const claimedJob = rows[0];
+
+    if (!claimedJob) {
+      return null;
+    }
+
+    const knowledgeSource =
+      await transaction.knowledgeSource.findUnique({
+        where: {
+          id: claimedJob.knowledgeSourceId,
+        },
+      });
+
+    if (!knowledgeSource) {
+      await transaction.knowledgeIndexJob.update({
+        where: {
+          id: claimedJob.id,
+        },
+        data: {
+          status: KnowledgeIndexJobStatus.FAILED,
+          finishedAt: new Date(),
+          error: "Knowledge source was not found.",
+        },
+      });
+
+      return null;
+    }
+
+    return {
+      ...claimedJob,
+      knowledgeSource,
+    };
   });
 }
 
