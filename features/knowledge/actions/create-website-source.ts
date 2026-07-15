@@ -3,14 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { aiEmployeeBelongsToWorkspace } from "@/features/knowledge/repositories/knowledge-access.repository";
-import { updateKnowledgeSourceStatus } from "@/features/knowledge/repositories/knowledge.repository";
+import { createKnowledgeIndexJob } from "@/features/knowledge/repositories/knowledge-index-job.repository";
 import { createWebsiteSourceSchema } from "@/features/knowledge/schemas/create-website-source-schema";
-import { indexWebsiteSource } from "@/features/knowledge/services/index-website-source";
 import { createKnowledge } from "@/features/knowledge/services/knowledge.service";
-import {
-  KnowledgeSourceStatus,
-  KnowledgeSourceType,
-} from "@/lib/generated/prisma/client";
+import { KnowledgeSourceType } from "@/lib/generated/prisma/client";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 export type CreateWebsiteSourceState = {
@@ -75,51 +71,30 @@ export async function createWebsiteSourceAction(
       sourceUrl: parsed.data.sourceUrl,
     });
 
-    await updateKnowledgeSourceStatus({
-      sourceId: source.id,
-      status: KnowledgeSourceStatus.INDEXING,
-    });
-
-    revalidatePath(knowledgePath);
-
     try {
-      await indexWebsiteSource({
-        knowledgeSourceId: source.id,
-        url: parsed.data.sourceUrl,
-      });
-
-      await updateKnowledgeSourceStatus({
-        sourceId: source.id,
-        status: KnowledgeSourceStatus.INDEXED,
-      });
-
-      revalidatePath(knowledgePath);
-
-      return {
-        success: true,
-        message: "Website added and indexed successfully.",
-        fieldErrors: {},
-      };
-    } catch (indexingError) {
+      await createKnowledgeIndexJob(source.id);
+    } catch (queueError) {
       console.error(
-        "Failed to index website knowledge source:",
-        indexingError,
+        "Failed to queue website knowledge source:",
+        queueError,
       );
-
-      await updateKnowledgeSourceStatus({
-        sourceId: source.id,
-        status: KnowledgeSourceStatus.FAILED,
-      });
-
-      revalidatePath(knowledgePath);
 
       return {
         success: false,
         message:
-          "Website was added, but indexing failed. You can retry it later.",
+          "Website was created, but it could not be added to the indexing queue.",
         fieldErrors: {},
       };
     }
+
+    revalidatePath(knowledgePath);
+
+    return {
+      success: true,
+      message:
+        "Website added successfully. Indexing will start shortly.",
+      fieldErrors: {},
+    };
   } catch (error) {
     console.error(
       "Failed to create website knowledge source:",
