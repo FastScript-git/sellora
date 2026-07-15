@@ -1,25 +1,34 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { notFound } from "next/navigation";
 
-type Props = {
-  title: string;
+import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
+import { TestChatPanel } from "@/features/test-chat/components/test-chat-panel";
+import { getCurrentWorkspace } from "@/lib/current-workspace";
+
+type TestChatPageProps = {
+  params: Promise<{
+    employeeId: string;
+  }>;
 };
 
-function Placeholder({ title }: Props) {
+export default async function TestChatPage({
+  params,
+}: TestChatPageProps) {
+  const { employeeId } = await params;
+
+  const workspace = await getCurrentWorkspace();
+
+  const employee = await getAIEmployee({
+    employeeId,
+    workspaceId: workspace.id,
+  });
+
+  if (!employee) {
+    notFound();
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          This section will be implemented in a future sprint.
-        </p>
-      </CardContent>
-    </Card>
+    <div className="mx-auto w-full max-w-5xl">
+      <TestChatPanel employeeName={employee.name} />
+    </div>
   );
-}
-
-export default function Page() {
-  return <Placeholder title="Test-chat" />;
 }
