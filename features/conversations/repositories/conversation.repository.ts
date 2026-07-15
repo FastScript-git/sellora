@@ -54,3 +54,35 @@ export async function getConversationWithMessages(
     },
   });
 }
+
+export async function getConversationsByEmployee(
+  employeeId: string,
+) {
+  return prisma.conversation.findMany({
+    where: {
+      employeeId,
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+    include: {
+      messages: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 1,
+        select: {
+          id: true,
+          role: true,
+          content: true,
+          createdAt: true,
+        },
+      },
+      _count: {
+        select: {
+          messages: true,
+        },
+      },
+    },
+  });
+}
