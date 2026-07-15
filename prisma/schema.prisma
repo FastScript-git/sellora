@@ -126,6 +126,30 @@ model KnowledgeSource {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  chunks KnowledgeChunk[]
+
   @@index([employeeId])
   @@index([employeeId, type])
+}
+
+model KnowledgeChunk {
+  id String @id @default(cuid())
+
+  knowledgeSourceId String
+  knowledgeSource   KnowledgeSource @relation(fields: [knowledgeSourceId], references: [id], onDelete: Cascade)
+
+  chunkIndex Int
+
+  content String
+
+  embedding Unsupported("vector(1536)")?
+
+  tokenCount Int?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([knowledgeSourceId])
+  @@index([knowledgeSourceId, chunkIndex])
 }
