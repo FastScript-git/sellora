@@ -30,6 +30,9 @@ export function TestChatPanel({
   employeeName,
 }: TestChatPanelProps) {
   const [message, setMessage] = useState("");
+  const [conversationId, setConversationId] = useState<string | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -76,8 +79,13 @@ export function TestChatPanel({
     startTransition(async () => {
       const result = await sendMessageAction({
         employeeId,
+        conversationId,
         message: trimmedMessage,
       });
+
+      if (result.conversationId) {
+        setConversationId(result.conversationId);
+      }
 
       if (!result.success) {
         setError(result.error);

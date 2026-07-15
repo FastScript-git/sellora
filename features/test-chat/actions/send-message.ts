@@ -3,11 +3,18 @@
 import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
 import { buildPrompt } from "@/features/ai/services/build-prompt";
 import { generateResponse } from "@/features/ai/services/generate-response";
+import {
+  getConversationHistory,
+  saveAssistantMessage,
+  saveUserMessage,
+  startConversation,
+} from "@/features/conversations/services/conversation.service";
 import { searchKnowledge } from "@/features/knowledge/services/search-knowledge";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 type SendMessageInput = {
   employeeId: string;
+  conversationId?: string | null;
   message: string;
 };
 
@@ -15,14 +22,17 @@ type SendMessageResult =
   | {
       success: true;
       message: string;
+      conversationId: string;
     }
   | {
       success: false;
       error: string;
+      conversationId?: string;
     };
 
 const MAX_MESSAGE_LENGTH = 4000;
 const KNOWLEDGE_RESULT_LIMIT = 5;
+const CONVERSATION_HISTORY_LIMIT = 20;
 
 function buildEmployeeInstructions(employee: {
   role: string;
@@ -38,15 +48,9 @@ function buildEmployeeInstructions(employee: {
     `Role:\n${employee.role}`,
     `Language:\n${employee.language}`,
     employee.tone ? `Tone:\n${employee.tone}` : null,
-    employee.identity
-      ? `Identity:\n${employee.identity}`
-      : null,
-    employee.goals
-      ? `Goals:\n${employee.goals}`
-      : null,
-    employee.rules
-      ? `Rules:\n${employee.rules}`
-      : null,
+    employee.identity ? `Identity:\n${employee.identity}` : null,
+    employee.goals ? `Goals:\n${employee.goals}` : null,
+    employee.rules ? `Rules:\n${employee.rules}` : null,
     employee.responseStyle
       ? `Response style:\n${employee.responseStyle}`
       : null,
@@ -62,9 +66,11 @@ function buildEmployeeInstructions(employee: {
 
 export async function sendMessageAction({
   employeeId,
+  conversationId,
   message,
 }: SendMessageInput): Promise<SendMessageResult> {
   const normalizedEmployeeId = employeeId.trim();
+  const normalizedConversationId = conversationId?.trim() || null;
   const normalizedMessage = message.trim();
 
   if (!normalizedEmployeeId) {
@@ -84,10 +90,11 @@ export async function sendMessageAction({
   if (normalizedMessage.length > MAX_MESSAGE_LENGTH) {
     return {
       success: false,
-      error:
-        `Message must contain at most ${MAX_MESSAGE_LENGTH} characters.`,
+      error: `Message must contain at most ${MAX_MESSAGE_LENGTH} characters.`,
     };
   }
+
+  let activeConversationId = normalizedConversationId ?? undefined;
 
   try {
     const workspace = await getCurrentWorkspace();
@@ -104,6 +111,46 @@ export async function sendMessageAction({
       };
     }
 
+    let conversationHistory: Array<{
+      role: "user" | "assistant";
+      content: string;
+    }> = [];
+
+    if (normalizedConversationId) {
+      const conversation = await getConversationHistory(
+        normalizedConversationId,
+      );
+
+      if (conversation.employeeId !== employee.id) {
+        return {
+          success: false,
+          error: "Conversation does not belong to this AI Employee.",
+        };
+      }
+
+      conversationHistory = conversation.messages
+        .slice(-CONVERSATION_HISTORY_LIMIT)
+        .map((conversationMessage) => ({
+          role:
+            conversationMessage.role === "USER"
+              ? ("user" as const)
+              : ("assistant" as const),
+          content: conversationMessage.content,
+        }));
+
+      await saveUserMessage({
+        conversationId: conversation.id,
+        content: normalizedMessage,
+      });
+    } else {
+      const conversation = await startConversation({
+        employeeId: employee.id,
+        firstMessage: normalizedMessage,
+      });
+
+      activeConversationId = conversation.id;
+    }
+
     const instructions = buildEmployeeInstructions(employee);
 
     const knowledgeResults = await searchKnowledge({
@@ -112,19 +159,18 @@ export async function sendMessageAction({
       limit: KNOWLEDGE_RESULT_LIMIT,
     });
 
-    const knowledge = knowledgeResults.map(
-      (result, index) =>
-        [
-          `[Knowledge source ${index + 1}: ${result.sourceTitle}]`,
-          result.content,
-        ].join("\n"),
+    const knowledge = knowledgeResults.map((result, index) =>
+      [
+        `[Knowledge source ${index + 1}: ${result.sourceTitle}]`,
+        result.content,
+      ].join("\n"),
     );
 
     const prompt = buildPrompt({
       employeeName: employee.name,
       instructions,
       knowledge,
-      conversation: [],
+      conversation: conversationHistory,
       message: normalizedMessage,
     });
 
@@ -138,23 +184,32 @@ export async function sendMessageAction({
       return {
         success: false,
         error: "The AI Employee returned an empty response.",
+        conversationId: activeConversationId,
       };
     }
+
+    if (!activeConversationId) {
+      throw new Error("Conversation ID was not created.");
+    }
+
+    await saveAssistantMessage({
+      conversationId: activeConversationId,
+      content: normalizedResponse,
+    });
 
     return {
       success: true,
       message: normalizedResponse,
+      conversationId: activeConversationId,
     };
   } catch (error) {
-    console.error(
-      "Failed to generate Test Chat response:",
-      error,
-    );
+    console.error("Failed to generate Test Chat response:", error);
 
     return {
       success: false,
       error:
         "Unable to generate a response. Check the AI and Knowledge configuration and try again.",
+      conversationId: activeConversationId,
     };
   }
 }
