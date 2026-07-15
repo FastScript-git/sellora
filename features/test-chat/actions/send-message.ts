@@ -1,7 +1,9 @@
 "use server";
 
 import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
+import { buildPrompt } from "@/features/ai/services/build-prompt";
 import { generateResponse } from "@/features/ai/services/generate-response";
+import { searchKnowledge } from "@/features/knowledge/services/search-knowledge";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 type SendMessageInput = {
@@ -20,6 +22,7 @@ type SendMessageResult =
     };
 
 const MAX_MESSAGE_LENGTH = 4000;
+const KNOWLEDGE_RESULT_LIMIT = 5;
 
 function buildEmployeeInstructions(employee: {
   role: string;
@@ -38,8 +41,12 @@ function buildEmployeeInstructions(employee: {
     employee.identity
       ? `Identity:\n${employee.identity}`
       : null,
-    employee.goals ? `Goals:\n${employee.goals}` : null,
-    employee.rules ? `Rules:\n${employee.rules}` : null,
+    employee.goals
+      ? `Goals:\n${employee.goals}`
+      : null,
+    employee.rules
+      ? `Rules:\n${employee.rules}`
+      : null,
     employee.responseStyle
       ? `Response style:\n${employee.responseStyle}`
       : null,
@@ -48,7 +55,9 @@ function buildEmployeeInstructions(employee: {
       : null,
   ];
 
-  return sections.filter(Boolean).join("\n\n");
+  return sections
+    .filter((section): section is string => section !== null)
+    .join("\n\n");
 }
 
 export async function sendMessageAction({
@@ -75,7 +84,8 @@ export async function sendMessageAction({
   if (normalizedMessage.length > MAX_MESSAGE_LENGTH) {
     return {
       success: false,
-      error: `Message must contain at most ${MAX_MESSAGE_LENGTH} characters.`,
+      error:
+        `Message must contain at most ${MAX_MESSAGE_LENGTH} characters.`,
     };
   }
 
@@ -96,10 +106,30 @@ export async function sendMessageAction({
 
     const instructions = buildEmployeeInstructions(employee);
 
-    const response = await generateResponse({
+    const knowledgeResults = await searchKnowledge({
+      employeeId: employee.id,
+      query: normalizedMessage,
+      limit: KNOWLEDGE_RESULT_LIMIT,
+    });
+
+    const knowledge = knowledgeResults.map(
+      (result, index) =>
+        [
+          `[Knowledge source ${index + 1}: ${result.sourceTitle}]`,
+          result.content,
+        ].join("\n"),
+    );
+
+    const prompt = buildPrompt({
       employeeName: employee.name,
       instructions,
+      knowledge,
+      conversation: [],
       message: normalizedMessage,
+    });
+
+    const response = await generateResponse({
+      prompt,
     });
 
     const normalizedResponse = response.trim();
@@ -116,12 +146,15 @@ export async function sendMessageAction({
       message: normalizedResponse,
     };
   } catch (error) {
-    console.error("Failed to generate Test Chat response:", error);
+    console.error(
+      "Failed to generate Test Chat response:",
+      error,
+    );
 
     return {
       success: false,
       error:
-        "Unable to generate a response. Check the OpenAI configuration and try again.",
+        "Unable to generate a response. Check the AI and Knowledge configuration and try again.",
     };
   }
 }
