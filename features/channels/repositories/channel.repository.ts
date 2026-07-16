@@ -26,3 +26,42 @@ export async function createWebsiteChannel(
     },
   });
 }
+
+export async function getWebsiteChannel({
+  employeeId,
+}: {
+  employeeId: string;
+}) {
+  return prisma.channel.findFirst({
+    where: {
+      employeeId,
+      type: ChannelType.WEBSITE,
+    },
+  });
+}
+
+export async function updateWebsiteChannel({
+  channelId,
+  widgetTitle,
+  widgetGreeting,
+  widgetPrimaryColor,
+  widgetPosition,
+}: {
+  channelId: string;
+  widgetTitle: string | null;
+  widgetGreeting: string | null;
+  widgetPrimaryColor: string;
+  widgetPosition: string;
+}) {
+  return prisma.channel.update({
+    where: {
+      id: channelId,
+    },
+    data: {
+      widgetTitle,
+      widgetGreeting,
+      widgetPrimaryColor,
+      widgetPosition,
+    },
+  });
+}
