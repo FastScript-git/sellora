@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { getKnowledgeSources as getKnowledgeSourcesFromRepository } from "@/features/knowledge/repositories/knowledge.repository";
 
 type GetKnowledgeSourcesParams = {
   employeeId: string;
@@ -7,12 +7,5 @@ type GetKnowledgeSourcesParams = {
 export async function getKnowledgeSources({
   employeeId,
 }: GetKnowledgeSourcesParams) {
-  return prisma.knowledgeSource.findMany({
-    where: {
-      employeeId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  return getKnowledgeSourcesFromRepository(employeeId);
 }
