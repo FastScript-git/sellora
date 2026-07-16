@@ -59,6 +59,26 @@ enum ContactStatus {
   CLOSED
 }
 
+enum ContactTimelineEventType {
+  CONTACT_CREATED
+
+  CONVERSATION_STARTED
+
+  USER_MESSAGE
+
+  AI_MESSAGE
+
+  AI_SUMMARY_UPDATED
+
+  SENTIMENT_CHANGED
+
+  LEAD_SCORE_CHANGED
+
+  TAGS_UPDATED
+
+  STATUS_CHANGED
+}
+
 model User {
   id             String            @id @default(cuid())
   externalAuthId String            @unique
@@ -165,10 +185,30 @@ model Contact {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   conversations Conversation[]
+  timeline      ContactTimelineEvent[]
 
   @@index([workspaceId])
   @@index([email])
   @@index([phone])
+}
+
+model ContactTimelineEvent {
+  id String @id @default(cuid())
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  type ContactTimelineEventType
+
+  title String
+
+  description String?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([contactId, createdAt])
 }
 
 model KnowledgeSource {
@@ -287,6 +327,14 @@ model Channel {
   name String
 
   widgetKey String? @unique
+
+  widgetTitle String?
+
+  widgetGreeting String?
+
+  widgetPrimaryColor String? @default("#2563eb")
+
+  widgetPosition String? @default("bottom-right")
 
   isEnabled Boolean @default(true)
 
