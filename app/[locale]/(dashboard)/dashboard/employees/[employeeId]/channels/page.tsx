@@ -109,6 +109,9 @@ export default async function ChannelsPage({
         </div>
 
         <WidgetDesigner
+          channelId={websiteChannel.id}
+          employeeId={employee.id}
+          locale={locale}
           widgetKey={websiteChannel.widgetKey}
           widgetTitle={websiteChannel.widgetTitle}
           widgetGreeting={websiteChannel.widgetGreeting}
