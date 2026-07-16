@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ContactAiSummary } from "@/features/contacts/components/contact-ai-summary";
 import { getContactDetails } from "@/features/contacts/repositories/contact.repository";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
@@ -50,9 +51,9 @@ export default async function ContactDetailsPage({
     ? {
         back: "До контактів",
         anonymous: "Анонімний відвідувач",
-        profile: "Профіль",
         conversations: "Розмови",
         noConversations: "У цього контакту ще немає розмов.",
+        conversationsCount: "розмов",
         messages: "повідомлень",
         noMessage: "Повідомлень ще немає",
         notes: "Нотатки",
@@ -62,13 +63,15 @@ export default async function ContactDetailsPage({
         company: "Компанія",
         jobTitle: "Посада",
         openConversation: "Відкрити розмову",
+        created: "Створено",
+        lastInteraction: "Остання взаємодія",
       }
     : {
         back: "Back to contacts",
         anonymous: "Anonymous visitor",
-        profile: "Profile",
         conversations: "Conversations",
         noConversations: "This contact does not have conversations yet.",
+        conversationsCount: "conversations",
         messages: "messages",
         noMessage: "No messages yet",
         notes: "Notes",
@@ -78,6 +81,8 @@ export default async function ContactDetailsPage({
         company: "Company",
         jobTitle: "Job title",
         openConversation: "Open conversation",
+        created: "Created",
+        lastInteraction: "Last interaction",
       };
 
   const fullName = [contact.firstName, contact.lastName]
@@ -98,7 +103,7 @@ export default async function ContactDetailsPage({
   );
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6">
       <Button
         variant="ghost"
         nativeButton={false}
@@ -108,7 +113,7 @@ export default async function ContactDetailsPage({
         {copy.back}
       </Button>
 
-      <section className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="space-y-6">
           <Card>
             <CardHeader>
@@ -123,6 +128,7 @@ export default async function ContactDetailsPage({
                   </CardTitle>
 
                   <p className="mt-1 text-xs text-muted-foreground">
+                    {copy.created}:{" "}
                     {dateFormatter.format(contact.createdAt)}
                   </p>
                 </div>
@@ -153,6 +159,16 @@ export default async function ContactDetailsPage({
                 label={copy.jobTitle}
                 value={contact.jobTitle}
               />
+
+              <ContactField
+                icon={<MessageSquare className="size-4" />}
+                label={copy.lastInteraction}
+                value={
+                  contact.lastInteractionAt
+                    ? dateFormatter.format(contact.lastInteractionAt)
+                    : null
+                }
+              />
             </CardContent>
           </Card>
 
@@ -171,92 +187,107 @@ export default async function ContactDetailsPage({
           </Card>
         </aside>
 
-        <section className="space-y-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {copy.conversations}
-            </h1>
+        <div className="space-y-6">
+          <ContactAiSummary
+            summary={contact.summary}
+            sentiment={contact.sentiment}
+            leadScore={contact.leadScore}
+            tags={contact.tags}
+            nextAction={contact.nextAction}
+            locale={locale}
+          />
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              {contact.conversations.length} {copy.messages}
-            </p>
-          </div>
+          <section className="space-y-4">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {copy.conversations}
+              </h1>
 
-          {contact.conversations.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex min-h-72 items-center justify-center px-6 text-center">
-                <p className="text-sm text-muted-foreground">
-                  {copy.noConversations}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {contact.conversations.map((conversation) => {
-                const latestMessage = conversation.messages[0];
+              <p className="mt-1 text-sm text-muted-foreground">
+                {contact.conversations.length}{" "}
+                {copy.conversationsCount}
+              </p>
+            </div>
 
-                const conversationHref =
-                  `/${locale}/dashboard/employees/` +
-                  `${conversation.employee.id}/conversations/` +
-                  conversation.id;
+            {contact.conversations.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="flex min-h-72 items-center justify-center px-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {copy.noConversations}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {contact.conversations.map((conversation) => {
+                  const latestMessage =
+                    conversation.messages[0];
 
-                return (
-                  <Link
-                    key={conversation.id}
-                    href={conversationHref}
-                    aria-label={copy.openConversation}
-                    className="block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <Card className="transition-colors hover:border-foreground/20 hover:bg-muted/10">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <CardTitle className="truncate text-base">
-                              {conversation.title || copy.conversations}
-                            </CardTitle>
+                  const conversationHref =
+                    `/${locale}/dashboard/employees/` +
+                    `${conversation.employee.id}/conversations/` +
+                    conversation.id;
 
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {conversation.employee.name}
-                            </p>
+                  return (
+                    <Link
+                      key={conversation.id}
+                      href={conversationHref}
+                      aria-label={copy.openConversation}
+                      className="block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Card className="transition-colors hover:border-foreground/20 hover:bg-muted/10">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <CardTitle className="truncate text-base">
+                                {conversation.title ||
+                                  copy.conversations}
+                              </CardTitle>
+
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {conversation.employee.name}
+                              </p>
+                            </div>
+
+                            <div className="flex shrink-0 items-center gap-3">
+                              <span className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
+                                {conversation._count.messages}{" "}
+                                {copy.messages}
+                              </span>
+
+                              <ArrowRight className="size-4 text-muted-foreground" />
+                            </div>
                           </div>
+                        </CardHeader>
 
-                          <div className="flex shrink-0 items-center gap-3">
-                            <span className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
-                              {conversation._count.messages}{" "}
-                              {copy.messages}
+                        <CardContent>
+                          <div className="flex items-center gap-3">
+                            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
+                              <MessageSquare className="size-4 text-muted-foreground" />
                             </span>
 
-                            <ArrowRight className="size-4 text-muted-foreground" />
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm text-muted-foreground">
+                                {latestMessage?.content ||
+                                  copy.noMessage}
+                              </p>
+
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {dateFormatter.format(
+                                  conversation.updatedAt,
+                                )}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </CardHeader>
-
-                      <CardContent>
-                        <div className="flex items-center gap-3">
-                          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
-                            <MessageSquare className="size-4 text-muted-foreground" />
-                          </span>
-
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm text-muted-foreground">
-                              {latestMessage?.content || copy.noMessage}
-                            </p>
-
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {dateFormatter.format(
-                                conversation.updatedAt,
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </section>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
       </section>
     </div>
   );
