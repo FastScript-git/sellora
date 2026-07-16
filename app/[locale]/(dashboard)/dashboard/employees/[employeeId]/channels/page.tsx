@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 
+import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
+import { WidgetDesigner } from "@/features/channels/components/widget-designer";
 import { WidgetInstallationCard } from "@/features/channels/components/widget-installation-card";
 import { ensureWebsiteChannel } from "@/features/channels/services/channel.service";
-import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 type ChannelsPageProps = {
@@ -31,7 +32,9 @@ export default async function ChannelsPage({
   const websiteChannel = await ensureWebsiteChannel(employee.id);
 
   if (!websiteChannel.widgetKey) {
-    throw new Error("Website channel does not contain a widget key.");
+    throw new Error(
+      "Website channel does not contain a widget key.",
+    );
   }
 
   const isUkrainian = locale === "uk";
@@ -40,7 +43,10 @@ export default async function ChannelsPage({
     ? {
         pageTitle: "Канали",
         pageDescription:
-          "Підключайте ШІ-співробітника до каналів, де він спілкуватиметься з клієнтами.",
+          "Налаштовуйте віджет сайту та підключайте ШІ-співробітника до каналів спілкування з клієнтами.",
+        designerTitle: "Дизайнер віджета",
+        designerDescription:
+          "Налаштуйте вигляд і привітання віджета перед встановленням на сайт.",
         websiteTitle: "Віджет для сайту",
         websiteDescription:
           "Додайте Sellora на свій сайт за допомогою одного script-тега.",
@@ -59,7 +65,10 @@ export default async function ChannelsPage({
     : {
         pageTitle: "Channels",
         pageDescription:
-          "Connect this AI Employee to the channels where it will communicate with customers.",
+          "Customize the website widget and connect this AI Employee to customer communication channels.",
+        designerTitle: "Widget Designer",
+        designerDescription:
+          "Configure the appearance and greeting before installing the widget on your website.",
         websiteTitle: "Website Widget",
         websiteDescription:
           "Add Sellora to your website with a single script tag.",
@@ -88,6 +97,30 @@ export default async function ChannelsPage({
         </p>
       </section>
 
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">
+            {copy.designerTitle}
+          </h2>
+
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            {copy.designerDescription}
+          </p>
+        </div>
+
+        <WidgetDesigner
+          widgetKey={websiteChannel.widgetKey}
+          widgetTitle={websiteChannel.widgetTitle}
+          widgetGreeting={websiteChannel.widgetGreeting}
+          widgetPrimaryColor={
+            websiteChannel.widgetPrimaryColor ?? "#2563eb"
+          }
+          widgetPosition={
+            websiteChannel.widgetPosition ?? "bottom-right"
+          }
+        />
+      </section>
+
       <WidgetInstallationCard
         widgetKey={websiteChannel.widgetKey}
         channelName={copy.websiteTitle}
@@ -99,7 +132,8 @@ export default async function ChannelsPage({
           statusDisabled: copy.statusDisabled,
           widgetKey: copy.widgetKey,
           installationTitle: copy.installationTitle,
-          installationDescription: copy.installationDescription,
+          installationDescription:
+            copy.installationDescription,
           copyScript: copy.copyScript,
           copied: copy.copied,
         }}
