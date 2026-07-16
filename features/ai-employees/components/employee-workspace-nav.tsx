@@ -78,43 +78,63 @@ export function EmployeeWorkspaceNav({
   const pathname = usePathname();
 
   return (
-    <nav
-      aria-label={navigationLabel}
-      className="overflow-x-auto border-b"
-    >
-      <div className="flex min-w-max gap-1">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
+    <div className="relative">
+      <nav
+        aria-label={navigationLabel}
+        className="overflow-x-auto rounded-2xl border bg-card/70 p-1.5 shadow-sm"
+      >
+        <div className="flex min-w-max items-center gap-1">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
 
-          const href = tab.segment
-            ? `${baseHref}/${tab.segment}`
-            : baseHref;
+            const href = tab.segment
+              ? `${baseHref}/${tab.segment}`
+              : baseHref;
 
-          const isActive = tab.segment
-            ? pathname === href || pathname.startsWith(`${href}/`)
-            : pathname === baseHref;
+            const isActive = tab.segment
+              ? pathname === href || pathname.startsWith(`${href}/`)
+              : pathname === baseHref;
 
-          return (
-            <Link
-              key={tab.key}
-              href={href}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "relative inline-flex h-11 items-center gap-2 px-3 text-sm font-medium text-muted-foreground transition-colors",
-                "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-                isActive && "text-foreground",
-              )}
-            >
-              <Icon className="size-4" />
-              {labels[tab.key]}
+            return (
+              <Link
+                key={tab.key}
+                href={href}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "group relative inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  isActive
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "size-4 shrink-0 transition-colors",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground group-hover:text-foreground",
+                  )}
+                />
 
-              {isActive ? (
-                <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary" />
-              ) : null}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+                <span>{labels[tab.key]}</span>
+
+                {isActive ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-x-3 -bottom-1.5 h-px rounded-full bg-primary"
+                  />
+                ) : null}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-0 w-10 rounded-r-2xl bg-gradient-to-l from-background to-transparent sm:hidden"
+      />
+    </div>
   );
 }
