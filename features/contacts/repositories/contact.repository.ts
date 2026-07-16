@@ -110,3 +110,49 @@ export async function getContactsByWorkspace(
     },
   });
 }
+
+export async function getContactDetails({
+  contactId,
+  workspaceId,
+}: {
+  contactId: string;
+  workspaceId: string;
+}) {
+  return prisma.contact.findFirst({
+    where: {
+      id: contactId,
+      workspaceId,
+    },
+    include: {
+      conversations: {
+        orderBy: {
+          updatedAt: "desc",
+        },
+        include: {
+          employee: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          messages: {
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 1,
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+            },
+          },
+          _count: {
+            select: {
+              messages: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
