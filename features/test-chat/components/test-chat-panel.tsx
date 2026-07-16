@@ -7,7 +7,12 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Loader2, Send, Sparkles } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Send,
+  Sparkles,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +29,16 @@ type TestChatPanelProps = {
   employeeId: string;
   employeeName: string;
 };
+
+function createWelcomeMessage(
+  employeeName: string,
+): ChatMessageItem {
+  return {
+    id: crypto.randomUUID(),
+    role: "employee",
+    content: `Hello! I’m ${employeeName}. Send me a message to test how I respond.`,
+  };
+}
 
 export function TestChatPanel({
   employeeId,
@@ -52,6 +67,19 @@ export function TestChatPanel({
       block: "end",
     });
   }, [messages, isPending]);
+
+  function handleNewChat() {
+    if (isPending) {
+      return;
+    }
+
+    setConversationId(null);
+    setMessage("");
+    setError(null);
+    setMessages([
+      createWelcomeMessage(employeeName),
+    ]);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -120,19 +148,34 @@ export function TestChatPanel({
 
   return (
     <section className="flex min-h-[620px] flex-col overflow-hidden rounded-2xl border bg-card">
-      <header className="flex items-center justify-between gap-4 border-b px-5 py-4">
+      <header className="flex flex-col gap-4 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-semibold">Test Chat</h2>
+          <h2 className="font-semibold">
+            Test Chat
+          </h2>
 
           <p className="mt-1 text-xs text-muted-foreground">
             Test this AI Employee before connecting a live channel.
           </p>
         </div>
 
-        <span className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
-          <Sparkles className="size-3.5" />
-          AI preview
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
+            <Sparkles className="size-3.5" />
+            AI preview
+          </span>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleNewChat}
+            disabled={isPending}
+          >
+            <Plus className="size-4" />
+            New chat
+          </Button>
+        </div>
       </header>
 
       <div className="flex-1 space-y-5 overflow-y-auto px-5 py-6">
