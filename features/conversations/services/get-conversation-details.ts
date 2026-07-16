@@ -1,15 +1,20 @@
 import { prisma } from "@/lib/prisma";
 
+type GetConversationDetailsParams = {
+  conversationId: string;
+  employeeId: string;
+  workspaceId: string;
+};
+
 export async function getConversationDetails({
   conversationId,
+  employeeId,
   workspaceId,
-}: {
-  conversationId: string;
-  workspaceId: string;
-}) {
+}: GetConversationDetailsParams) {
   return prisma.conversation.findFirst({
     where: {
       id: conversationId,
+      employeeId,
       employee: {
         workspaceId,
       },
@@ -23,7 +28,6 @@ export async function getConversationDetails({
           status: true,
         },
       },
-
       contact: {
         select: {
           id: true,
@@ -37,7 +41,6 @@ export async function getConversationDetails({
           summary: true,
         },
       },
-
       messages: {
         orderBy: {
           createdAt: "asc",
