@@ -75,6 +75,33 @@ export async function getContactsByWorkspace(
       updatedAt: "desc",
     },
     include: {
+      conversations: {
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 1,
+        select: {
+          id: true,
+          title: true,
+          updatedAt: true,
+          employee: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          messages: {
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 1,
+            select: {
+              content: true,
+              createdAt: true,
+            },
+          },
+        },
+      },
       _count: {
         select: {
           conversations: true,
