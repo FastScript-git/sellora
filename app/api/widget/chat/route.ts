@@ -8,6 +8,8 @@ import {
   saveUserMessage,
   startConversation,
 } from "@/features/conversations/services/conversation.service";
+import { createAnonymousContact } from "@/features/contacts/repositories/contact.repository";
+import { updateContactIntelligence } from "@/features/contacts/services/contact-intelligence.service";
 import { searchKnowledge } from "@/features/knowledge/services/search-knowledge";
 import { prisma } from "@/lib/prisma";
 
@@ -59,8 +61,12 @@ function buildEmployeeInstructions(employee: {
     employee.identity
       ? `Identity:\n${employee.identity}`
       : null,
-    employee.goals ? `Goals:\n${employee.goals}` : null,
-    employee.rules ? `Rules:\n${employee.rules}` : null,
+    employee.goals
+      ? `Goals:\n${employee.goals}`
+      : null,
+    employee.rules
+      ? `Rules:\n${employee.rules}`
+      : null,
     employee.responseStyle
       ? `Response style:\n${employee.responseStyle}`
       : null,
@@ -135,7 +141,8 @@ export async function POST(request: Request) {
     return jsonResponse(
       {
         success: false,
-        error: `Message must contain at most ${MAX_MESSAGE_LENGTH} characters.`,
+        error:
+          `Message must contain at most ${MAX_MESSAGE_LENGTH} characters.`,
       },
       400,
     );
@@ -152,6 +159,7 @@ export async function POST(request: Request) {
         employee: {
           select: {
             id: true,
+            workspaceId: true,
             name: true,
             role: true,
             language: true,
@@ -185,6 +193,8 @@ export async function POST(request: Request) {
     const employee = channel.employee;
 
     let activeConversationId = conversationId;
+    let activeContactId: string | null = null;
+
     let conversationHistory: Array<{
       role: "user" | "assistant";
       content: string;
@@ -205,6 +215,8 @@ export async function POST(request: Request) {
         );
       }
 
+      activeContactId = conversation.contactId;
+
       conversationHistory = conversation.messages
         .slice(-CONVERSATION_HISTORY_LIMIT)
         .map((conversationMessage) => ({
@@ -220,8 +232,15 @@ export async function POST(request: Request) {
         content: message,
       });
     } else {
+      const contact = await createAnonymousContact({
+        workspaceId: employee.workspaceId,
+      });
+
+      activeContactId = contact.id;
+
       const conversation = await startConversation({
         employeeId: employee.id,
+        contactId: contact.id,
         firstMessage: message,
       });
 
@@ -271,6 +290,12 @@ export async function POST(request: Request) {
       conversationId: activeConversationId,
       content: normalizedResponse,
     });
+
+    if (activeContactId) {
+      await updateContactIntelligence({
+        contactId: activeContactId,
+      });
+    }
 
     return jsonResponse({
       success: true,
