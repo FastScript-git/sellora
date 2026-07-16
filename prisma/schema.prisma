@@ -46,6 +46,19 @@ enum KnowledgeIndexJobStatus {
   FAILED
 }
 
+enum ContactSentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
+
+enum ContactStatus {
+  LEAD
+  QUALIFIED
+  CUSTOMER
+  CLOSED
+}
+
 model User {
   id             String            @id @default(cuid())
   externalAuthId String            @unique
@@ -131,7 +144,16 @@ model Contact {
 
   avatarUrl String?
 
-  notes String?
+  notes   String?
+  summary String?
+
+  sentiment ContactSentiment @default(NEUTRAL)
+
+  status ContactStatus @default(LEAD)
+
+  lastInteractionAt DateTime?
+
+  tags Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
