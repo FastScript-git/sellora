@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 
 import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
 import { EmployeeAnalyticsCards } from "@/features/analytics/components/employee-analytics-cards";
+import { RecentConversationsTable } from "@/features/analytics/components/recent-conversations-table";
 import { getEmployeeAnalytics } from "@/features/analytics/repositories/employee-analytics.repository";
+import { getRecentEmployeeConversations } from "@/features/analytics/repositories/recent-conversations.repository";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 type EmployeeAnalyticsPageProps = {
@@ -28,7 +30,10 @@ export default async function EmployeeAnalyticsPage({
     notFound();
   }
 
-  const analytics = await getEmployeeAnalytics(employee.id);
+  const [analytics, conversations] = await Promise.all([
+    getEmployeeAnalytics(employee.id),
+    getRecentEmployeeConversations(employee.id),
+  ]);
 
   const isUkrainian = locale === "uk";
 
@@ -36,18 +41,12 @@ export default async function EmployeeAnalyticsPage({
     ? {
         title: "Аналітика",
         description:
-          "Переглядайте ключові показники роботи цього ШІ-співробітника.",
-        activityTitle: "Активність",
-        activityDescription:
-          "Графіки активності та розширені показники з’являться в наступному кроці.",
+          "Ключові показники роботи AI Employee та останні розмови.",
       }
     : {
         title: "Analytics",
         description:
-          "Review the key performance metrics for this AI Employee.",
-        activityTitle: "Activity",
-        activityDescription:
-          "Activity charts and advanced metrics will be added in the next step.",
+          "Key AI Employee metrics and recent conversations.",
       };
 
   return (
@@ -57,7 +56,7 @@ export default async function EmployeeAnalyticsPage({
           {copy.title}
         </h2>
 
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           {copy.description}
         </p>
       </section>
@@ -69,15 +68,11 @@ export default async function EmployeeAnalyticsPage({
         knowledgeSources={analytics.knowledgeSources}
       />
 
-      <section className="rounded-2xl border border-dashed bg-card px-6 py-12">
-        <h3 className="font-semibold">
-          {copy.activityTitle}
-        </h3>
-
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          {copy.activityDescription}
-        </p>
-      </section>
+      <RecentConversationsTable
+        conversations={conversations}
+        employeeId={employee.id}
+        locale={locale}
+      />
     </div>
   );
 }
