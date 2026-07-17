@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { NoteSourceForm } from "@/features/knowledge/components/note-source-form";
 import { WebsiteSourceForm } from "@/features/knowledge/components/website-source-form";
 
 type SourceType = "website" | "pdf" | "faq" | "note";
@@ -75,6 +76,9 @@ export function AddKnowledgeSourceDialog({
     }
   }
 
+  const isWebsite = selectedType === "website";
+  const isNote = selectedType === "note";
+
   return (
     <>
       <Button type="button" onClick={() => setOpen(true)}>
@@ -84,7 +88,7 @@ export function AddKnowledgeSourceDialog({
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-2xl">
-          {selectedType === "website" ? (
+          {selectedType ? (
             <>
               <DialogHeader>
                 <div className="mb-2">
@@ -99,19 +103,31 @@ export function AddKnowledgeSourceDialog({
                   </Button>
                 </div>
 
-                <DialogTitle>Add Website</DialogTitle>
+                <DialogTitle>
+                  {isWebsite ? "Add Website" : "Add Note"}
+                </DialogTitle>
 
                 <DialogDescription>
-                  Add a public website that this AI Employee can use as a
-                  knowledge source.
+                  {isWebsite
+                    ? "Add a public website that this AI Employee can use as a knowledge source."
+                    : "Write custom knowledge that this AI Employee can use in conversations."}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="pt-4">
-                <WebsiteSourceForm
-                  employeeId={employeeId}
-                  locale={locale}
-                />
+                {isWebsite ? (
+                  <WebsiteSourceForm
+                    employeeId={employeeId}
+                    locale={locale}
+                  />
+                ) : null}
+
+                {isNote ? (
+                  <NoteSourceForm
+                    employeeId={employeeId}
+                    locale={locale}
+                  />
+                ) : null}
               </div>
             </>
           ) : (
@@ -127,7 +143,8 @@ export function AddKnowledgeSourceDialog({
               <div className="grid gap-4 pt-4">
                 {options.map((option) => {
                   const Icon = option.icon;
-                  const isAvailable = option.key === "website";
+                  const isAvailable =
+                    option.key === "website" || option.key === "note";
 
                   return (
                     <button
