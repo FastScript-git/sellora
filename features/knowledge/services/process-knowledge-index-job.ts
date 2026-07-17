@@ -3,6 +3,7 @@ import {
   markKnowledgeIndexJobFailed,
 } from "@/features/knowledge/repositories/knowledge-index-job.repository";
 import { updateKnowledgeSourceStatus } from "@/features/knowledge/repositories/knowledge.repository";
+import { indexKnowledgeSource } from "@/features/knowledge/services/index-knowledge-source";
 import { indexWebsiteSource } from "@/features/knowledge/services/index-website-source";
 import {
   KnowledgeSourceStatus,
@@ -53,9 +54,23 @@ export async function processKnowledgeIndexJob({
         break;
       }
 
+      case KnowledgeSourceType.NOTE: {
+        if (!source.content) {
+          throw new Error(
+            "Note knowledge source does not contain any content.",
+          );
+        }
+
+        await indexKnowledgeSource({
+          knowledgeSourceId: source.id,
+          content: source.content,
+        });
+
+        break;
+      }
+
       case KnowledgeSourceType.PDF:
       case KnowledgeSourceType.FAQ:
-      case KnowledgeSourceType.NOTE:
         throw new Error(
           `Indexing for ${source.type} sources is not implemented yet.`,
         );
