@@ -20,13 +20,22 @@ export async function createKnowledgeSource(
   });
 }
 
-export async function getKnowledgeSources(employeeId: string) {
+export async function getKnowledgeSources(
+  employeeId: string,
+) {
   return prisma.knowledgeSource.findMany({
     where: {
       employeeId,
     },
     orderBy: {
-      createdAt: "desc",
+      updatedAt: "desc",
+    },
+    include: {
+      _count: {
+        select: {
+          chunks: true,
+        },
+      },
     },
   });
 }

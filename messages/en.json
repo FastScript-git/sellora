@@ -215,6 +215,17 @@
 },
 "knowledge": {
   "title": "Knowledge",
-  "description": "Connect the knowledge your AI Employee should use."
+  "description": "Connect the knowledge your AI Employee should use.",
+  "list": {
+    "types": {
+      "website": "Website",
+      "pdf": "PDF",
+      "faq": "FAQ",
+      "note": "Note",
+      "knowledge": "Knowledge"
+    },
+    "chunks": "{count, plural, one {# chunk} other {# chunks}}",
+    "updated": "Updated {date}"
+  }
 }
 }

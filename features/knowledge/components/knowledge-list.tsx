@@ -5,6 +5,7 @@ import {
   HelpCircle,
   NotebookPen,
 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import type {
   KnowledgeSource,
@@ -42,29 +43,31 @@ function getIcon(type: KnowledgeSourceType) {
   }
 }
 
-function getTypeLabel(type: KnowledgeSourceType) {
+function getTypeTranslationKey(type: KnowledgeSourceType) {
   switch (type) {
     case "WEBSITE":
-      return "Website";
+      return "website";
 
     case "PDF":
-      return "PDF";
+      return "pdf";
 
     case "FAQ":
-      return "FAQ";
+      return "faq";
 
     case "NOTE":
-      return "Note";
+      return "note";
 
     default:
-      return "Knowledge";
+      return "knowledge";
   }
 }
 
-export function KnowledgeList({
+export async function KnowledgeList({
   sources,
 }: KnowledgeListProps) {
-  const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  const t = await getTranslations("knowledge.list");
+
+  const dateFormatter = new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
   });
@@ -73,6 +76,7 @@ export function KnowledgeList({
     <div className="space-y-4">
       {sources.map((source) => {
         const Icon = getIcon(source.type);
+        const typeKey = getTypeTranslationKey(source.type);
 
         return (
           <article
@@ -98,20 +102,28 @@ export function KnowledgeList({
                     ) : null}
                   </div>
 
-                  <KnowledgeStatusBadge status={source.status} />
+                  <KnowledgeStatusBadge
+                    status={source.status}
+                  />
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span className="rounded-full border bg-muted/20 px-2.5 py-1">
-                    {getTypeLabel(source.type)}
+                    {t(`types.${typeKey}`)}
                   </span>
 
                   <span className="rounded-full border bg-muted/20 px-2.5 py-1">
-                    {source._count.chunks} chunks
+                    {t("chunks", {
+                      count: source._count.chunks,
+                    })}
                   </span>
 
                   <span className="rounded-full border bg-muted/20 px-2.5 py-1">
-                    Updated {dateFormatter.format(source.updatedAt)}
+                    {t("updated", {
+                      date: dateFormatter.format(
+                        source.updatedAt,
+                      ),
+                    })}
                   </span>
                 </div>
               </div>
