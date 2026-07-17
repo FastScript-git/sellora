@@ -67,3 +67,26 @@ export async function deleteKnowledgeSource(id: string) {
     },
   });
 }
+
+export async function getKnowledgeSourceById(
+  id: string,
+) {
+  return prisma.knowledgeSource.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      chunks: {
+        orderBy: {
+          chunkIndex: "asc",
+        },
+      },
+      _count: {
+        select: {
+          chunks: true,
+          indexJobs: true,
+        },
+      },
+    },
+  });
+}
