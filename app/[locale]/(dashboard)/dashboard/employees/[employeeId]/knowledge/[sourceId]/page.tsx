@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { ReindexKnowledgeSourceButton } from "@/features/knowledge/components/reindex-knowledge-source-button";
 import { aiEmployeeBelongsToWorkspace } from "@/features/knowledge/repositories/knowledge-access.repository";
 import { getKnowledgeSourceById } from "@/features/knowledge/repositories/knowledge.repository";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
@@ -15,7 +16,7 @@ type PageProps = {
 export default async function KnowledgeSourcePage({
   params,
 }: PageProps) {
-  const { employeeId, sourceId } = await params;
+  const { locale, employeeId, sourceId } = await params;
 
   const workspace = await getCurrentWorkspace();
 
@@ -36,13 +37,23 @@ export default async function KnowledgeSourcePage({
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">{source.title}</h1>
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">
+            {source.title}
+          </h1>
 
-        <p className="mt-2 text-muted-foreground">
-          {source.type}
-        </p>
-      </div>
+          <p className="mt-2 text-muted-foreground">
+            {source.type}
+          </p>
+        </div>
+
+        <ReindexKnowledgeSourceButton
+          sourceId={source.id}
+          employeeId={employeeId}
+          locale={locale}
+        />
+      </section>
 
       <div className="grid gap-4 md:grid-cols-4">
         <div className="rounded-xl border p-5">
