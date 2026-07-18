@@ -1,5 +1,6 @@
 "use server";
 
+import { getCurrentWorkspace } from "@/lib/current-workspace";
 import { reindexKnowledgeSourceSchema } from "@/features/knowledge/schemas/reindex-knowledge-source-schema";
 
 export type ReindexKnowledgeSourceState = {
@@ -24,8 +25,17 @@ export async function reindexKnowledgeSourceAction(
     };
   }
 
+  const workspace = await getCurrentWorkspace();
+
+  if (!workspace) {
+    return {
+      success: false,
+      message: "Workspace not found.",
+    };
+  }
+
   return {
     success: true,
-    message: "Validation passed.",
+    message: "Workspace validated.",
   };
 }
