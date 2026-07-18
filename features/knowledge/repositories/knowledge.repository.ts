@@ -12,6 +12,11 @@ export type CreateKnowledgeSourceData = {
   content?: string | null;
 };
 
+type GetKnowledgeSourceForEmployeeParams = {
+  sourceId: string;
+  employeeId: string;
+};
+
 export async function createKnowledgeSource(
   data: CreateKnowledgeSourceData,
 ) {
@@ -87,6 +92,25 @@ export async function getKnowledgeSourceById(
           indexJobs: true,
         },
       },
+    },
+  });
+}
+
+export async function getKnowledgeSourceForEmployee({
+  sourceId,
+  employeeId,
+}: GetKnowledgeSourceForEmployeeParams) {
+  return prisma.knowledgeSource.findFirst({
+    where: {
+      id: sourceId,
+      employeeId,
+    },
+    select: {
+      id: true,
+      employeeId: true,
+      type: true,
+      title: true,
+      status: true,
     },
   });
 }
