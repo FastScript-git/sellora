@@ -18,6 +18,7 @@ export default async function KnowledgePage({
   params,
 }: KnowledgePageProps) {
   const { locale, employeeId } = await params;
+
   const t = await getTranslations("knowledge");
 
   const workspace = await getCurrentWorkspace();
@@ -63,7 +64,11 @@ export default async function KnowledgePage({
           locale={locale}
         />
       ) : (
-        <KnowledgeList sources={sources} />
+        <KnowledgeList
+          sources={sources}
+          employeeId={employeeId}
+          locale={locale}
+        />
       )}
     </div>
   );
