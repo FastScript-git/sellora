@@ -27,6 +27,42 @@ export async function createKnowledgeIndexJob(
   });
 }
 
+export async function createKnowledgeIndexJobIfIdle(
+  knowledgeSourceId: string,
+) {
+  const activeJob = await prisma.knowledgeIndexJob.findFirst({
+    where: {
+      knowledgeSourceId,
+      status: {
+        in: [
+          KnowledgeIndexJobStatus.PENDING,
+          KnowledgeIndexJobStatus.PROCESSING,
+        ],
+      },
+    },
+    select: {
+      id: true,
+      status: true,
+    },
+  });
+
+  if (activeJob) {
+    return {
+      created: false as const,
+      job: activeJob,
+    };
+  }
+
+  const job = await createKnowledgeIndexJob(
+    knowledgeSourceId,
+  );
+
+  return {
+    created: true as const,
+    job,
+  };
+}
+
 export async function claimNextPendingKnowledgeIndexJob(): Promise<
   ClaimedKnowledgeIndexJob | null
 > {
