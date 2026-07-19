@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { NoteSourceForm } from "@/features/knowledge/components/note-source-form";
+import { PdfSourceForm } from "@/features/knowledge/components/pdf-source-form";
 import { WebsiteSourceForm } from "@/features/knowledge/components/website-source-form";
 
 type SourceType = "website" | "pdf" | "faq" | "note";
@@ -60,6 +61,30 @@ const options = [
   description: string;
 }>;
 
+const sourceContent: Record<
+  Exclude<SourceType, "faq">,
+  {
+    title: string;
+    description: string;
+  }
+> = {
+  website: {
+    title: "Add Website",
+    description:
+      "Add a public website that this AI Employee can use as a knowledge source.",
+  },
+  pdf: {
+    title: "Upload PDF",
+    description:
+      "Upload a PDF document that this AI Employee can use in conversations.",
+  },
+  note: {
+    title: "Add Note",
+    description:
+      "Write custom knowledge that this AI Employee can use in conversations.",
+  },
+};
+
 export function AddKnowledgeSourceDialog({
   employeeId,
   locale,
@@ -76,19 +101,27 @@ export function AddKnowledgeSourceDialog({
     }
   }
 
-  const isWebsite = selectedType === "website";
-  const isNote = selectedType === "note";
+  const selectedContent =
+    selectedType && selectedType !== "faq"
+      ? sourceContent[selectedType]
+      : null;
 
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        onClick={() => setOpen(true)}
+      >
         <Plus className="size-4" />
         Add knowledge source
       </Button>
 
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-2xl">
-          {selectedType ? (
+      <Dialog
+        open={open}
+        onOpenChange={handleOpenChange}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          {selectedType && selectedContent ? (
             <>
               <DialogHeader>
                 <div className="mb-2">
@@ -96,7 +129,9 @@ export function AddKnowledgeSourceDialog({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedType(null)}
+                    onClick={() =>
+                      setSelectedType(null)
+                    }
                   >
                     <ArrowLeft className="size-4" />
                     Back
@@ -104,25 +139,33 @@ export function AddKnowledgeSourceDialog({
                 </div>
 
                 <DialogTitle>
-                  {isWebsite ? "Add Website" : "Add Note"}
+                  {selectedContent.title}
                 </DialogTitle>
 
                 <DialogDescription>
-                  {isWebsite
-                    ? "Add a public website that this AI Employee can use as a knowledge source."
-                    : "Write custom knowledge that this AI Employee can use in conversations."}
+                  {selectedContent.description}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="pt-4">
-                {isWebsite ? (
+                {selectedType === "website" ? (
                   <WebsiteSourceForm
                     employeeId={employeeId}
                     locale={locale}
                   />
                 ) : null}
 
-                {isNote ? (
+                {selectedType === "pdf" ? (
+                  <PdfSourceForm
+                    employeeId={employeeId}
+                    locale={locale}
+                    onSuccess={() =>
+                      handleOpenChange(false)
+                    }
+                  />
+                ) : null}
+
+                {selectedType === "note" ? (
                   <NoteSourceForm
                     employeeId={employeeId}
                     locale={locale}
@@ -133,10 +176,13 @@ export function AddKnowledgeSourceDialog({
           ) : (
             <>
               <DialogHeader>
-                <DialogTitle>Add Knowledge Source</DialogTitle>
+                <DialogTitle>
+                  Add Knowledge Source
+                </DialogTitle>
 
                 <DialogDescription>
-                  Choose how you want to add knowledge to this AI Employee.
+                  Choose how you want to add knowledge to
+                  this AI Employee.
                 </DialogDescription>
               </DialogHeader>
 
@@ -144,7 +190,7 @@ export function AddKnowledgeSourceDialog({
                 {options.map((option) => {
                   const Icon = option.icon;
                   const isAvailable =
-                    option.key === "website" || option.key === "note";
+                    option.key !== "faq";
 
                   return (
                     <button
