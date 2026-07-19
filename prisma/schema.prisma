@@ -224,7 +224,7 @@ model KnowledgeSource {
   sourceUrl String?
   content   String?
 
-  storageKey    String?
+  storageKey    String? @unique
   fileName      String?
   mimeType      String?
   fileSizeBytes Int?
