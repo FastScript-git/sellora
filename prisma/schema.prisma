@@ -222,8 +222,12 @@ model KnowledgeSource {
   title String
 
   sourceUrl String?
+  content   String?
 
-  content String?
+  storageKey    String?
+  fileName      String?
+  mimeType      String?
+  fileSizeBytes Int?
 
   status KnowledgeSourceStatus @default(PENDING)
 
