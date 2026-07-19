@@ -17,8 +17,25 @@ const MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024;
 
 const uploadPayloadSchema = z.object({
   employeeId: z.string().trim().min(1),
-  title: z.string().trim().min(2).max(120),
-  fileName: z.string().trim().min(1).max(255),
+
+  title: z
+    .string()
+    .trim()
+    .min(2)
+    .max(120),
+
+  fileName: z
+    .string()
+    .trim()
+    .min(1)
+    .max(255),
+
+  fileSizeBytes: z
+    .number()
+    .int()
+    .positive()
+    .max(MAX_PDF_SIZE_BYTES),
+
   locale: z.enum(["en", "uk"]),
 });
 
@@ -163,7 +180,7 @@ export async function POST(
             storageKey: blob.pathname,
             fileName: parsed.data.fileName,
             mimeType: "application/pdf",
-            fileSizeBytes: 0,
+            fileSizeBytes: parsed.data.fileSizeBytes,
           });
         } catch (error) {
           const duplicateStorageKey =
