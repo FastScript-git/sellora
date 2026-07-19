@@ -118,3 +118,41 @@ export async function getKnowledgeSourceForEmployee({
     },
   });
 }
+export type CreateDocumentKnowledgeSourceWithJobData = {
+  employeeId: string;
+  type: KnowledgeSourceType;
+  title: string;
+  storageKey: string;
+  fileName: string;
+  mimeType: string;
+  fileSizeBytes: number;
+};
+
+export async function createDocumentKnowledgeSourceWithJob(
+  data: CreateDocumentKnowledgeSourceWithJobData,
+) {
+  return prisma.$transaction(async (transaction) => {
+    const source = await transaction.knowledgeSource.create({
+      data: {
+        employeeId: data.employeeId,
+        type: data.type,
+        title: data.title,
+        storageKey: data.storageKey,
+        fileName: data.fileName,
+        mimeType: data.mimeType,
+        fileSizeBytes: data.fileSizeBytes,
+      },
+    });
+
+    const indexJob = await transaction.knowledgeIndexJob.create({
+      data: {
+        knowledgeSourceId: source.id,
+      },
+    });
+
+    return {
+      source,
+      indexJob,
+    };
+  });
+}
