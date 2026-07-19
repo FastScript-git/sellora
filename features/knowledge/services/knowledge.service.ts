@@ -12,6 +12,10 @@ type CreateKnowledgeSourceParams = {
   title: string;
   sourceUrl?: string | null;
   content?: string | null;
+  storageKey?: string | null;
+  fileName?: string | null;
+  mimeType?: string | null;
+  fileSizeBytes?: number | null;
 };
 
 export async function createKnowledge({
@@ -20,6 +24,10 @@ export async function createKnowledge({
   title,
   sourceUrl,
   content,
+  storageKey,
+  fileName,
+  mimeType,
+  fileSizeBytes,
 }: CreateKnowledgeSourceParams) {
   return createKnowledgeSource({
     employeeId,
@@ -27,6 +35,10 @@ export async function createKnowledge({
     title,
     sourceUrl,
     content,
+    storageKey,
+    fileName,
+    mimeType,
+    fileSizeBytes,
   });
 }
 

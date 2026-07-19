@@ -10,6 +10,10 @@ export type CreateKnowledgeSourceData = {
   title: string;
   sourceUrl?: string | null;
   content?: string | null;
+  storageKey?: string | null;
+  fileName?: string | null;
+  mimeType?: string | null;
+  fileSizeBytes?: number | null;
 };
 
 type GetKnowledgeSourceForEmployeeParams = {
