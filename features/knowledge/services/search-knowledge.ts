@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 const EMBEDDING_DIMENSIONS = 1536;
 const DEFAULT_RESULT_LIMIT = 5;
 const MAX_RESULT_LIMIT = 10;
+const MINIMUM_SIMILARITY = 0.35;
 
 type SearchKnowledgeParams = {
   employeeId: string;
@@ -95,6 +96,11 @@ export async function searchKnowledge({
       source."employeeId" = ${normalizedEmployeeId}
       AND source."status" = 'INDEXED'::"KnowledgeSourceStatus"
       AND chunk."embedding" IS NOT NULL
+      AND (
+        1 - (
+          chunk."embedding" <=> ${serializedEmbedding}::vector
+        )
+      ) >= ${MINIMUM_SIMILARITY}
     ORDER BY
       chunk."embedding" <=> ${serializedEmbedding}::vector
     LIMIT ${safeLimit}
