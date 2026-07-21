@@ -1,4 +1,7 @@
-import { ConversationRole } from "@/lib/generated/prisma/client";
+import {
+  ConversationRole,
+  Prisma,
+} from "@/lib/generated/prisma/client";
 
 import {
   createConversation,
@@ -40,16 +43,19 @@ export async function startConversation({
 type SaveAssistantMessageParams = {
   conversationId: string;
   content: string;
+  metadata?: Prisma.InputJsonValue;
 };
 
 export async function saveAssistantMessage({
   conversationId,
   content,
+  metadata,
 }: SaveAssistantMessageParams) {
   return createConversationMessage({
     conversationId,
     role: ConversationRole.ASSISTANT,
     content,
+    metadata,
   });
 }
 

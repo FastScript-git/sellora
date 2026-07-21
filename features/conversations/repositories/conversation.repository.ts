@@ -1,4 +1,7 @@
-import { ConversationRole } from "@/lib/generated/prisma/client";
+import {
+  ConversationRole,
+  Prisma,
+} from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 type CreateConversationParams = {
@@ -25,18 +28,21 @@ type CreateConversationMessageParams = {
   conversationId: string;
   role: ConversationRole;
   content: string;
+  metadata?: Prisma.InputJsonValue;
 };
 
 export async function createConversationMessage({
   conversationId,
   role,
   content,
+  metadata,
 }: CreateConversationMessageParams) {
   return prisma.conversationMessage.create({
     data: {
       conversationId,
       role,
       content,
+      metadata,
     },
   });
 }
