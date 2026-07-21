@@ -19,10 +19,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { sendMessageAction } from "@/features/test-chat/actions/send-message";
 import { ChatMessage } from "@/features/test-chat/components/chat-message";
 
+type ChatCitation = {
+  sourceId: string;
+  sourceTitle: string;
+  citationNumbers: number[];
+};
+
 type ChatMessageItem = {
   id: string;
   role: "user" | "employee";
   content: string;
+  citations?: ChatCitation[];
 };
 
 type TestChatPanelProps = {
@@ -124,6 +131,7 @@ export function TestChatPanel({
         id: crypto.randomUUID(),
         role: "employee",
         content: result.message,
+        citations: result.citations,
       };
 
       setMessages((currentMessages) => [
@@ -184,6 +192,7 @@ export function TestChatPanel({
             key={chatMessage.id}
             role={chatMessage.role}
             content={chatMessage.content}
+            citations={chatMessage.citations}
           />
         ))}
 

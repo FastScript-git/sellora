@@ -23,6 +23,11 @@ type SendMessageResult =
       success: true;
       message: string;
       conversationId: string;
+      citations: Array<{
+        sourceId: string;
+        sourceTitle: string;
+        citationNumbers: number[];
+      }>;
     }
   | {
       success: false;
@@ -212,10 +217,39 @@ export async function sendMessageAction({
           : undefined,
     });
 
+    const groupedCitations = citations.reduce<
+      Array<{
+        sourceId: string;
+        sourceTitle: string;
+        citationNumbers: number[];
+      }>
+    >((groups, citation) => {
+      const existingGroup = groups.find(
+        (group) => group.sourceId === citation.sourceId,
+      );
+
+      if (existingGroup) {
+        existingGroup.citationNumbers.push(
+          citation.citationNumber,
+        );
+
+        return groups;
+      }
+
+      groups.push({
+        sourceId: citation.sourceId,
+        sourceTitle: citation.sourceTitle,
+        citationNumbers: [citation.citationNumber],
+      });
+
+      return groups;
+    }, []);
+
     return {
       success: true,
       message: normalizedResponse,
       conversationId: activeConversationId,
+      citations: groupedCitations,
     };
   } catch (error) {
     console.error("Failed to generate Test Chat response:", error);
