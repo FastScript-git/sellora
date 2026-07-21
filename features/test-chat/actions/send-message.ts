@@ -159,6 +159,15 @@ export async function sendMessageAction({
       limit: KNOWLEDGE_RESULT_LIMIT,
     });
 
+    const citations = knowledgeResults.map((result, index) => ({
+      citationNumber: index + 1,
+      sourceId: result.knowledgeSourceId,
+      sourceTitle: result.sourceTitle,
+      chunkId: result.id,
+      chunkIndex: result.chunkIndex,
+      similarity: result.similarity,
+    }));
+
     const knowledge = knowledgeResults.map((result, index) =>
       [
         `[Knowledge source ${index + 1}: ${result.sourceTitle}]`,
@@ -195,6 +204,12 @@ export async function sendMessageAction({
     await saveAssistantMessage({
       conversationId: activeConversationId,
       content: normalizedResponse,
+      metadata:
+        citations.length > 0
+          ? {
+              citations,
+            }
+          : undefined,
     });
 
     return {
