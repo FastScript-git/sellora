@@ -676,55 +676,80 @@
   document.body.append(root);
 
   async function loadWidgetConfig() {
-    try {
-      const response = await fetch(
-        `${apiBaseUrl}/api/widget/config/${encodeURIComponent(widgetKey)}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-          cache: "no-store",
+  try {
+    const response = await fetch(
+      `${apiBaseUrl}/api/widget/config/${encodeURIComponent(widgetKey)}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
         },
+        cache: "no-store",
+      },
+    );
+
+    const payload = await response.json();
+
+    if (!response.ok || !payload.success) {
+      throw new Error(
+        payload.error ||
+          "Widget configuration could not be loaded.",
       );
-
-      const payload = await response.json();
-
-      if (!response.ok || !payload.success) {
-        throw new Error(
-          payload.error ||
-            "Widget configuration could not be loaded.",
-        );
-      }
-
-      const employee = payload.widget.employee;
-
-      title.textContent = employee.name;
-
-      launcher.setAttribute(
-        "aria-label",
-        `Open chat with ${employee.name}`,
-      );
-
-      panel.setAttribute(
-        "aria-label",
-        `Chat with ${employee.name}`,
-      );
-
-      input.placeholder = `Message ${employee.name}...`;
-
-      welcomeMessage.textContent =
-        employee.description?.trim() ||
-        `Hello! I’m ${employee.name}. How can I help you today?`;
-    } catch (error) {
-      console.error(
-        "[Sellora Widget] Failed to load widget configuration.",
-        error,
-      );
-
-      root.remove();
     }
+
+    const widgetConfig = payload.widget;
+    const employee = widgetConfig.employee;
+
+    // ---------- Title ----------
+    title.textContent = widgetConfig.title;
+
+    // ---------- Greeting ----------
+    welcomeMessage.textContent = widgetConfig.greeting;
+
+    // ---------- Placeholder ----------
+    input.placeholder = `Message ${employee.name}...`;
+
+    // ---------- Accessibility ----------
+    launcher.setAttribute(
+      "aria-label",
+      `Open chat with ${employee.name}`,
+    );
+
+    panel.setAttribute(
+      "aria-label",
+      `Chat with ${employee.name}`,
+    );
+
+    // ---------- Primary color ----------
+    launcher.style.backgroundColor =
+      widgetConfig.primaryColor;
+
+    header.style.background =
+      widgetConfig.primaryColor;
+
+    // ---------- Position ----------
+    if (widgetConfig.position === "bottom-left") {
+      launcher.style.left = "24px";
+      launcher.style.right = "auto";
+
+      panel.style.left = "24px";
+      panel.style.right = "auto";
+    } else {
+      launcher.style.right = "24px";
+      launcher.style.left = "auto";
+
+      panel.style.right = "24px";
+      panel.style.left = "auto";
+    }
+  } catch (error) {
+    console.error(
+      "[Sellora Widget] Failed to load widget configuration.",
+      error,
+    );
+
+    root.remove();
   }
+}
 
   updateComposerState();
   void loadWidgetConfig();
