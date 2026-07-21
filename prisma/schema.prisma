@@ -315,6 +315,8 @@ model ConversationMessage {
 
   content String
 
+  metadata Json?
+
   createdAt DateTime @default(now())
 
   @@index([conversationId, createdAt])
