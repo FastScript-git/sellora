@@ -4,6 +4,7 @@ import {
 } from "@/features/knowledge/repositories/knowledge-index-job.repository";
 import { updateKnowledgeSourceStatus } from "@/features/knowledge/repositories/knowledge.repository";
 import { indexKnowledgeSource } from "@/features/knowledge/services/index-knowledge-source";
+import { indexPdfSource } from "@/features/knowledge/services/index-pdf-source";
 import { indexWebsiteSource } from "@/features/knowledge/services/index-website-source";
 import {
   KnowledgeSourceStatus,
@@ -69,10 +70,24 @@ export async function processKnowledgeIndexJob({
         break;
       }
 
-      case KnowledgeSourceType.PDF:
+      case KnowledgeSourceType.PDF: {
+        if (!source.storageKey) {
+          throw new Error(
+            "PDF knowledge source does not contain a storage key.",
+          );
+        }
+
+        await indexPdfSource({
+          knowledgeSourceId: source.id,
+          storageKey: source.storageKey,
+        });
+
+        break;
+      }
+
       case KnowledgeSourceType.FAQ:
         throw new Error(
-          `Indexing for ${source.type} sources is not implemented yet.`,
+          "FAQ indexing is not implemented yet.",
         );
 
       default: {
