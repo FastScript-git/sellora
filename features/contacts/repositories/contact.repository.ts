@@ -1,3 +1,5 @@
+import type { ContactStatus } from "@/lib/generated/prisma/client";
+
 import { prisma } from "@/lib/prisma";
 
 type CreateAnonymousContactParams = {
@@ -68,6 +70,7 @@ export async function getContactsByWorkspace(
   workspaceId: string,
   search?: string,
   employeeId?: string,
+  status?: ContactStatus,
 ) {
   return prisma.contact.findMany({
     where: {
@@ -120,6 +123,12 @@ export async function getContactsByWorkspace(
                 },
               },
             },
+          }
+        : {}),
+
+      ...(status
+        ? {
+            status,
           }
         : {}),
     },

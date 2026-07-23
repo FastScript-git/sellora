@@ -1,3 +1,5 @@
+import type { ContactStatus } from "@/lib/generated/prisma/client";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -27,6 +29,13 @@ import { getContactsByWorkspace } from "@/features/contacts/repositories/contact
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 import { cn } from "@/lib/utils";
 
+const CONTACT_STATUSES = [
+  "LEAD",
+  "QUALIFIED",
+  "CUSTOMER",
+  "CLOSED",
+] as const satisfies readonly ContactStatus[];
+
 type ContactsPageProps = {
   params: Promise<{
     locale: string;
@@ -34,21 +43,33 @@ type ContactsPageProps = {
   searchParams: Promise<{
     search?: string;
     employeeId?: string;
+    status?: string;
   }>;
 };
+
+function isContactStatus(
+  value: string,
+): value is ContactStatus {
+  return CONTACT_STATUSES.some(
+    (status) => status === value,
+  );
+}
 
 export default async function ContactsPage({
   params,
   searchParams,
 }: ContactsPageProps) {
   const { locale } = await params;
+
   const {
     search = "",
     employeeId = "",
+    status = "",
   } = await searchParams;
 
   const normalizedSearch = search.trim();
   const normalizedEmployeeId = employeeId.trim();
+  const normalizedStatus = status.trim();
 
   const workspace = await getCurrentWorkspace();
 
@@ -64,10 +85,17 @@ export default async function ContactsPage({
     ? normalizedEmployeeId
     : undefined;
 
+  const selectedStatus = isContactStatus(
+    normalizedStatus,
+  )
+    ? normalizedStatus
+    : undefined;
+
   const contacts = await getContactsByWorkspace(
     workspace.id,
     normalizedSearch || undefined,
     selectedEmployeeId,
+    selectedStatus,
   );
 
   const isUkrainian = locale === "uk";
@@ -81,8 +109,11 @@ export default async function ContactsPage({
           "Пошук за ім’ям, email, телефоном або компанією",
         searchButton: "Знайти",
         clearSearch: "Очистити пошук",
-        filterLabel: "ШІ-співробітник",
+        clearFilters: "Очистити фільтри",
+        employeeFilterLabel: "ШІ-співробітник",
+        statusFilterLabel: "Статус",
         allEmployees: "Усі ШІ-співробітники",
+        allStatuses: "Усі статуси",
         contactsCount: "контактів",
         searchResults: "результатів для",
         emptyTitle: "Контактів поки немає",
@@ -90,13 +121,19 @@ export default async function ContactsPage({
           "Нові контакти автоматично з’являться після першої розмови через Website Widget.",
         noResultsTitle: "Контактів не знайдено",
         noResultsDescription:
-          "Спробуйте змінити пошуковий запит або обрати іншого ШІ-співробітника.",
+          "Спробуйте змінити пошук або очистити активні фільтри.",
         anonymous: "Анонімний відвідувач",
         conversations: "розмов",
         noConversation: "Розмов ще немає",
         noMessage: "Повідомлень ще немає",
         openContact: "Відкрити контакт",
         unknownEmployee: "ШІ-співробітник",
+        statuses: {
+          LEAD: "Лід",
+          QUALIFIED: "Кваліфікований",
+          CUSTOMER: "Клієнт",
+          CLOSED: "Закритий",
+        },
       }
     : {
         title: "Contacts",
@@ -106,8 +143,11 @@ export default async function ContactsPage({
           "Search by name, email, phone, or company",
         searchButton: "Search",
         clearSearch: "Clear search",
-        filterLabel: "AI Employee",
+        clearFilters: "Clear filters",
+        employeeFilterLabel: "AI Employee",
+        statusFilterLabel: "Status",
         allEmployees: "All AI Employees",
+        allStatuses: "All statuses",
         contactsCount: "contacts",
         searchResults: "results for",
         emptyTitle: "No contacts yet",
@@ -115,13 +155,19 @@ export default async function ContactsPage({
           "New contacts will appear automatically after the first Website Widget conversation.",
         noResultsTitle: "No contacts found",
         noResultsDescription:
-          "Try changing your search query or selecting another AI Employee.",
+          "Try changing your search or clearing the active filters.",
         anonymous: "Anonymous visitor",
         conversations: "conversations",
         noConversation: "No conversations yet",
         noMessage: "No messages yet",
         openContact: "Open contact",
         unknownEmployee: "AI Employee",
+        statuses: {
+          LEAD: "Lead",
+          QUALIFIED: "Qualified",
+          CUSTOMER: "Customer",
+          CLOSED: "Closed",
+        },
       };
 
   const dateFormatter = new Intl.DateTimeFormat(
@@ -133,10 +179,15 @@ export default async function ContactsPage({
   );
 
   const contactsHref = `/${locale}/dashboard/contacts`;
+
   const hasSearch = normalizedSearch.length > 0;
   const hasEmployeeFilter = Boolean(selectedEmployeeId);
+  const hasStatusFilter = Boolean(selectedStatus);
+
   const hasActiveFilters =
-    hasSearch || hasEmployeeFilter;
+    hasSearch ||
+    hasEmployeeFilter ||
+    hasStatusFilter;
 
   const clearSearchParams = new URLSearchParams();
 
@@ -144,6 +195,13 @@ export default async function ContactsPage({
     clearSearchParams.set(
       "employeeId",
       selectedEmployeeId,
+    );
+  }
+
+  if (selectedStatus) {
+    clearSearchParams.set(
+      "status",
+      selectedStatus,
     );
   }
 
@@ -161,6 +219,27 @@ export default async function ContactsPage({
       role: employee.role,
     }),
   );
+
+  const statusOptions = CONTACT_STATUSES.map(
+    (statusValue) => ({
+      value: statusValue,
+      label: copy.statuses[statusValue],
+    }),
+  );
+
+  const statusClassNames: Record<
+    ContactStatus,
+    string
+  > = {
+    LEAD:
+      "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-300",
+    QUALIFIED:
+      "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+    CUSTOMER:
+      "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+    CLOSED:
+      "border-zinc-500/20 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300",
+  };
 
   return (
     <div className="space-y-8">
@@ -185,6 +264,14 @@ export default async function ContactsPage({
               type="hidden"
               name="employeeId"
               value={selectedEmployeeId}
+            />
+          ) : null}
+
+          {selectedStatus ? (
+            <input
+              type="hidden"
+              name="status"
+              value={selectedStatus}
             />
           ) : null}
 
@@ -223,12 +310,41 @@ export default async function ContactsPage({
           ) : null}
         </form>
 
-        <ContactsEmployeeFilter
-          employees={employeeOptions}
-          selectedEmployeeId={selectedEmployeeId}
-          allEmployeesLabel={copy.allEmployees}
-          filterLabel={copy.filterLabel}
-        />
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <ContactsEmployeeFilter
+            employees={employeeOptions}
+            statuses={statusOptions}
+            selectedEmployeeId={selectedEmployeeId}
+            selectedStatus={selectedStatus}
+            allEmployeesLabel={copy.allEmployees}
+            allStatusesLabel={copy.allStatuses}
+            employeeFilterLabel={
+              copy.employeeFilterLabel
+            }
+            statusFilterLabel={copy.statusFilterLabel}
+          />
+
+          {(hasEmployeeFilter || hasStatusFilter) ? (
+            <Link
+              href={
+                hasSearch
+                  ? `${contactsHref}?search=${encodeURIComponent(
+                      normalizedSearch,
+                    )}`
+                  : contactsHref
+              }
+              className={cn(
+                buttonVariants({
+                  variant: "outline",
+                }),
+                "h-11",
+              )}
+            >
+              <X className="size-4" />
+              {copy.clearFilters}
+            </Link>
+          ) : null}
+        </div>
       </section>
 
       <section className="flex items-center justify-between gap-4">
@@ -287,7 +403,7 @@ export default async function ContactsPage({
                   "mt-5",
                 )}
               >
-                {copy.clearSearch}
+                {copy.clearFilters}
               </Link>
             ) : null}
           </CardContent>
@@ -332,9 +448,26 @@ export default async function ContactsPage({
                         </span>
 
                         <div className="min-w-0">
-                          <CardTitle className="truncate text-base">
-                            {displayName}
-                          </CardTitle>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <CardTitle className="truncate text-base">
+                              {displayName}
+                            </CardTitle>
+
+                            <span
+                              className={cn(
+                                "rounded-full border px-2.5 py-1 text-xs font-medium",
+                                statusClassNames[
+                                  contact.status
+                                ],
+                              )}
+                            >
+                              {
+                                copy.statuses[
+                                  contact.status
+                                ]
+                              }
+                            </span>
+                          </div>
 
                           <p className="mt-1 text-xs text-muted-foreground">
                             {dateFormatter.format(
