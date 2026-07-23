@@ -67,50 +67,67 @@ export async function getContactById({
 export async function getContactsByWorkspace(
   workspaceId: string,
   search?: string,
-  ) {
+  employeeId?: string,
+) {
   return prisma.contact.findMany({
     where: {
-  workspaceId,
-  ...(search
-    ? {
-        OR: [
-          {
-            firstName: {
-              contains: search,
-              mode: "insensitive",
+      workspaceId,
+
+      ...(search
+        ? {
+            OR: [
+              {
+                firstName: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                lastName: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                email: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                phone: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                company: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              },
+            ],
+          }
+        : {}),
+
+      ...(employeeId
+        ? {
+            conversations: {
+              some: {
+                employeeId,
+                employee: {
+                  workspaceId,
+                },
+              },
             },
-          },
-          {
-            lastName: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          {
-            email: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          {
-            phone: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-          {
-            company: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-        ],
-      }
-    : {}),
-},
+          }
+        : {}),
+    },
+
     orderBy: {
       updatedAt: "desc",
     },
+
     include: {
       conversations: {
         orderBy: {
@@ -139,6 +156,7 @@ export async function getContactsByWorkspace(
           },
         },
       },
+
       _count: {
         select: {
           conversations: true,
