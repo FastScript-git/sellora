@@ -5,31 +5,49 @@ import {
   Mail,
   MessageSquare,
   Phone,
+  Search,
   UserRound,
+  X,
 } from "lucide-react";
 
+import {
+  Button,
+  buttonVariants,
+} from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { getContactsByWorkspace } from "@/features/contacts/repositories/contact.repository";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
+import { cn } from "@/lib/utils";
 
 type ContactsPageProps = {
   params: Promise<{
     locale: string;
   }>;
+  searchParams: Promise<{
+    search?: string;
+  }>;
 };
 
 export default async function ContactsPage({
   params,
+  searchParams,
 }: ContactsPageProps) {
   const { locale } = await params;
+  const { search = "" } = await searchParams;
+
+  const normalizedSearch = search.trim();
 
   const workspace = await getCurrentWorkspace();
-  const contacts = await getContactsByWorkspace(workspace.id);
+  const contacts = await getContactsByWorkspace(
+    workspace.id,
+    normalizedSearch || undefined,
+  );
 
   const isUkrainian = locale === "uk";
 
@@ -38,12 +56,20 @@ export default async function ContactsPage({
         title: "Контакти",
         description:
           "Усі клієнти та відвідувачі, які взаємодіяли з вашими ШІ-співробітниками.",
+        searchPlaceholder:
+          "Пошук за ім’ям, email, телефоном або компанією",
+        searchButton: "Знайти",
+        clearSearch: "Очистити пошук",
+        contactsCount: "контактів",
+        searchResults: "результатів для",
         emptyTitle: "Контактів поки немає",
         emptyDescription:
           "Нові контакти автоматично з’являться після першої розмови через Website Widget.",
+        noResultsTitle: "Контактів не знайдено",
+        noResultsDescription:
+          "Спробуйте змінити пошуковий запит або очистити пошук.",
         anonymous: "Анонімний відвідувач",
         conversations: "розмов",
-        latestConversation: "Остання розмова",
         noConversation: "Розмов ще немає",
         noMessage: "Повідомлень ще немає",
         openContact: "Відкрити контакт",
@@ -53,12 +79,20 @@ export default async function ContactsPage({
         title: "Contacts",
         description:
           "All customers and visitors who interacted with your AI Employees.",
+        searchPlaceholder:
+          "Search by name, email, phone, or company",
+        searchButton: "Search",
+        clearSearch: "Clear search",
+        contactsCount: "contacts",
+        searchResults: "results for",
         emptyTitle: "No contacts yet",
         emptyDescription:
           "New contacts will appear automatically after the first Website Widget conversation.",
+        noResultsTitle: "No contacts found",
+        noResultsDescription:
+          "Try changing your search query or clearing the search.",
         anonymous: "Anonymous visitor",
         conversations: "conversations",
-        latestConversation: "Latest conversation",
         noConversation: "No conversations yet",
         noMessage: "No messages yet",
         openContact: "Open contact",
@@ -73,6 +107,9 @@ export default async function ContactsPage({
     },
   );
 
+  const contactsHref = `/${locale}/dashboard/contacts`;
+  const hasSearch = normalizedSearch.length > 0;
+
   return (
     <div className="space-y-8">
       <section>
@@ -85,26 +122,111 @@ export default async function ContactsPage({
         </p>
       </section>
 
+      <section>
+        <form
+          action={contactsHref}
+          method="get"
+          className="flex flex-col gap-3 sm:flex-row"
+        >
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+            <Input
+              name="search"
+              type="search"
+              defaultValue={normalizedSearch}
+              placeholder={copy.searchPlaceholder}
+              className="h-11 pl-10"
+            />
+          </div>
+
+          <Button type="submit" className="h-11 sm:px-6">
+            {copy.searchButton}
+          </Button>
+
+          {hasSearch ? (
+            <Link
+              href={contactsHref}
+              className={cn(
+                buttonVariants({
+                  variant: "outline",
+                }),
+                "h-11",
+              )}
+            >
+              <X className="size-4" />
+              {copy.clearSearch}
+            </Link>
+          ) : null}
+        </form>
+      </section>
+
+      <section className="flex items-center justify-between gap-4">
+        <p className="text-sm text-muted-foreground">
+          {hasSearch ? (
+            <>
+              <span className="font-medium text-foreground">
+                {contacts.length}
+              </span>{" "}
+              {copy.searchResults}{" "}
+              <span className="font-medium text-foreground">
+                “{normalizedSearch}”
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="font-medium text-foreground">
+                {contacts.length}
+              </span>{" "}
+              {copy.contactsCount}
+            </>
+          )}
+        </p>
+      </section>
+
       {contacts.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex min-h-96 flex-col items-center justify-center px-6 py-16 text-center">
             <span className="flex size-12 items-center justify-center rounded-xl border bg-muted/40">
-              <UserRound className="size-5 text-muted-foreground" />
+              {hasSearch ? (
+                <Search className="size-5 text-muted-foreground" />
+              ) : (
+                <UserRound className="size-5 text-muted-foreground" />
+              )}
             </span>
 
             <h2 className="mt-5 text-lg font-semibold">
-              {copy.emptyTitle}
+              {hasSearch
+                ? copy.noResultsTitle
+                : copy.emptyTitle}
             </h2>
 
             <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-              {copy.emptyDescription}
+              {hasSearch
+                ? copy.noResultsDescription
+                : copy.emptyDescription}
             </p>
+
+            {hasSearch ? (
+              <Link
+                href={contactsHref}
+                className={cn(
+                  buttonVariants({
+                    variant: "outline",
+                  }),
+                  "mt-5",
+                )}
+              >
+                {copy.clearSearch}
+              </Link>
+            ) : null}
           </CardContent>
         </Card>
       ) : (
         <section className="grid gap-4">
           {contacts.map((contact) => {
-            const latestConversation = contact.conversations[0];
+            const latestConversation =
+              contact.conversations[0];
             const latestMessage =
               latestConversation?.messages[0];
 
@@ -142,7 +264,9 @@ export default async function ContactsPage({
                           </CardTitle>
 
                           <p className="mt-1 text-xs text-muted-foreground">
-                            {dateFormatter.format(contact.updatedAt)}
+                            {dateFormatter.format(
+                              contact.updatedAt,
+                            )}
                           </p>
                         </div>
                       </div>
@@ -162,6 +286,7 @@ export default async function ContactsPage({
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Mail className="size-4 shrink-0" />
+
                         <span className="truncate">
                           {contact.email || "—"}
                         </span>
@@ -169,6 +294,7 @@ export default async function ContactsPage({
 
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Phone className="size-4 shrink-0" />
+
                         <span className="truncate">
                           {contact.phone || "—"}
                         </span>
@@ -176,6 +302,7 @@ export default async function ContactsPage({
 
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Building2 className="size-4 shrink-0" />
+
                         <span className="truncate">
                           {contact.company || "—"}
                         </span>
@@ -202,7 +329,8 @@ export default async function ContactsPage({
                       </div>
 
                       <p className="mt-2 truncate text-sm text-muted-foreground">
-                        {latestMessage?.content || copy.noMessage}
+                        {latestMessage?.content ||
+                          copy.noMessage}
                       </p>
                     </div>
                   </CardContent>
