@@ -7,6 +7,7 @@ import {
   BarChart3,
   BookOpen,
   Bot,
+  Columns3,
   CreditCard,
   LayoutDashboard,
   MessageSquare,
@@ -58,6 +59,11 @@ const navigationItems = [
     icon: Users,
   },
   {
+    labelKey: "pipeline",
+    path: "/dashboard/pipeline",
+    icon: Columns3,
+  },
+  {
     labelKey: "analytics",
     path: "/dashboard/analytics",
     icon: BarChart3,
@@ -82,7 +88,10 @@ type SidebarProps = {
   className?: string;
 };
 
-export function Sidebar({ activePath, className }: SidebarProps) {
+export function Sidebar({
+  activePath,
+  className,
+}: SidebarProps) {
   const locale = useLocale();
   const pathname = usePathname();
   const navigation = useTranslations("navigation");
@@ -120,7 +129,9 @@ export function Sidebar({ activePath, className }: SidebarProps) {
             <Sparkles className="size-4" />
           </span>
 
-          <span className="text-lg font-semibold tracking-tight">Sellora</span>
+          <span className="text-lg font-semibold tracking-tight">
+            Sellora
+          </span>
         </Link>
       </div>
 
@@ -139,7 +150,9 @@ export function Sidebar({ activePath, className }: SidebarProps) {
             <Link
               key={item.path}
               href={href}
-              aria-current={isActive ? "page" : undefined}
+              aria-current={
+                isActive ? "page" : undefined
+              }
               className={cn(
                 "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors",
                 "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
@@ -149,7 +162,10 @@ export function Sidebar({ activePath, className }: SidebarProps) {
               )}
             >
               <Icon className="size-4 shrink-0" />
-              <span>{navigation(item.labelKey)}</span>
+
+              <span>
+                {navigation(item.labelKey)}
+              </span>
             </Link>
           );
         })}
@@ -172,7 +188,9 @@ export function Sidebar({ activePath, className }: SidebarProps) {
             <Link
               key={item.path}
               href={href}
-              aria-current={isActive ? "page" : undefined}
+              aria-current={
+                isActive ? "page" : undefined
+              }
               className={cn(
                 "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors",
                 "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
@@ -182,7 +200,10 @@ export function Sidebar({ activePath, className }: SidebarProps) {
               )}
             >
               <Icon className="size-4 shrink-0" />
-              <span>{navigation(item.labelKey)}</span>
+
+              <span>
+                {navigation(item.labelKey)}
+              </span>
             </Link>
           );
         })}
@@ -190,13 +211,18 @@ export function Sidebar({ activePath, className }: SidebarProps) {
 
       <div className="p-3 pt-0">
         <div className="rounded-xl border bg-card p-3">
-          <p className="text-sm font-medium">{sidebar("freePlan")}</p>
+          <p className="text-sm font-medium">
+            {sidebar("freePlan")}
+          </p>
 
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
             {sidebar("upgradeDescription")}
           </p>
 
-          <Button className="mt-3 w-full" size="sm">
+          <Button
+            className="mt-3 w-full"
+            size="sm"
+          >
             {sidebar("upgradePlan")}
           </Button>
         </div>

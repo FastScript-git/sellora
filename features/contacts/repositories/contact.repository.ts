@@ -220,3 +220,25 @@ export async function getContactDetails({
     },
   });
 }
+
+type UpdateContactStatusParams = {
+  contactId: string;
+  workspaceId: string;
+  status: ContactStatus;
+};
+
+export async function updateContactStatus({
+  contactId,
+  workspaceId,
+  status,
+}: UpdateContactStatusParams) {
+  return prisma.contact.updateMany({
+    where: {
+      id: contactId,
+      workspaceId,
+    },
+    data: {
+      status,
+    },
+  });
+}
