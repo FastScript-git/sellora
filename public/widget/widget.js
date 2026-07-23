@@ -273,6 +273,8 @@
         }
 
         ui.applyConfig(payload.widget);
+
+        return true;
       } catch (error) {
         console.error(
           "[Sellora Widget] Failed to load widget configuration.",
@@ -280,11 +282,88 @@
         );
 
         ui.root.remove();
+
+        return false;
       }
     }
 
-    updateComposerState();
-    void loadWidgetConfig();
+    async function loadHistory() {
+      if (!conversationId) {
+        ui.renderHistory([]);
+        return;
+      }
+
+      try {
+        const url = new URL(
+          `${apiBaseUrl}/api/widget/history`,
+        );
+
+        url.searchParams.set("widgetKey", widgetKey);
+        url.searchParams.set(
+          "conversationId",
+          conversationId,
+        );
+
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        });
+
+        const payload = await response.json();
+
+        if (!response.ok || !payload.success) {
+          if (response.status === 404) {
+            conversationId = "";
+
+            try {
+              window.localStorage.removeItem(
+                conversationStorageKey,
+              );
+            } catch (error) {
+              console.warn(
+                "[Sellora Widget] Could not remove stale conversation ID.",
+                error,
+              );
+            }
+
+            ui.renderHistory([]);
+            return;
+          }
+
+          throw new Error(
+            payload.error ||
+              "Conversation history could not be loaded.",
+          );
+        }
+
+        ui.renderHistory(payload.messages);
+      } catch (error) {
+        console.error(
+          "[Sellora Widget] Failed to load conversation history.",
+          error,
+        );
+
+        ui.renderHistory([]);
+      }
+    }
+
+    async function initializeWidget() {
+      updateComposerState();
+
+      const configLoaded =
+        await loadWidgetConfig();
+
+      if (!configLoaded) {
+        return;
+      }
+
+      await loadHistory();
+    }
+
+    void initializeWidget();
   }
 
   void bootstrapWidget().catch((error) => {

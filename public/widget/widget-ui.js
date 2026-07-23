@@ -1,6 +1,7 @@
 (() => {
   function createWidgetUI({ widgetKey }) {
     let unreadMessagesCount = 0;
+    let welcomeText = "Hello! How can I help you today?";
 
     const root = document.createElement("div");
     root.dataset.selloraWidget = widgetKey;
@@ -56,17 +57,6 @@
     const messages = document.createElement("div");
     messages.className = "sellora-messages";
     messages.setAttribute("aria-live", "polite");
-
-    const welcomeRow = document.createElement("div");
-    welcomeRow.className = "sellora-message-row";
-
-    const welcomeMessage = document.createElement("div");
-    welcomeMessage.className = "sellora-message";
-    welcomeMessage.textContent =
-      "Hello! How can I help you today?";
-
-    welcomeRow.append(welcomeMessage);
-    messages.append(welcomeRow);
 
     const footer = document.createElement("footer");
     footer.className = "sellora-footer";
@@ -125,6 +115,10 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
+    function clearMessages() {
+      messages.replaceChildren();
+    }
+
     function createMessageRow({
       content,
       role = "employee",
@@ -149,6 +143,44 @@
       scrollMessagesToBottom();
 
       return row;
+    }
+
+    function showWelcomeMessage() {
+      createMessageRow({
+        content: welcomeText,
+        role: "employee",
+      });
+    }
+
+    function renderHistory(historyMessages) {
+      clearMessages();
+
+      if (
+        !Array.isArray(historyMessages) ||
+        historyMessages.length === 0
+      ) {
+        showWelcomeMessage();
+        return;
+      }
+
+      historyMessages.forEach((message) => {
+        if (
+          !message ||
+          typeof message.content !== "string"
+        ) {
+          return;
+        }
+
+        createMessageRow({
+          content: message.content,
+          role:
+            message.role === "user"
+              ? "user"
+              : "employee",
+        });
+      });
+
+      scrollMessagesToBottom();
     }
 
     function createTypingIndicator() {
@@ -221,7 +253,7 @@
       title.textContent =
         widgetConfig.title || employee.name;
 
-      welcomeMessage.textContent =
+      welcomeText =
         widgetConfig.greeting ||
         `Hello! I’m ${employee.name}. How can I help you today?`;
 
@@ -252,6 +284,8 @@
     shadowRoot.append(style, widget);
     document.body.append(root);
 
+    showWelcomeMessage();
+
     return {
       root,
       panel,
@@ -260,6 +294,9 @@
       form,
       input,
       sendButton,
+      clearMessages,
+      renderHistory,
+      showWelcomeMessage,
       createMessageRow,
       createTypingIndicator,
       incrementUnreadMessages,
