@@ -66,11 +66,48 @@ export async function getContactById({
 
 export async function getContactsByWorkspace(
   workspaceId: string,
-) {
+  search?: string,
+  ) {
   return prisma.contact.findMany({
     where: {
-      workspaceId,
-    },
+  workspaceId,
+  ...(search
+    ? {
+        OR: [
+          {
+            firstName: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            lastName: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            email: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            phone: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            company: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        ],
+      }
+    : {}),
+},
     orderBy: {
       updatedAt: "desc",
     },
