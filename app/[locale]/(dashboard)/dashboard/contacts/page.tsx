@@ -21,6 +21,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { getAIEmployees } from "@/features/ai-employees/queries";
+import { ContactsEmployeeFilter } from "@/features/contacts/components/contacts-employee-filter";
 import { getContactsByWorkspace } from "@/features/contacts/repositories/contact.repository";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 import { cn } from "@/lib/utils";
@@ -31,6 +33,7 @@ type ContactsPageProps = {
   }>;
   searchParams: Promise<{
     search?: string;
+    employeeId?: string;
   }>;
 };
 
@@ -39,14 +42,32 @@ export default async function ContactsPage({
   searchParams,
 }: ContactsPageProps) {
   const { locale } = await params;
-  const { search = "" } = await searchParams;
+  const {
+    search = "",
+    employeeId = "",
+  } = await searchParams;
 
   const normalizedSearch = search.trim();
+  const normalizedEmployeeId = employeeId.trim();
 
   const workspace = await getCurrentWorkspace();
+
+  const employees = await getAIEmployees({
+    workspaceId: workspace.id,
+  });
+
+  const selectedEmployeeExists = employees.some(
+    (employee) => employee.id === normalizedEmployeeId,
+  );
+
+  const selectedEmployeeId = selectedEmployeeExists
+    ? normalizedEmployeeId
+    : undefined;
+
   const contacts = await getContactsByWorkspace(
     workspace.id,
     normalizedSearch || undefined,
+    selectedEmployeeId,
   );
 
   const isUkrainian = locale === "uk";
@@ -60,6 +81,8 @@ export default async function ContactsPage({
           "Пошук за ім’ям, email, телефоном або компанією",
         searchButton: "Знайти",
         clearSearch: "Очистити пошук",
+        filterLabel: "ШІ-співробітник",
+        allEmployees: "Усі ШІ-співробітники",
         contactsCount: "контактів",
         searchResults: "результатів для",
         emptyTitle: "Контактів поки немає",
@@ -67,7 +90,7 @@ export default async function ContactsPage({
           "Нові контакти автоматично з’являться після першої розмови через Website Widget.",
         noResultsTitle: "Контактів не знайдено",
         noResultsDescription:
-          "Спробуйте змінити пошуковий запит або очистити пошук.",
+          "Спробуйте змінити пошуковий запит або обрати іншого ШІ-співробітника.",
         anonymous: "Анонімний відвідувач",
         conversations: "розмов",
         noConversation: "Розмов ще немає",
@@ -83,6 +106,8 @@ export default async function ContactsPage({
           "Search by name, email, phone, or company",
         searchButton: "Search",
         clearSearch: "Clear search",
+        filterLabel: "AI Employee",
+        allEmployees: "All AI Employees",
         contactsCount: "contacts",
         searchResults: "results for",
         emptyTitle: "No contacts yet",
@@ -90,7 +115,7 @@ export default async function ContactsPage({
           "New contacts will appear automatically after the first Website Widget conversation.",
         noResultsTitle: "No contacts found",
         noResultsDescription:
-          "Try changing your search query or clearing the search.",
+          "Try changing your search query or selecting another AI Employee.",
         anonymous: "Anonymous visitor",
         conversations: "conversations",
         noConversation: "No conversations yet",
@@ -109,6 +134,33 @@ export default async function ContactsPage({
 
   const contactsHref = `/${locale}/dashboard/contacts`;
   const hasSearch = normalizedSearch.length > 0;
+  const hasEmployeeFilter = Boolean(selectedEmployeeId);
+  const hasActiveFilters =
+    hasSearch || hasEmployeeFilter;
+
+  const clearSearchParams = new URLSearchParams();
+
+  if (selectedEmployeeId) {
+    clearSearchParams.set(
+      "employeeId",
+      selectedEmployeeId,
+    );
+  }
+
+  const clearSearchQuery =
+    clearSearchParams.toString();
+
+  const clearSearchHref = clearSearchQuery
+    ? `${contactsHref}?${clearSearchQuery}`
+    : contactsHref;
+
+  const employeeOptions = employees.map(
+    (employee) => ({
+      id: employee.id,
+      name: employee.name,
+      role: employee.role,
+    }),
+  );
 
   return (
     <div className="space-y-8">
@@ -122,12 +174,20 @@ export default async function ContactsPage({
         </p>
       </section>
 
-      <section>
+      <section className="space-y-4">
         <form
           action={contactsHref}
           method="get"
           className="flex flex-col gap-3 sm:flex-row"
         >
+          {selectedEmployeeId ? (
+            <input
+              type="hidden"
+              name="employeeId"
+              value={selectedEmployeeId}
+            />
+          ) : null}
+
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
@@ -140,13 +200,16 @@ export default async function ContactsPage({
             />
           </div>
 
-          <Button type="submit" className="h-11 sm:px-6">
+          <Button
+            type="submit"
+            className="h-11 sm:px-6"
+          >
             {copy.searchButton}
           </Button>
 
           {hasSearch ? (
             <Link
-              href={contactsHref}
+              href={clearSearchHref}
               className={cn(
                 buttonVariants({
                   variant: "outline",
@@ -159,6 +222,13 @@ export default async function ContactsPage({
             </Link>
           ) : null}
         </form>
+
+        <ContactsEmployeeFilter
+          employees={employeeOptions}
+          selectedEmployeeId={selectedEmployeeId}
+          allEmployeesLabel={copy.allEmployees}
+          filterLabel={copy.filterLabel}
+        />
       </section>
 
       <section className="flex items-center justify-between gap-4">
@@ -188,7 +258,7 @@ export default async function ContactsPage({
         <Card className="border-dashed">
           <CardContent className="flex min-h-96 flex-col items-center justify-center px-6 py-16 text-center">
             <span className="flex size-12 items-center justify-center rounded-xl border bg-muted/40">
-              {hasSearch ? (
+              {hasActiveFilters ? (
                 <Search className="size-5 text-muted-foreground" />
               ) : (
                 <UserRound className="size-5 text-muted-foreground" />
@@ -196,18 +266,18 @@ export default async function ContactsPage({
             </span>
 
             <h2 className="mt-5 text-lg font-semibold">
-              {hasSearch
+              {hasActiveFilters
                 ? copy.noResultsTitle
                 : copy.emptyTitle}
             </h2>
 
             <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-              {hasSearch
+              {hasActiveFilters
                 ? copy.noResultsDescription
                 : copy.emptyDescription}
             </p>
 
-            {hasSearch ? (
+            {hasActiveFilters ? (
               <Link
                 href={contactsHref}
                 className={cn(
@@ -227,6 +297,7 @@ export default async function ContactsPage({
           {contacts.map((contact) => {
             const latestConversation =
               contact.conversations[0];
+
             const latestMessage =
               latestConversation?.messages[0];
 
@@ -238,7 +309,9 @@ export default async function ContactsPage({
               .join(" ");
 
             const displayName =
-              fullName || contact.email || copy.anonymous;
+              fullName ||
+              contact.email ||
+              copy.anonymous;
 
             const contactHref =
               `/${locale}/dashboard/contacts/${contact.id}`;
@@ -322,7 +395,8 @@ export default async function ContactsPage({
 
                         {latestConversation ? (
                           <span className="shrink-0 text-xs text-muted-foreground">
-                            {latestConversation.employee.name ||
+                            {latestConversation.employee
+                              .name ||
                               copy.unknownEmployee}
                           </span>
                         ) : null}
