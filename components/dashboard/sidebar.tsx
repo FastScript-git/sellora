@@ -7,6 +7,7 @@ import {
   BarChart3,
   BookOpen,
   Bot,
+  ClipboardList,
   Columns3,
   CreditCard,
   LayoutDashboard,
@@ -62,6 +63,11 @@ const navigationItems = [
     labelKey: "pipeline",
     path: "/dashboard/pipeline",
     icon: Columns3,
+  },
+  {
+    labelKey: "tasks",
+    path: "/dashboard/tasks",
+    icon: ClipboardList,
   },
   {
     labelKey: "analytics",
@@ -150,9 +156,7 @@ export function Sidebar({
             <Link
               key={item.path}
               href={href}
-              aria-current={
-                isActive ? "page" : undefined
-              }
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors",
                 "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
@@ -163,9 +167,7 @@ export function Sidebar({
             >
               <Icon className="size-4 shrink-0" />
 
-              <span>
-                {navigation(item.labelKey)}
-              </span>
+              <span>{navigation(item.labelKey)}</span>
             </Link>
           );
         })}
@@ -188,9 +190,7 @@ export function Sidebar({
             <Link
               key={item.path}
               href={href}
-              aria-current={
-                isActive ? "page" : undefined
-              }
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors",
                 "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
@@ -201,9 +201,7 @@ export function Sidebar({
             >
               <Icon className="size-4 shrink-0" />
 
-              <span>
-                {navigation(item.labelKey)}
-              </span>
+              <span>{navigation(item.labelKey)}</span>
             </Link>
           );
         })}
