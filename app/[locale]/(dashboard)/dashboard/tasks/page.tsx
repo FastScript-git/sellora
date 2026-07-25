@@ -4,7 +4,6 @@ import {
   Circle,
   ClipboardList,
   Clock3,
-  Plus,
 } from "lucide-react";
 
 import { EmptyState } from "@/components/dashboard/shared/empty-state";
@@ -13,7 +12,7 @@ import {
   PageHeaderStat,
 } from "@/components/dashboard/shared/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { CreateTaskDialog } from "@/features/tasks/components/create-task-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { getTasksByWorkspace } from "@/features/tasks/repositories/task.repository";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
@@ -129,12 +128,7 @@ export default async function TasksPage() {
             />
           </>
         }
-        actions={
-          <Button type="button">
-            <Plus className="size-4" />
-            New Task
-          </Button>
-        }
+        actions={<CreateTaskDialog />}
       />
 
       {tasks.length === 0 ? (
