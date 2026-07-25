@@ -4,6 +4,8 @@ import { ContactPipelineBoard } from "@/features/contacts/components/contact-pip
 import { getContactsByWorkspace } from "@/features/contacts/repositories/contact.repository";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
+export const dynamic = "force-dynamic";
+
 type PipelinePageProps = {
   params: Promise<{
     locale: string;
