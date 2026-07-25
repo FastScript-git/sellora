@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
 import { MessageSquare } from "lucide-react";
 
 import {
@@ -66,9 +67,10 @@ export default async function ConversationsPage({
                 conversation.messages[0];
 
               return (
-                <div
+                <Link
                   key={conversation.id}
-                  className="flex items-center justify-between rounded-xl border p-4"
+                  href={`/${locale}/dashboard/conversations/${conversation.id}`}
+                  className="flex items-center justify-between rounded-xl border p-4 transition-colors hover:border-foreground/20 hover:bg-muted/20"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="font-medium">
@@ -78,7 +80,7 @@ export default async function ConversationsPage({
                           : "New conversation")}
                     </div>
 
-                    <div className="mt-1 text-sm text-muted-foreground truncate">
+                    <div className="mt-1 truncate text-sm text-muted-foreground">
                       {lastMessage?.content ??
                         (isUk
                           ? "Без повідомлень"
@@ -97,7 +99,7 @@ export default async function ConversationsPage({
                       {conversation._count.messages}
                     </span>
                   </div>
-                </div>
+                </Link>
               );
             })
           )}
