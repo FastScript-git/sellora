@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { extractContactDetails } from "@/features/ai/services/extract-contact-details";
 import { generateConversationResponse } from "@/features/ai/services/generate-conversation-response";
+import { updateContactFromExtraction } from "@/features/contacts/services/update-contact-from-extraction";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -30,6 +32,7 @@ type WidgetMessage = {
 
 type WidgetMessageResult = {
   conversationId: string;
+  contactId: string;
   message: WidgetMessage;
   isNewConversation: boolean;
 };
@@ -279,9 +282,17 @@ export async function POST(
               });
             }
 
+            if (!existingConversation.contactId) {
+              throw new Error(
+                "WIDGET_CONTACT_NOT_FOUND",
+              );
+            }
+
             return {
               conversationId:
                 existingConversation.id,
+              contactId:
+                existingConversation.contactId,
               message,
               isNewConversation: false,
             };
@@ -419,14 +430,43 @@ export async function POST(
 
           return {
             conversationId: conversation.id,
+            contactId,
             message,
             isNewConversation: true,
           };
         },
       );
 
-    let assistantMessage: WidgetMessage | null = null;
+    try {
+      const extractedDetails =
+        await extractContactDetails(content);
 
+      const contactUpdateResult =
+        await updateContactFromExtraction({
+          workspaceId:
+            channel.employee.workspaceId,
+          contactId: result.contactId,
+          details: extractedDetails,
+        });
+
+      if (contactUpdateResult.updated) {
+        console.info(
+          "Contact details extracted from widget message:",
+          {
+            contactId: result.contactId,
+            updatedFields:
+              contactUpdateResult.updatedFields,
+          },
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Failed to update contact from message extraction:",
+        error,
+      );
+    }
+
+    let assistantMessage: WidgetMessage | null = null;
     let aiError: string | null = null;
 
     try {
@@ -489,6 +529,22 @@ export async function POST(
         },
         {
           status: 404,
+        },
+      );
+    }
+
+    if (
+      error instanceof Error &&
+      error.message ===
+        "WIDGET_CONTACT_NOT_FOUND"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "The contact connected to this conversation was not found.",
+        },
+        {
+          status: 409,
         },
       );
     }
