@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { generateConversationResponse } from "@/features/ai/services/generate-conversation-response";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -18,6 +19,19 @@ type CreateWidgetMessageBody = {
     email?: string;
     phone?: string;
   };
+};
+
+type WidgetMessage = {
+  id: string;
+  role: "USER" | "ASSISTANT";
+  content: string;
+  createdAt: Date;
+};
+
+type WidgetMessageResult = {
+  conversationId: string;
+  message: WidgetMessage;
+  isNewConversation: boolean;
 };
 
 function normalizeOptionalText(
@@ -102,12 +116,15 @@ export async function POST(
       firstName: normalizeOptionalText(
         body.visitor?.firstName,
       ),
+
       lastName: normalizeOptionalText(
         body.visitor?.lastName,
       ),
+
       email: normalizeOptionalText(
         body.visitor?.email,
       )?.toLowerCase(),
+
       phone: normalizeOptionalText(
         body.visitor?.phone,
       ),
@@ -162,242 +179,281 @@ export async function POST(
 
     const now = new Date();
 
-    const result = await prisma.$transaction(
-      async (transaction) => {
-        if (requestedConversationId) {
-          const existingConversation =
-            await transaction.conversation.findFirst({
-              where: {
-                id: requestedConversationId,
-                employeeId: channel.employeeId,
-                channelId: channel.id,
-              },
-
-              select: {
-                id: true,
-                contactId: true,
-              },
-            });
-
-          if (!existingConversation) {
-            throw new Error(
-              "WIDGET_CONVERSATION_NOT_FOUND",
-            );
-          }
-
-          const message =
-            await transaction.conversationMessage.create({
-              data: {
-                conversationId:
-                  existingConversation.id,
-                role: "USER",
-                content,
-                metadata: {
-                  source: "WEBSITE_WIDGET",
+    const result =
+      await prisma.$transaction<WidgetMessageResult>(
+        async (transaction) => {
+          if (requestedConversationId) {
+            const existingConversation =
+              await transaction.conversation.findFirst({
+                where: {
+                  id: requestedConversationId,
+                  employeeId: channel.employeeId,
+                  channelId: channel.id,
                 },
-              },
 
-              select: {
-                id: true,
-                role: true,
-                content: true,
-                createdAt: true,
-              },
-            });
+                select: {
+                  id: true,
+                  contactId: true,
+                },
+              });
 
-          await transaction.conversation.update({
-            where: {
-              id: existingConversation.id,
-            },
+            if (!existingConversation) {
+              throw new Error(
+                "WIDGET_CONVERSATION_NOT_FOUND",
+              );
+            }
 
-            data: {
-              status: "OPEN",
-              unreadCount: {
-                increment: 1,
-              },
-              lastMessageAt: now,
-              closedAt: null,
-            },
-          });
-
-          if (existingConversation.contactId) {
-            await transaction.contact.update({
-              where: {
-                id: existingConversation.contactId,
-              },
-
-              data: {
-                lastInteractionAt: now,
-
-                ...(visitor.firstName
-                  ? {
-                      firstName: visitor.firstName,
-                    }
-                  : {}),
-
-                ...(visitor.lastName
-                  ? {
-                      lastName: visitor.lastName,
-                    }
-                  : {}),
-
-                ...(visitor.email
-                  ? {
-                      email: visitor.email,
-                    }
-                  : {}),
-
-                ...(visitor.phone
-                  ? {
-                      phone: visitor.phone,
-                    }
-                  : {}),
-              },
-            });
-          }
-
-          return {
-            conversationId:
-              existingConversation.id,
-            message,
-            isNewConversation: false,
-          };
-        }
-
-        let contactId: string | undefined;
-
-        if (visitor.email) {
-          const existingContact =
-            await transaction.contact.findFirst({
-              where: {
-                workspaceId:
-                  channel.employee.workspaceId,
-                email: visitor.email,
-              },
-
-              select: {
-                id: true,
-              },
-            });
-
-          if (existingContact) {
-            contactId = existingContact.id;
-
-            await transaction.contact.update({
-              where: {
-                id: existingContact.id,
-              },
-
-              data: {
-                lastInteractionAt: now,
-
-                ...(visitor.firstName
-                  ? {
-                      firstName: visitor.firstName,
-                    }
-                  : {}),
-
-                ...(visitor.lastName
-                  ? {
-                      lastName: visitor.lastName,
-                    }
-                  : {}),
-
-                ...(visitor.phone
-                  ? {
-                      phone: visitor.phone,
-                    }
-                  : {}),
-              },
-            });
-          }
-        }
-
-        if (!contactId) {
-          const contact =
-            await transaction.contact.create({
-              data: {
-                workspaceId:
-                  channel.employee.workspaceId,
-                firstName: visitor.firstName,
-                lastName: visitor.lastName,
-                email: visitor.email,
-                phone: visitor.phone,
-                lastInteractionAt: now,
-              },
-
-              select: {
-                id: true,
-              },
-            });
-
-          contactId = contact.id;
-        }
-
-        const conversation =
-          await transaction.conversation.create({
-            data: {
-              employeeId: channel.employeeId,
-              contactId,
-              channelId: channel.id,
-              title:
-                visitor.firstName ||
-                visitor.email ||
-                "Website visitor",
-              status: "OPEN",
-              unreadCount: 1,
-              lastMessageAt: now,
-
-              messages: {
-                create: {
+            const message =
+              await transaction.conversationMessage.create({
+                data: {
+                  conversationId:
+                    existingConversation.id,
                   role: "USER",
                   content,
+
                   metadata: {
                     source: "WEBSITE_WIDGET",
                   },
                 },
-              },
-            },
 
-            select: {
-              id: true,
-
-              messages: {
-                take: 1,
-                orderBy: {
-                  createdAt: "desc",
-                },
                 select: {
                   id: true,
                   role: true,
                   content: true,
                   createdAt: true,
                 },
+              });
+
+            await transaction.conversation.update({
+              where: {
+                id: existingConversation.id,
               },
-            },
-          });
 
-        const message = conversation.messages[0];
+              data: {
+                status: "OPEN",
 
-        if (!message) {
-          throw new Error(
-            "WIDGET_MESSAGE_CREATION_FAILED",
-          );
-        }
+                unreadCount: {
+                  increment: 1,
+                },
 
-        return {
-          conversationId: conversation.id,
-          message,
-          isNewConversation: true,
-        };
-      },
-    );
+                lastMessageAt: now,
+                closedAt: null,
+              },
+            });
+
+            if (existingConversation.contactId) {
+              await transaction.contact.update({
+                where: {
+                  id: existingConversation.contactId,
+                },
+
+                data: {
+                  lastInteractionAt: now,
+
+                  ...(visitor.firstName
+                    ? {
+                        firstName:
+                          visitor.firstName,
+                      }
+                    : {}),
+
+                  ...(visitor.lastName
+                    ? {
+                        lastName:
+                          visitor.lastName,
+                      }
+                    : {}),
+
+                  ...(visitor.email
+                    ? {
+                        email: visitor.email,
+                      }
+                    : {}),
+
+                  ...(visitor.phone
+                    ? {
+                        phone: visitor.phone,
+                      }
+                    : {}),
+                },
+              });
+            }
+
+            return {
+              conversationId:
+                existingConversation.id,
+              message,
+              isNewConversation: false,
+            };
+          }
+
+          let contactId: string | undefined;
+
+          if (visitor.email) {
+            const existingContact =
+              await transaction.contact.findFirst({
+                where: {
+                  workspaceId:
+                    channel.employee.workspaceId,
+
+                  email: visitor.email,
+                },
+
+                select: {
+                  id: true,
+                },
+              });
+
+            if (existingContact) {
+              contactId = existingContact.id;
+
+              await transaction.contact.update({
+                where: {
+                  id: existingContact.id,
+                },
+
+                data: {
+                  lastInteractionAt: now,
+
+                  ...(visitor.firstName
+                    ? {
+                        firstName:
+                          visitor.firstName,
+                      }
+                    : {}),
+
+                  ...(visitor.lastName
+                    ? {
+                        lastName:
+                          visitor.lastName,
+                      }
+                    : {}),
+
+                  ...(visitor.phone
+                    ? {
+                        phone: visitor.phone,
+                      }
+                    : {}),
+                },
+              });
+            }
+          }
+
+          if (!contactId) {
+            const contact =
+              await transaction.contact.create({
+                data: {
+                  workspaceId:
+                    channel.employee.workspaceId,
+
+                  firstName: visitor.firstName,
+                  lastName: visitor.lastName,
+                  email: visitor.email,
+                  phone: visitor.phone,
+                  lastInteractionAt: now,
+                },
+
+                select: {
+                  id: true,
+                },
+              });
+
+            contactId = contact.id;
+          }
+
+          const conversation =
+            await transaction.conversation.create({
+              data: {
+                employeeId: channel.employeeId,
+                contactId,
+                channelId: channel.id,
+
+                title:
+                  visitor.firstName ||
+                  visitor.email ||
+                  "Website visitor",
+
+                status: "OPEN",
+                unreadCount: 1,
+                lastMessageAt: now,
+
+                messages: {
+                  create: {
+                    role: "USER",
+                    content,
+
+                    metadata: {
+                      source: "WEBSITE_WIDGET",
+                    },
+                  },
+                },
+              },
+
+              select: {
+                id: true,
+
+                messages: {
+                  take: 1,
+
+                  orderBy: {
+                    createdAt: "desc",
+                  },
+
+                  select: {
+                    id: true,
+                    role: true,
+                    content: true,
+                    createdAt: true,
+                  },
+                },
+              },
+            });
+
+          const message = conversation.messages[0];
+
+          if (!message) {
+            throw new Error(
+              "WIDGET_MESSAGE_CREATION_FAILED",
+            );
+          }
+
+          return {
+            conversationId: conversation.id,
+            message,
+            isNewConversation: true,
+          };
+        },
+      );
+
+    let assistantMessage: WidgetMessage | null = null;
+
+    let aiError: string | null = null;
+
+    try {
+      assistantMessage =
+        await generateConversationResponse({
+          conversationId: result.conversationId,
+          userMessageId: result.message.id,
+        });
+    } catch (error) {
+      console.error(
+        "Failed to generate AI response:",
+        error,
+      );
+
+      aiError =
+        "The AI employee could not generate a response.";
+    }
 
     return NextResponse.json(
       {
         data: {
           conversationId: result.conversationId,
+
           message: result.message,
+
+          assistantMessage,
+
           isNewConversation:
             result.isNewConversation,
 
@@ -411,6 +467,8 @@ export async function POST(
             name: channel.employee.name,
           },
         },
+
+        warning: aiError,
       },
       {
         status: result.isNewConversation
@@ -431,6 +489,22 @@ export async function POST(
         },
         {
           status: 404,
+        },
+      );
+    }
+
+    if (
+      error instanceof Error &&
+      error.message ===
+        "WIDGET_MESSAGE_CREATION_FAILED"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "The message could not be created.",
+        },
+        {
+          status: 500,
         },
       );
     }

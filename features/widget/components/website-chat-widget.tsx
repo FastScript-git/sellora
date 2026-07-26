@@ -32,13 +32,49 @@ type WebsiteChatWidgetProps = {
 type SendMessageResponse = {
   data?: {
     conversationId: string;
+    message: WidgetMessage;
+    assistantMessage: WidgetMessage | null;
+    isNewConversation: boolean;
 
-    message: {
+    channel: {
       id: string;
-      role: "USER" | "ASSISTANT";
-      content: string;
-      createdAt: string;
+      name: string;
     };
+
+    employee: {
+      id: string;
+      name: string;
+    };
+  };
+
+  error?: string;
+  warning?: string | null;
+};
+
+type LoadConversationResponse = {
+  data?: {
+    conversation: {
+      id: string;
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+
+    employee: {
+      id: string;
+      name: string;
+      status: string;
+    };
+
+    channel: {
+      id: string;
+      name: string;
+      widgetTitle: string | null;
+      widgetGreeting: string | null;
+      widgetPrimaryColor: string | null;
+    };
+
+    messages: WidgetMessage[];
   };
 
   error?: string;
@@ -57,6 +93,8 @@ export function WebsiteChatWidget({
     WidgetMessage[]
   >([]);
   const [isSending, setIsSending] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] =
+    useState(true);
   const [error, setError] = useState<string>();
 
   const conversationIdRef = useRef<
@@ -69,10 +107,86 @@ export function WebsiteChatWidget({
   const storageKey = `sellora-widget-conversation:${widgetKey}`;
 
   useEffect(() => {
+    let isCancelled = false;
+
+    async function loadConversationHistory() {
+      const savedConversationId =
+        window.localStorage.getItem(storageKey);
+
+      if (!savedConversationId) {
+        if (!isCancelled) {
+          setIsLoadingHistory(false);
+        }
+
+        return;
+      }
+
+      conversationIdRef.current =
+        savedConversationId;
+
+      try {
+        const response = await fetch(
+          `/api/widget/${widgetKey}/conversations/${savedConversationId}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
+
+        const responseBody =
+          (await response.json()) as LoadConversationResponse;
+
+        if (!response.ok || !responseBody.data) {
+          if (response.status === 404) {
+            window.localStorage.removeItem(
+              storageKey,
+            );
+
+            conversationIdRef.current = undefined;
+
+            if (!isCancelled) {
+              setMessages([]);
+            }
+
+            return;
+          }
+
+          throw new Error(
+            responseBody.error ||
+              "The conversation history could not be loaded.",
+          );
+        }
+
+        if (!isCancelled) {
+          setMessages(responseBody.data.messages);
+        }
+      } catch (loadError) {
+        if (!isCancelled) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "The conversation history could not be loaded.",
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingHistory(false);
+        }
+      }
+    }
+
+    void loadConversationHistory();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [storageKey, widgetKey]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [messages]);
+  }, [messages, isSending, isLoadingHistory]);
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
@@ -81,7 +195,11 @@ export function WebsiteChatWidget({
 
     const normalizedContent = content.trim();
 
-    if (!normalizedContent || isSending) {
+    if (
+      !normalizedContent ||
+      isSending ||
+      isLoadingHistory
+    ) {
       return;
     }
 
@@ -120,30 +238,52 @@ export function WebsiteChatWidget({
         );
       }
 
-      const nextConversationId =
-        responseBody.data.conversationId;
+      const {
+        conversationId,
+        message,
+        assistantMessage,
+      } = responseBody.data;
 
-      conversationIdRef.current =
-        nextConversationId;
+      conversationIdRef.current = conversationId;
 
       window.localStorage.setItem(
         storageKey,
-        nextConversationId,
+        conversationId,
       );
 
-      setMessages((currentMessages) => [
-        ...currentMessages,
-        {
-          id: responseBody.data!.message.id,
-          role: responseBody.data!.message.role,
-          content:
-            responseBody.data!.message.content,
-          createdAt:
-            responseBody.data!.message.createdAt,
-        },
-      ]);
+      setMessages((currentMessages) => {
+        const existingMessageIds = new Set(
+          currentMessages.map(
+            (currentMessage) => currentMessage.id,
+          ),
+        );
+
+        const nextMessages = [
+          ...currentMessages,
+        ];
+
+        if (!existingMessageIds.has(message.id)) {
+          nextMessages.push(message);
+          existingMessageIds.add(message.id);
+        }
+
+        if (
+          assistantMessage &&
+          !existingMessageIds.has(
+            assistantMessage.id,
+          )
+        ) {
+          nextMessages.push(assistantMessage);
+        }
+
+        return nextMessages;
+      });
 
       setContent("");
+
+      if (responseBody.warning) {
+        setError(responseBody.warning);
+      }
     } catch (sendError) {
       setError(
         sendError instanceof Error
@@ -223,6 +363,14 @@ export function WebsiteChatWidget({
           </div>
         </div>
 
+        {isLoadingHistory ? (
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <LoaderCircle className="size-4 animate-spin" />
+
+            <span>Loading conversation...</span>
+          </div>
+        ) : null}
+
         <div className="mt-5 space-y-4">
           {messages.map((message) => {
             const isUser = message.role === "USER";
@@ -278,6 +426,31 @@ export function WebsiteChatWidget({
               </div>
             );
           })}
+
+          {isSending ? (
+            <div className="flex justify-start">
+              <div className="flex max-w-[82%] items-end gap-2">
+                <span
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full text-white"
+                  style={{
+                    backgroundColor: primaryColor,
+                  }}
+                >
+                  <MessageCircle className="size-3.5" />
+                </span>
+
+                <div className="rounded-2xl rounded-bl-md border bg-background px-4 py-3 shadow-sm">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <LoaderCircle className="size-4 animate-spin" />
+
+                    <span>
+                      {employeeName} is typing...
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div ref={messagesEndRef} />
@@ -310,14 +483,22 @@ export function WebsiteChatWidget({
             }}
             rows={1}
             maxLength={10_000}
-            placeholder="Write a message..."
-            className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border bg-background px-4 py-3 text-sm outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
+            disabled={
+              isSending || isLoadingHistory
+            }
+            placeholder={
+              isLoadingHistory
+                ? "Loading conversation..."
+                : "Write a message..."
+            }
+            className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border bg-background px-4 py-3 text-sm outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           />
 
           <button
             type="submit"
             disabled={
               isSending ||
+              isLoadingHistory ||
               content.trim().length === 0
             }
             className="flex size-11 shrink-0 items-center justify-center rounded-full text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
@@ -326,7 +507,8 @@ export function WebsiteChatWidget({
             }}
             aria-label="Send message"
           >
-            {isSending ? (
+            {isSending ||
+            isLoadingHistory ? (
               <LoaderCircle className="size-5 animate-spin" />
             ) : (
               <Send className="size-5" />
