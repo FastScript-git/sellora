@@ -142,22 +142,28 @@ export async function getContactsByWorkspace(
         orderBy: {
           updatedAt: "desc",
         },
+
         take: 1,
+
         select: {
           id: true,
           title: true,
           updatedAt: true,
+
           employee: {
             select: {
               id: true,
               name: true,
             },
           },
+
           messages: {
             orderBy: {
               createdAt: "desc",
             },
+
             take: 1,
+
             select: {
               content: true,
               createdAt: true,
@@ -187,11 +193,28 @@ export async function getContactDetails({
       id: contactId,
       workspaceId,
     },
+
     include: {
+      timeline: {
+        orderBy: {
+          createdAt: "desc",
+        },
+
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          description: true,
+          metadata: true,
+          createdAt: true,
+        },
+      },
+
       conversations: {
         orderBy: {
           updatedAt: "desc",
         },
+
         include: {
           employee: {
             select: {
@@ -199,17 +222,21 @@ export async function getContactDetails({
               name: true,
             },
           },
+
           messages: {
             orderBy: {
               createdAt: "desc",
             },
+
             take: 1,
+
             select: {
               id: true,
               content: true,
               createdAt: true,
             },
           },
+
           _count: {
             select: {
               messages: true,
@@ -237,6 +264,7 @@ export async function updateContactStatus({
       id: contactId,
       workspaceId,
     },
+
     data: {
       status,
     },

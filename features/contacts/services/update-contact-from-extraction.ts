@@ -1,3 +1,4 @@
+import { createContactTimelineEvent } from "@/features/contacts/services/create-contact-timeline-event";
 import { prisma } from "@/lib/prisma";
 
 import type { ExtractedContactDetails } from "@/features/ai/services/extract-contact-details";
@@ -8,7 +9,7 @@ type UpdateContactFromExtractionInput = {
   details: ExtractedContactDetails;
 };
 
-type ContactFieldUpdates = {
+type ContactExtractionUpdates = {
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -29,17 +30,35 @@ export type ContactExtractionUpdateResult = {
   >;
 };
 
-function hasExtractedContactDetails(
-  details: ExtractedContactDetails,
-): boolean {
-  return Boolean(
-    details.firstName ||
-      details.lastName ||
-      details.email ||
-      details.phone ||
-      details.company ||
-      details.jobTitle,
-  );
+function normalizeOptionalText(
+  value: string | null,
+): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const normalizedValue = value.trim();
+
+  return normalizedValue.length > 0
+    ? normalizedValue
+    : null;
+}
+
+function buildDetectedName(
+  firstName: string | null,
+  lastName: string | null,
+): string | null {
+  const name = [
+    firstName,
+    lastName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return name.length > 0
+    ? name
+    : null;
 }
 
 export async function updateContactFromExtraction({
@@ -47,13 +66,6 @@ export async function updateContactFromExtraction({
   contactId,
   details,
 }: UpdateContactFromExtractionInput): Promise<ContactExtractionUpdateResult> {
-  if (!hasExtractedContactDetails(details)) {
-    return {
-      updated: false,
-      updatedFields: [],
-    };
-  }
-
   const contact = await prisma.contact.findFirst({
     where: {
       id: contactId,
@@ -78,37 +90,94 @@ export async function updateContactFromExtraction({
     };
   }
 
-  const data: ContactFieldUpdates = {};
+  const normalizedDetails = {
+    firstName: normalizeOptionalText(
+      details.firstName,
+    ),
+
+    lastName: normalizeOptionalText(
+      details.lastName,
+    ),
+
+    email: normalizeOptionalText(
+      details.email,
+    )?.toLowerCase() ?? null,
+
+    phone: normalizeOptionalText(
+      details.phone,
+    ),
+
+    company: normalizeOptionalText(
+      details.company,
+    ),
+
+    jobTitle: normalizeOptionalText(
+      details.jobTitle,
+    ),
+  };
+
+  const data: ContactExtractionUpdates = {};
+
   const updatedFields: ContactExtractionUpdateResult["updatedFields"] =
     [];
 
-  if (!contact.firstName && details.firstName) {
-    data.firstName = details.firstName;
+  if (
+    !contact.firstName &&
+    normalizedDetails.firstName
+  ) {
+    data.firstName =
+      normalizedDetails.firstName;
+
     updatedFields.push("firstName");
   }
 
-  if (!contact.lastName && details.lastName) {
-    data.lastName = details.lastName;
+  if (
+    !contact.lastName &&
+    normalizedDetails.lastName
+  ) {
+    data.lastName =
+      normalizedDetails.lastName;
+
     updatedFields.push("lastName");
   }
 
-  if (!contact.email && details.email) {
-    data.email = details.email;
+  if (
+    !contact.email &&
+    normalizedDetails.email
+  ) {
+    data.email =
+      normalizedDetails.email;
+
     updatedFields.push("email");
   }
 
-  if (!contact.phone && details.phone) {
-    data.phone = details.phone;
+  if (
+    !contact.phone &&
+    normalizedDetails.phone
+  ) {
+    data.phone =
+      normalizedDetails.phone;
+
     updatedFields.push("phone");
   }
 
-  if (!contact.company && details.company) {
-    data.company = details.company;
+  if (
+    !contact.company &&
+    normalizedDetails.company
+  ) {
+    data.company =
+      normalizedDetails.company;
+
     updatedFields.push("company");
   }
 
-  if (!contact.jobTitle && details.jobTitle) {
-    data.jobTitle = details.jobTitle;
+  if (
+    !contact.jobTitle &&
+    normalizedDetails.jobTitle
+  ) {
+    data.jobTitle =
+      normalizedDetails.jobTitle;
+
     updatedFields.push("jobTitle");
   }
 
@@ -126,6 +195,99 @@ export async function updateContactFromExtraction({
 
     data,
   });
+
+  const detectedName = buildDetectedName(
+    data.firstName ?? null,
+    data.lastName ?? null,
+  );
+
+  const timelineEvents: Promise<void>[] = [];
+
+  if (detectedName) {
+    timelineEvents.push(
+      createContactTimelineEvent({
+        workspaceId,
+        contactId,
+        type: "TAGS_UPDATED",
+        title: "Contact name detected",
+        description: detectedName,
+        metadata: {
+          source: "AI_CONTACT_EXTRACTION",
+          fields: updatedFields.filter(
+            (field) =>
+              field === "firstName" ||
+              field === "lastName",
+          ),
+        },
+      }),
+    );
+  }
+
+  if (data.email) {
+    timelineEvents.push(
+      createContactTimelineEvent({
+        workspaceId,
+        contactId,
+        type: "TAGS_UPDATED",
+        title: "Email detected",
+        description: data.email,
+        metadata: {
+          source: "AI_CONTACT_EXTRACTION",
+          field: "email",
+        },
+      }),
+    );
+  }
+
+  if (data.phone) {
+    timelineEvents.push(
+      createContactTimelineEvent({
+        workspaceId,
+        contactId,
+        type: "TAGS_UPDATED",
+        title: "Phone detected",
+        description: data.phone,
+        metadata: {
+          source: "AI_CONTACT_EXTRACTION",
+          field: "phone",
+        },
+      }),
+    );
+  }
+
+  if (data.company) {
+    timelineEvents.push(
+      createContactTimelineEvent({
+        workspaceId,
+        contactId,
+        type: "TAGS_UPDATED",
+        title: "Company detected",
+        description: data.company,
+        metadata: {
+          source: "AI_CONTACT_EXTRACTION",
+          field: "company",
+        },
+      }),
+    );
+  }
+
+  if (data.jobTitle) {
+    timelineEvents.push(
+      createContactTimelineEvent({
+        workspaceId,
+        contactId,
+        type: "TAGS_UPDATED",
+        title: "Job title detected",
+        description: data.jobTitle,
+        metadata: {
+          source: "AI_CONTACT_EXTRACTION",
+          field: "jobTitle",
+        },
+      }),
+    );
+  }
+
+  await Promise.all(timelineEvents);
 
   return {
     updated: true,
