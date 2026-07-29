@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { extractContactDetails } from "@/features/ai/services/extract-contact-details";
-import { generateConversationResponse } from "@/features/ai/services/generate-conversation-response";
-import { updateContactFromExtraction } from "@/features/contacts/services/update-contact-from-extraction";
+import { processWidgetMessage } from "@/features/ai/services/process-widget-message";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -291,9 +289,12 @@ export async function POST(
             return {
               conversationId:
                 existingConversation.id,
+
               contactId:
                 existingConversation.contactId,
+
               message,
+
               isNewConversation: false,
             };
           }
@@ -437,62 +438,31 @@ export async function POST(
         },
       );
 
-    try {
-      const extractedDetails =
-        await extractContactDetails(content);
+    const aiResult = await processWidgetMessage({
+      workspaceId:
+        channel.employee.workspaceId,
 
-      const contactUpdateResult =
-        await updateContactFromExtraction({
-          workspaceId:
-            channel.employee.workspaceId,
-          contactId: result.contactId,
-          details: extractedDetails,
-        });
+      contactId: result.contactId,
 
-      if (contactUpdateResult.updated) {
-        console.info(
-          "Contact details extracted from widget message:",
-          {
-            contactId: result.contactId,
-            updatedFields:
-              contactUpdateResult.updatedFields,
-          },
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Failed to update contact from message extraction:",
-        error,
-      );
-    }
+      conversationId:
+        result.conversationId,
 
-    let assistantMessage: WidgetMessage | null = null;
-    let aiError: string | null = null;
+      userMessageId:
+        result.message.id,
 
-    try {
-      assistantMessage =
-        await generateConversationResponse({
-          conversationId: result.conversationId,
-          userMessageId: result.message.id,
-        });
-    } catch (error) {
-      console.error(
-        "Failed to generate AI response:",
-        error,
-      );
-
-      aiError =
-        "The AI employee could not generate a response.";
-    }
+      content,
+    });
 
     return NextResponse.json(
       {
         data: {
-          conversationId: result.conversationId,
+          conversationId:
+            result.conversationId,
 
           message: result.message,
 
-          assistantMessage,
+          assistantMessage:
+            aiResult.assistantMessage,
 
           isNewConversation:
             result.isNewConversation,
@@ -508,7 +478,7 @@ export async function POST(
           },
         },
 
-        warning: aiError,
+        warning: aiResult.warning,
       },
       {
         status: result.isNewConversation

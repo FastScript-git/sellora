@@ -195,6 +195,40 @@ export async function getContactDetails({
     },
 
     include: {
+      tasks: {
+        orderBy: [
+          {
+            status: "asc",
+          },
+          {
+            dueAt: "asc",
+          },
+          {
+            createdAt: "desc",
+          },
+        ],
+
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          priority: true,
+          dueAt: true,
+          completedAt: true,
+          reminderAt: true,
+          createdAt: true,
+          updatedAt: true,
+
+          employee: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+
       timeline: {
         orderBy: {
           createdAt: "desc",

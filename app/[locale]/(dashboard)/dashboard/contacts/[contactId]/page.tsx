@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ContactAiSummary } from "@/features/contacts/components/contact-ai-summary";
+import { ContactTasks } from "@/features/contacts/components/contact-tasks";
 import { ContactTimeline } from "@/features/contacts/components/contact-timeline";
 import { getContactDetails } from "@/features/contacts/repositories/contact.repository";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
@@ -195,6 +196,11 @@ export default async function ContactDetailsPage({
             leadScore={contact.leadScore}
             tags={contact.tags}
             nextAction={contact.nextAction}
+            locale={locale}
+          />
+
+          <ContactTasks
+            tasks={contact.tasks}
             locale={locale}
           />
 
