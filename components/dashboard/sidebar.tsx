@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   BarChart3,
+  Zap,
   BookOpen,
   Bot,
   ClipboardList,
@@ -50,9 +51,14 @@ const navigationItems = [
     icon: Radio,
   },
   {
+    labelKey: "workflows",
+    path: "/dashboard/workflows",
+    icon: Workflow,
+  },
+  {
     labelKey: "automations",
     path: "/dashboard/automations",
-    icon: Workflow,
+    icon: Zap,
   },
   {
     labelKey: "contacts",
