@@ -201,6 +201,7 @@ export default async function ContactDetailsPage({
 
           <ContactTasks
             tasks={contact.tasks}
+            workspaceId={workspace.id}
             locale={locale}
           />
 

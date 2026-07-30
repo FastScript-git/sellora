@@ -1,9 +1,15 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import {
   CalendarClock,
   CheckCircle2,
   Circle,
   Clock3,
   ListTodo,
+  LoaderCircle,
+  RotateCcw,
   Sparkles,
   UserRound,
 } from "lucide-react";
@@ -14,21 +20,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { updateTaskStatus } from "@/features/tasks/actions/update-task-status";
+
+type TaskStatus =
+  | "TODO"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELED";
+
+type TaskPriority =
+  | "LOW"
+  | "MEDIUM"
+  | "HIGH"
+  | "URGENT";
 
 type ContactTask = {
   id: string;
   title: string;
   description: string | null;
-  status:
-    | "TODO"
-    | "IN_PROGRESS"
-    | "COMPLETED"
-    | "CANCELED";
-  priority:
-    | "LOW"
-    | "MEDIUM"
-    | "HIGH"
-    | "URGENT";
+  status: TaskStatus;
+  priority: TaskPriority;
   dueAt: Date | null;
   completedAt: Date | null;
   reminderAt: Date | null;
@@ -42,13 +53,22 @@ type ContactTask = {
 
 type ContactTasksProps = {
   tasks: ContactTask[];
+  workspaceId: string;
   locale: string;
 };
 
 export function ContactTasks({
   tasks,
+  workspaceId,
   locale,
 }: ContactTasksProps) {
+  const router = useRouter();
+
+  const [isPending, startTransition] = useTransition();
+  const [pendingTaskId, setPendingTaskId] =
+    useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const isUkrainian = locale === "uk";
 
   const copy = isUkrainian
@@ -63,6 +83,11 @@ export function ContactTasks({
         due: "Виконати до",
         reminder: "Нагадування",
         assignedTo: "Виконавець",
+        start: "Почати",
+        complete: "Завершити",
+        reopen: "Відкрити знову",
+        updateError:
+          "Не вдалося змінити статус завдання. Спробуйте ще раз.",
         statuses: {
           TODO: "До виконання",
           IN_PROGRESS: "У роботі",
@@ -87,6 +112,11 @@ export function ContactTasks({
         due: "Due",
         reminder: "Reminder",
         assignedTo: "Assigned to",
+        start: "Start",
+        complete: "Complete",
+        reopen: "Reopen",
+        updateError:
+          "Could not update the task status. Please try again.",
         statuses: {
           TODO: "To do",
           IN_PROGRESS: "In progress",
@@ -121,6 +151,35 @@ export function ContactTasks({
       task.status === "CANCELED",
   );
 
+  function handleStatusChange(
+    taskId: string,
+    status: TaskStatus,
+  ) {
+    setError(null);
+    setPendingTaskId(taskId);
+
+    startTransition(async () => {
+      try {
+        await updateTaskStatus({
+          taskId,
+          workspaceId,
+          status,
+        });
+
+        router.refresh();
+      } catch (taskError) {
+        console.error(
+          "Failed to update task status:",
+          taskError,
+        );
+
+        setError(copy.updateError);
+      } finally {
+        setPendingTaskId(null);
+      }
+    });
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -142,6 +201,12 @@ export function ContactTasks({
       </CardHeader>
 
       <CardContent>
+        {error ? (
+          <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        ) : null}
+
         {tasks.length === 0 ? (
           <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed px-6 text-center">
             <span className="flex size-11 items-center justify-center rounded-xl border bg-muted/40">
@@ -164,9 +229,13 @@ export function ContactTasks({
                   <TaskItem
                     key={task.id}
                     task={task}
-                    locale={locale}
                     dateFormatter={dateFormatter}
                     copy={copy}
+                    isUpdating={
+                      isPending &&
+                      pendingTaskId === task.id
+                    }
+                    onStatusChange={handleStatusChange}
                   />
                 ))}
               </div>
@@ -178,9 +247,13 @@ export function ContactTasks({
                   <TaskItem
                     key={task.id}
                     task={task}
-                    locale={locale}
                     dateFormatter={dateFormatter}
                     copy={copy}
+                    isUpdating={
+                      isPending &&
+                      pendingTaskId === task.id
+                    }
+                    onStatusChange={handleStatusChange}
                   />
                 ))}
               </div>
@@ -192,28 +265,41 @@ export function ContactTasks({
   );
 }
 
+type TaskCopy = {
+  created: string;
+  due: string;
+  reminder: string;
+  assignedTo: string;
+  start: string;
+  complete: string;
+  reopen: string;
+  statuses: Record<TaskStatus, string>;
+  priorities: Record<TaskPriority, string>;
+};
+
 type TaskItemProps = {
   task: ContactTask;
-  locale: string;
   dateFormatter: Intl.DateTimeFormat;
-  copy: {
-    created: string;
-    due: string;
-    reminder: string;
-    assignedTo: string;
-    statuses: Record<ContactTask["status"], string>;
-    priorities: Record<ContactTask["priority"], string>;
-  };
+  copy: TaskCopy;
+  isUpdating: boolean;
+  onStatusChange: (
+    taskId: string,
+    status: TaskStatus,
+  ) => void;
 };
 
 function TaskItem({
   task,
   dateFormatter,
   copy,
+  isUpdating,
+  onStatusChange,
 }: TaskItemProps) {
   const isInactive =
     task.status === "COMPLETED" ||
     task.status === "CANCELED";
+
+  const action = getTaskAction(task.status, copy);
 
   return (
     <article
@@ -228,7 +314,7 @@ function TaskItem({
         </span>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <h3
                 className={[
@@ -294,6 +380,28 @@ function TaskItem({
               />
             ) : null}
           </div>
+
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              disabled={isUpdating}
+              onClick={() =>
+                onStatusChange(
+                  task.id,
+                  action.nextStatus,
+                )
+              }
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isUpdating ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                action.icon
+              )}
+
+              {action.label}
+            </button>
+          </div>
         </div>
       </div>
     </article>
@@ -314,6 +422,7 @@ function TaskMeta({
   return (
     <span className="inline-flex items-center gap-1.5">
       {icon}
+
       <span>
         {label}: {value}
       </span>
@@ -321,9 +430,34 @@ function TaskMeta({
   );
 }
 
-function getStatusIcon(
-  status: ContactTask["status"],
+function getTaskAction(
+  status: TaskStatus,
+  copy: TaskCopy,
 ) {
+  if (status === "TODO") {
+    return {
+      label: copy.start,
+      nextStatus: "IN_PROGRESS" as const,
+      icon: <Clock3 className="size-4" />,
+    };
+  }
+
+  if (status === "IN_PROGRESS") {
+    return {
+      label: copy.complete,
+      nextStatus: "COMPLETED" as const,
+      icon: <CheckCircle2 className="size-4" />,
+    };
+  }
+
+  return {
+    label: copy.reopen,
+    nextStatus: "TODO" as const,
+    icon: <RotateCcw className="size-4" />,
+  };
+}
+
+function getStatusIcon(status: TaskStatus) {
   if (status === "COMPLETED") {
     return <CheckCircle2 className="size-5" />;
   }
