@@ -29,6 +29,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  WorkflowConditionList,
+  type WorkflowConditionItem,
+} from "@/features/workflows/components/workflow-condition-list";
 import { cn } from "@/lib/utils";
 
 type WorkflowStatus = "DRAFT" | "ACTIVE";
@@ -120,6 +124,40 @@ function getApiErrorMessage(
   return "Failed to create workflow.";
 }
 
+function parseConditionValue(
+  condition: WorkflowConditionItem,
+): string | number | boolean | null {
+  if (
+    condition.operator === "EXISTS" ||
+    condition.operator === "NOT_EXISTS"
+  ) {
+    return null;
+  }
+
+  const trimmedValue = condition.value.trim();
+
+  if (
+    condition.field === "contact.leadScore" &&
+    trimmedValue !== ""
+  ) {
+    const numericValue = Number(trimmedValue);
+
+    if (Number.isFinite(numericValue)) {
+      return numericValue;
+    }
+  }
+
+  if (trimmedValue === "true") {
+    return true;
+  }
+
+  if (trimmedValue === "false") {
+    return false;
+  }
+
+  return trimmedValue;
+}
+
 export function WorkflowBuilder() {
   const router = useRouter();
   const params = useParams<{ locale: string }>();
@@ -133,6 +171,9 @@ export function WorkflowBuilder() {
   const [description, setDescription] = useState("");
   const [triggerType, setTriggerType] =
     useState<WorkflowTriggerType>("CONTACT_CREATED");
+  const [conditions, setConditions] = useState<
+    WorkflowConditionItem[]
+  >([]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [submitStatus, setSubmitStatus] =
@@ -142,7 +183,17 @@ export function WorkflowBuilder() {
   const selectedTrigger = getTriggerOption(triggerType);
 
   const isNameValid = name.trim().length >= 2;
-  const canSubmit = isNameValid && !isSaving;
+
+  const areConditionsValid = conditions.every(
+    (condition) =>
+      condition.field.trim().length > 0 &&
+      (condition.operator === "EXISTS" ||
+        condition.operator === "NOT_EXISTS" ||
+        condition.value.trim().length > 0),
+  );
+
+  const canSubmit =
+    isNameValid && areConditionsValid && !isSaving;
 
   async function createWorkflow(
     status: WorkflowStatus,
@@ -150,6 +201,13 @@ export function WorkflowBuilder() {
     if (!isNameValid) {
       setError(
         "Workflow name must contain at least 2 characters.",
+      );
+      return;
+    }
+
+    if (!areConditionsValid) {
+      setError(
+        "Complete all condition values before saving the workflow.",
       );
       return;
     }
@@ -171,6 +229,12 @@ export function WorkflowBuilder() {
           trigger: {
             type: triggerType,
           },
+          conditions: conditions.map((condition, index) => ({
+            field: condition.field,
+            operator: condition.operator,
+            value: parseConditionValue(condition),
+            position: index,
+          })),
         }),
       });
 
@@ -227,8 +291,8 @@ export function WorkflowBuilder() {
             </div>
 
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Define the event that starts this workflow. Conditions
-              and actions will be added in the next builder steps.
+              Configure the trigger and optional conditions that
+              control when this workflow should run.
             </p>
           </div>
 
@@ -406,6 +470,17 @@ export function WorkflowBuilder() {
               </div>
             </CardContent>
           </Card>
+
+          <WorkflowConditionList
+            conditions={conditions}
+            onChange={(nextConditions) => {
+              setConditions(nextConditions);
+
+              if (error) {
+                setError(null);
+              }
+            }}
+          />
         </main>
 
         <aside className="space-y-6">
@@ -437,7 +512,13 @@ export function WorkflowBuilder() {
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Conditions
                 </p>
-                <p>Not configured yet</p>
+                <p>
+                  {conditions.length === 0
+                    ? "No conditions"
+                    : `${conditions.length} condition${
+                        conditions.length === 1 ? "" : "s"
+                      }`}
+                </p>
               </div>
 
               <div className="space-y-1">
@@ -454,8 +535,8 @@ export function WorkflowBuilder() {
               Builder progress
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              This first version saves workflow details and the
-              trigger. Conditions and actions will be connected next.
+              Workflow details, trigger and conditions are now
+              connected. Actions will be added in the next step.
             </p>
           </div>
         </aside>
