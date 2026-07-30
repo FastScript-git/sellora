@@ -14,6 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  WorkflowActionList,
+} from "@/features/workflows/components/workflow-action-list";
+import type {
+  WorkflowActionItem,
+} from "@/features/workflows/components/workflow-action-card";
+import {
   WorkflowConditionList,
   type WorkflowConditionItem,
 } from "@/features/workflows/components/workflow-condition-list";
@@ -103,15 +109,23 @@ export function WorkflowBuilder() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+
   const [triggerType, setTriggerType] =
     useState<WorkflowTriggerType>("CONTACT_CREATED");
+
   const [conditions, setConditions] = useState<
     WorkflowConditionItem[]
   >([]);
 
+  const [actions, setActions] = useState<
+    WorkflowActionItem[]
+  >([]);
+
   const [isSaving, setIsSaving] = useState(false);
+
   const [submitStatus, setSubmitStatus] =
     useState<WorkflowStatus | null>(null);
+
   const [error, setError] = useState<string | null>(null);
 
   const isNameValid = name.trim().length >= 2;
@@ -167,6 +181,14 @@ export function WorkflowBuilder() {
             value: parseConditionValue(condition),
             position: index,
           })),
+          ...(actions.length > 0
+            ? {
+                actions: actions.map((action, index) => ({
+                  type: action.type,
+                  position: index,
+                })),
+              }
+            : {}),
         }),
       });
 
@@ -215,6 +237,7 @@ export function WorkflowBuilder() {
           <Card>
             <CardHeader>
               <CardTitle>Workflow details</CardTitle>
+
               <CardDescription>
                 Give the workflow a clear name and optional
                 description.
@@ -248,6 +271,7 @@ export function WorkflowBuilder() {
                   <span>
                     Use a name that explains the workflow goal.
                   </span>
+
                   <span>{name.length}/120</span>
                 </div>
 
@@ -296,12 +320,24 @@ export function WorkflowBuilder() {
               }
             }}
           />
+
+          <WorkflowActionList
+            actions={actions}
+            onChange={(nextActions) => {
+              setActions(nextActions);
+
+              if (error) {
+                setError(null);
+              }
+            }}
+          />
         </main>
 
         <WorkflowSummary
           name={name}
           triggerType={triggerType}
           conditionsCount={conditions.length}
+          actionsCount={actions.length}
         />
       </div>
     </div>

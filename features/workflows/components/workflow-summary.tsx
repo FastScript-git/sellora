@@ -13,12 +13,14 @@ type WorkflowSummaryProps = {
   name: string;
   triggerType: WorkflowTriggerType;
   conditionsCount: number;
+  actionsCount: number;
 };
 
 export function WorkflowSummary({
   name,
   triggerType,
   conditionsCount,
+  actionsCount,
 }: WorkflowSummaryProps) {
   return (
     <aside className="space-y-6">
@@ -34,6 +36,7 @@ export function WorkflowSummary({
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Name
             </p>
+
             <p className="font-medium">
               {name.trim() || "Untitled workflow"}
             </p>
@@ -43,6 +46,7 @@ export function WorkflowSummary({
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Trigger
             </p>
+
             <p>{getWorkflowTriggerLabel(triggerType)}</p>
           </div>
 
@@ -50,6 +54,7 @@ export function WorkflowSummary({
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Conditions
             </p>
+
             <p>
               {conditionsCount === 0
                 ? "No conditions"
@@ -63,7 +68,14 @@ export function WorkflowSummary({
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Actions
             </p>
-            <p>Not configured yet</p>
+
+            <p>
+              {actionsCount === 0
+                ? "No actions"
+                : `${actionsCount} action${
+                    actionsCount === 1 ? "" : "s"
+                  }`}
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -72,9 +84,10 @@ export function WorkflowSummary({
         <p className="text-sm font-medium">
           Builder progress
         </p>
+
         <p className="mt-1 text-sm text-muted-foreground">
-          Workflow details, trigger and conditions are now
-          connected. Actions will be added in the next step.
+          Workflow details, trigger, conditions and action ordering
+          are connected. Action settings will be added next.
         </p>
       </div>
     </aside>
