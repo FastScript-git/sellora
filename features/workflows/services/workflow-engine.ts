@@ -1,4 +1,5 @@
 import type { Prisma } from "@/lib/generated/prisma/client";
+import { getWorkflowById } from "../repositories/workflow.repository";
 
 import type {
   WorkflowActionDefinition,
@@ -23,6 +24,19 @@ import { getTriggeredWorkflows } from "./trigger.service";
 type TriggeredWorkflow = Awaited<
   ReturnType<typeof getTriggeredWorkflows>
 >[number];
+
+type RunWorkflowByIdParams = {
+  workflowId: string;
+  workspaceId: string;
+
+  contactId?: string;
+  conversationId?: string;
+  messageId?: string;
+  taskId?: string;
+  employeeId?: string;
+
+  payload?: Record<string, unknown>;
+};
 
 function createRuntimeContext({
   event,
@@ -273,4 +287,53 @@ export async function runWorkflowEvent(
   }
 
   return results;
+}
+
+export async function runWorkflowById({
+  workflowId,
+  workspaceId,
+  contactId,
+  conversationId,
+  messageId,
+  taskId,
+  employeeId,
+  payload = {},
+}: RunWorkflowByIdParams): Promise<WorkflowExecutionResult | null> {
+  const workflow = await getWorkflowById({
+    workflowId,
+    workspaceId,
+  });
+
+  if (!workflow || !workflow.trigger) {
+    return null;
+  }
+
+  const event: WorkflowEvent = {
+    workspaceId,
+    triggerType: workflow.trigger.type,
+    ...(contactId ? { contactId } : {}),
+    ...(conversationId ? { conversationId } : {}),
+    ...(messageId ? { messageId } : {}),
+    ...(taskId ? { taskId } : {}),
+    ...(employeeId ? { employeeId } : {}),
+    payload,
+  };
+
+  try {
+    return await executeTriggeredWorkflow({
+      workflow,
+      event,
+    });
+  } catch (error) {
+    return {
+      workflowId: workflow.id,
+      executionId: "",
+      status: "FAILED",
+      actions: [],
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unexpected workflow execution error",
+    };
+  }
 }
