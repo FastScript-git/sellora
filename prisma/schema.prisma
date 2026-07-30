@@ -101,6 +101,7 @@ model Workspace {
   aiEmployees AIEmployee[]
   contacts    Contact[]
   tasks       Task[]
+  workflows   Workflow[]
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 }
@@ -432,4 +433,163 @@ model Task {
   @@index([workspaceId, dueAt])
   @@index([contactId])
   @@index([employeeId])
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum WorkflowTriggerType {
+  CONTACT_CREATED
+  MESSAGE_RECEIVED
+  LEAD_QUALIFIED
+  TASK_COMPLETED
+  PIPELINE_STAGE_CHANGED
+}
+
+enum WorkflowConditionOperator {
+  EQUALS
+  NOT_EQUALS
+  GREATER_THAN
+  GREATER_THAN_OR_EQUAL
+  LESS_THAN
+  LESS_THAN_OR_EQUAL
+  CONTAINS
+  NOT_CONTAINS
+  EXISTS
+  NOT_EXISTS
+}
+
+enum WorkflowActionType {
+  CREATE_TASK
+  ASSIGN_EMPLOYEE
+  UPDATE_CONTACT_STATUS
+  ADD_TAG
+  SEND_EMAIL
+  RUN_AI_PROMPT
+}
+
+enum WorkflowExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+enum WorkflowLogLevel {
+  INFO
+  WARNING
+  ERROR
+}
+
+model Workflow {
+  id          String @id @default(cuid())
+  workspaceId String
+
+  name        String
+  description String?
+
+  status WorkflowStatus @default(DRAFT)
+
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  trigger   WorkflowTrigger?
+
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  workflowConditions WorkflowCondition[]
+  workflowActions    WorkflowAction[]
+  executions         WorkflowExecution[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+}
+
+model WorkflowTrigger {
+  id         String @id @default(cuid())
+  workflowId String @unique
+
+  type   WorkflowTriggerType
+  config Json?
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+}
+
+model WorkflowCondition {
+  id         String @id @default(cuid())
+  workflowId String
+
+  field    String
+  operator WorkflowConditionOperator
+  value    Json?
+  position Int                       @default(0)
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workflowId])
+  @@index([workflowId, position])
+}
+
+model WorkflowAction {
+  id         String @id @default(cuid())
+  workflowId String
+
+  type     WorkflowActionType
+  config   Json?
+  position Int                @default(0)
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workflowId])
+  @@index([workflowId, position])
+}
+
+model WorkflowExecution {
+  id         String @id @default(cuid())
+  workflowId String
+
+  status WorkflowExecutionStatus @default(PENDING)
+  input  Json?
+  output Json?
+
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  workflow Workflow               @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  logs     WorkflowExecutionLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workflowId])
+  @@index([status])
+}
+
+model WorkflowExecutionLog {
+  id          String @id @default(cuid())
+  executionId String
+
+  level    WorkflowLogLevel
+  message  String
+  metadata Json?
+
+  execution WorkflowExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([executionId])
 }
