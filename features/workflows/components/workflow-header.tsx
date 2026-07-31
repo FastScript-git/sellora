@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import {
   ArrowLeft,
+  Check,
   Loader2,
   Save,
   Sparkles,
@@ -11,28 +13,48 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type WorkflowStatus = "DRAFT" | "ACTIVE";
+export type WorkflowSubmitStatus = "DRAFT" | "ACTIVE";
 
 type WorkflowHeaderProps = {
-  workflowsPath: string;
+  mode?: "create" | "edit";
+  backPath: string;
   canSubmit: boolean;
   isSaving: boolean;
-  submitStatus: WorkflowStatus | null;
-  onSubmit: (status: WorkflowStatus) => void;
+  submitStatus: WorkflowSubmitStatus | null;
+  onSubmit: (status: WorkflowSubmitStatus) => void;
 };
 
 export function WorkflowHeader({
-  workflowsPath,
+  mode = "create",
+  backPath,
   canSubmit,
   isSaving,
   submitStatus,
   onSubmit,
 }: WorkflowHeaderProps) {
+  const isEditMode = mode === "edit";
+
+  const title = isEditMode
+    ? "Edit workflow"
+    : "Create workflow";
+
+  const description = isEditMode
+    ? "Update the workflow details, trigger, conditions and actions."
+    : "Configure the trigger, conditions and actions that control how this workflow runs.";
+
+  const draftButtonLabel = isEditMode
+    ? "Save as draft"
+    : "Save draft";
+
+  const activeButtonLabel = isEditMode
+    ? "Save and activate"
+    : "Create active workflow";
+
   return (
     <header className="flex flex-col gap-4 border-b pb-6">
       <div>
-        <a
-          href={workflowsPath}
+        <Link
+          href={backPath}
           className={cn(
             buttonVariants({
               variant: "ghost",
@@ -42,8 +64,10 @@ export function WorkflowHeader({
           )}
         >
           <ArrowLeft />
-          Back to workflows
-        </a>
+          {isEditMode
+            ? "Back to workflow"
+            : "Back to workflows"}
+        </Link>
       </div>
 
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
@@ -54,13 +78,12 @@ export function WorkflowHeader({
             </div>
 
             <h1 className="text-2xl font-semibold tracking-tight">
-              Create workflow
+              {title}
             </h1>
           </div>
 
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Configure the trigger and optional conditions that control
-            when this workflow should run.
+            {description}
           </p>
         </div>
 
@@ -76,7 +99,8 @@ export function WorkflowHeader({
             ) : (
               <Save />
             )}
-            Save draft
+
+            {draftButtonLabel}
           </Button>
 
           <Button
@@ -86,10 +110,13 @@ export function WorkflowHeader({
           >
             {isSaving && submitStatus === "ACTIVE" ? (
               <Loader2 className="animate-spin" />
+            ) : isEditMode ? (
+              <Check />
             ) : (
               <Sparkles />
             )}
-            Create active workflow
+
+            {activeButtonLabel}
           </Button>
         </div>
       </div>

@@ -30,15 +30,33 @@ import {
   type WorkflowTriggerType,
 } from "@/features/workflows/components/workflow-trigger-card";
 
-type WorkflowStatus = "DRAFT" | "ACTIVE";
+type WorkflowBuilderMode = "create" | "edit";
+type WorkflowSubmitStatus = "DRAFT" | "ACTIVE";
 
-type CreateWorkflowResponse = {
+export type WorkflowBuilderInitialData = {
+  name: string;
+  description: string;
+  status: WorkflowSubmitStatus;
+  triggerType: WorkflowTriggerType;
+  conditions: WorkflowConditionItem[];
+  actions: WorkflowActionItem[];
+};
+
+type WorkflowBuilderProps = {
+  employees: WorkflowEmployeeOption[];
+  mode?: WorkflowBuilderMode;
+  workflowId?: string;
+  initialWorkflow?: WorkflowBuilderInitialData;
+};
+
+type WorkflowMutationResponse = {
   success: boolean;
   workflow?: {
     id: string;
   };
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
+  formErrors?: string[];
 };
 
 type WorkflowActionPayloadConfig = Record<
@@ -46,27 +64,61 @@ type WorkflowActionPayloadConfig = Record<
   string | number | null
 >;
 
+const emptyInitialWorkflow: WorkflowBuilderInitialData = {
+  name: "",
+  description: "",
+  status: "DRAFT",
+  triggerType: "CONTACT_CREATED",
+  conditions: [],
+  actions: [],
+};
+
+function cloneConditions(
+  conditions: WorkflowConditionItem[],
+): WorkflowConditionItem[] {
+  return conditions.map((condition) => ({
+    ...condition,
+  }));
+}
+
+function cloneActions(
+  actions: WorkflowActionItem[],
+): WorkflowActionItem[] {
+  return actions.map((action) => ({
+    ...action,
+    config: {
+      ...action.config,
+    },
+  }));
+}
+
 function getApiErrorMessage(
-  data: CreateWorkflowResponse,
+  data: WorkflowMutationResponse,
+  fallbackMessage: string,
 ): string {
   if (data.error) {
     return data.error;
   }
 
   if (data.fieldErrors) {
-    const firstError = Object.values(data.fieldErrors)
+    const firstFieldError = Object.values(data.fieldErrors)
       .flat()
       .find(
         (message): message is string =>
           typeof message === "string",
       );
 
-    if (firstError) {
-      return firstError;
+    if (firstFieldError) {
+      return firstFieldError;
     }
   }
 
-  return "Failed to create workflow.";
+  const firstFormError = data.formErrors?.find(
+    (message): message is string =>
+      typeof message === "string",
+  );
+
+  return firstFormError ?? fallbackMessage;
 }
 
 function parseConditionValue(
@@ -175,12 +227,11 @@ function buildActionConfig(
   }
 }
 
-type WorkflowBuilderProps = {
-  employees: WorkflowEmployeeOption[];
-};
-
 export function WorkflowBuilder({
   employees,
+  mode = "create",
+  workflowId,
+  initialWorkflow,
 }: WorkflowBuilderProps) {
   const router = useRouter();
   const params = useParams<{ locale: string }>();
@@ -192,26 +243,43 @@ export function WorkflowBuilder({
 
   const workflowsPath = `/${locale}/dashboard/workflows`;
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const source =
+    mode === "edit" && initialWorkflow
+      ? initialWorkflow
+      : emptyInitialWorkflow;
+
+  const [name, setName] = useState(source.name);
+
+  const [description, setDescription] = useState(
+    source.description,
+  );
 
   const [triggerType, setTriggerType] =
-    useState<WorkflowTriggerType>("CONTACT_CREATED");
+    useState<WorkflowTriggerType>(
+      source.triggerType,
+    );
 
   const [conditions, setConditions] = useState<
     WorkflowConditionItem[]
-  >([]);
+  >(() => cloneConditions(source.conditions));
 
   const [actions, setActions] = useState<
     WorkflowActionItem[]
-  >([]);
+  >(() => cloneActions(source.actions));
 
   const [isSaving, setIsSaving] = useState(false);
 
   const [submitStatus, setSubmitStatus] =
-    useState<WorkflowStatus | null>(null);
+    useState<WorkflowSubmitStatus | null>(null);
 
   const [error, setError] = useState<string | null>(null);
+
+  const isEditMode = mode === "edit";
+
+  const workflowDetailsPath =
+    isEditMode && workflowId
+      ? `${workflowsPath}/${workflowId}`
+      : workflowsPath;
 
   const isNameValid = name.trim().length >= 2;
 
@@ -229,7 +297,9 @@ export function WorkflowBuilder({
         return true;
       }
 
-      const dueInDays = action.config.dueInDays?.trim();
+      const dueInDays =
+        action.config.dueInDays?.trim();
+
       const reminderInHours =
         action.config.reminderInHours?.trim();
 
@@ -244,7 +314,8 @@ export function WorkflowBuilder({
           Number(reminderInHours) >= 0);
 
       return (
-        isDueInDaysValid && isReminderInHoursValid
+        isDueInDaysValid &&
+        isReminderInHoursValid
       );
     },
   );
@@ -260,8 +331,8 @@ export function WorkflowBuilder({
     areActionsValid &&
     !isSaving;
 
-  async function createWorkflow(
-    status: WorkflowStatus,
+  async function saveWorkflow(
+    status: WorkflowSubmitStatus,
   ): Promise<void> {
     if (!isNameValid) {
       setError(
@@ -298,53 +369,84 @@ export function WorkflowBuilder({
       return;
     }
 
+    if (isEditMode && !workflowId) {
+      setError(
+        "Workflow ID is required for editing.",
+      );
+      return;
+    }
+
     setIsSaving(true);
     setSubmitStatus(status);
     setError(null);
 
+    const requestBody = {
+      name: name.trim(),
+      description: description.trim() || null,
+      status,
+      trigger: {
+        type: triggerType,
+      },
+      conditions: conditions.map(
+        (condition, index) => ({
+          field: condition.field,
+          operator: condition.operator,
+          value: parseConditionValue(condition),
+          position: index,
+        }),
+      ),
+      actions: actions.map((action, index) => ({
+        type: action.type,
+        config: buildActionConfig(action),
+        position: index,
+      })),
+    };
+
+    const endpoint = isEditMode
+      ? `/api/workflows/${workflowId}`
+      : "/api/workflows";
+
+    const method = isEditMode ? "PATCH" : "POST";
+
+    const fallbackError = isEditMode
+      ? "Failed to update workflow."
+      : "Failed to create workflow.";
+
     try {
-      const response = await fetch("/api/workflows", {
-        method: "POST",
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: name.trim(),
-          description: description.trim() || null,
-          status,
-          trigger: {
-            type: triggerType,
-          },
-          conditions: conditions.map(
-            (condition, index) => ({
-              field: condition.field,
-              operator: condition.operator,
-              value: parseConditionValue(condition),
-              position: index,
-            }),
-          ),
-          actions: actions.map((action, index) => ({
-            type: action.type,
-            config: buildActionConfig(action),
-            position: index,
-          })),
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data =
-        (await response.json()) as CreateWorkflowResponse;
+        (await response.json()) as WorkflowMutationResponse;
 
       if (!response.ok || !data.success) {
-        throw new Error(getApiErrorMessage(data));
+        throw new Error(
+          getApiErrorMessage(data, fallbackError),
+        );
       }
 
-      router.push(workflowsPath);
+      const savedWorkflowId =
+        data.workflow?.id ?? workflowId;
+
+      if (savedWorkflowId) {
+        router.push(
+          `${workflowsPath}/${savedWorkflowId}`,
+        );
+      } else {
+        router.push(workflowsPath);
+      }
+
       router.refresh();
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Failed to create workflow.",
+          : fallbackError,
       );
     } finally {
       setIsSaving(false);
@@ -355,11 +457,12 @@ export function WorkflowBuilder({
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       <WorkflowHeader
-        workflowsPath={workflowsPath}
+        mode={mode}
+        backPath={workflowDetailsPath}
         canSubmit={canSubmit}
         isSaving={isSaving}
         submitStatus={submitStatus}
-        onSubmit={createWorkflow}
+        onSubmit={saveWorkflow}
       />
 
       {error ? (
@@ -432,9 +535,13 @@ export function WorkflowBuilder({
                   maxLength={500}
                   rows={4}
                   placeholder="Describe what this workflow should accomplish..."
-                  onChange={(event) =>
-                    setDescription(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setDescription(event.target.value);
+
+                    if (error) {
+                      setError(null);
+                    }
+                  }}
                 />
 
                 <div className="flex justify-end text-xs text-muted-foreground">
@@ -446,7 +553,13 @@ export function WorkflowBuilder({
 
           <WorkflowTriggerCard
             value={triggerType}
-            onChange={setTriggerType}
+            onChange={(nextTriggerType) => {
+              setTriggerType(nextTriggerType);
+
+              if (error) {
+                setError(null);
+              }
+            }}
           />
 
           <WorkflowConditionList
