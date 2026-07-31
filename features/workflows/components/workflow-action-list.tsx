@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  createDefaultActionConfig,
   WorkflowActionCard,
   type WorkflowActionItem,
 } from "@/features/workflows/components/workflow-action-card";
@@ -24,6 +25,7 @@ function createAction(): WorkflowActionItem {
   return {
     id: crypto.randomUUID(),
     type: "CREATE_TASK",
+    config: createDefaultActionConfig("CREATE_TASK"),
   };
 }
 
@@ -82,11 +84,14 @@ export function WorkflowActionList({
     }
 
     const nextActions = [...actions];
-    const currentAction = nextActions[currentIndex];
-    const targetAction = nextActions[targetIndex];
 
-    nextActions[currentIndex] = targetAction;
-    nextActions[targetIndex] = currentAction;
+    [
+      nextActions[currentIndex],
+      nextActions[targetIndex],
+    ] = [
+      nextActions[targetIndex],
+      nextActions[currentIndex],
+    ];
 
     onChange(nextActions);
   }
@@ -99,7 +104,7 @@ export function WorkflowActionList({
             <CardTitle>Actions</CardTitle>
 
             <CardDescription>
-              Choose what Sellora should do after the trigger and
+              Define what Sellora should do after the trigger and
               conditions are matched.
             </CardDescription>
           </div>
@@ -124,7 +129,7 @@ export function WorkflowActionList({
             </p>
 
             <p className="mt-1 text-sm text-muted-foreground">
-              Add an action to define what the workflow should do.
+              Add at least one action before saving the workflow.
             </p>
 
             <Button

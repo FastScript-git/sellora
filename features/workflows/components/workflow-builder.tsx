@@ -13,11 +13,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { WorkflowActionList } from "@/features/workflows/components/workflow-action-list";
 import {
-  WorkflowActionList,
-} from "@/features/workflows/components/workflow-action-list";
-import type {
-  WorkflowActionItem,
+  isWorkflowActionValid,
+  type WorkflowActionItem,
 } from "@/features/workflows/components/workflow-action-card";
 import {
   WorkflowConditionList,
@@ -40,6 +39,11 @@ type CreateWorkflowResponse = {
   error?: string;
   fieldErrors?: Record<string, string[] | undefined>;
 };
+
+type WorkflowActionPayloadConfig = Record<
+  string,
+  string | number | null
+>;
 
 function getApiErrorMessage(
   data: CreateWorkflowResponse,
@@ -98,12 +102,86 @@ function parseConditionValue(
   return trimmedValue;
 }
 
+function parseOptionalNonNegativeNumber(
+  value: string | undefined,
+): number | undefined {
+  const trimmedValue = value?.trim();
+
+  if (!trimmedValue) {
+    return undefined;
+  }
+
+  const numericValue = Number(trimmedValue);
+
+  if (
+    !Number.isFinite(numericValue) ||
+    numericValue < 0
+  ) {
+    return undefined;
+  }
+
+  return numericValue;
+}
+
+function buildActionConfig(
+  action: WorkflowActionItem,
+): WorkflowActionPayloadConfig {
+  switch (action.type) {
+    case "CREATE_TASK": {
+      const dueInDays = parseOptionalNonNegativeNumber(
+        action.config.dueInDays,
+      );
+
+      const reminderInHours =
+        parseOptionalNonNegativeNumber(
+          action.config.reminderInHours,
+        );
+
+      return {
+        title:
+          action.config.title?.trim() || "Workflow task",
+        description:
+          action.config.description?.trim() || null,
+        priority: action.config.priority ?? "MEDIUM",
+        ...(dueInDays !== undefined
+          ? {
+              dueInDays,
+            }
+          : {}),
+        ...(reminderInHours !== undefined
+          ? {
+              reminderInHours,
+            }
+          : {}),
+      };
+    }
+
+    case "ASSIGN_EMPLOYEE":
+      return {
+        employeeId:
+          action.config.employeeId?.trim() ?? "",
+      };
+
+    case "UPDATE_CONTACT_STATUS":
+      return {
+        status: action.config.status ?? "LEAD",
+      };
+
+    case "ADD_TAG":
+      return {
+        tag: action.config.tag?.trim() ?? "",
+      };
+  }
+}
+
 export function WorkflowBuilder() {
   const router = useRouter();
   const params = useParams<{ locale: string }>();
 
   const locale =
-    typeof params.locale === "string" ? params.locale : "en";
+    typeof params.locale === "string"
+      ? params.locale
+      : "en";
 
   const workflowsPath = `/${locale}/dashboard/workflows`;
 
@@ -138,8 +216,42 @@ export function WorkflowBuilder() {
         condition.value.trim().length > 0),
   );
 
+  const areActionNumbersValid = actions.every(
+    (action) => {
+      if (action.type !== "CREATE_TASK") {
+        return true;
+      }
+
+      const dueInDays = action.config.dueInDays?.trim();
+      const reminderInHours =
+        action.config.reminderInHours?.trim();
+
+      const isDueInDaysValid =
+        !dueInDays ||
+        (Number.isFinite(Number(dueInDays)) &&
+          Number(dueInDays) >= 0);
+
+      const isReminderInHoursValid =
+        !reminderInHours ||
+        (Number.isFinite(Number(reminderInHours)) &&
+          Number(reminderInHours) >= 0);
+
+      return (
+        isDueInDaysValid && isReminderInHoursValid
+      );
+    },
+  );
+
+  const areActionsValid =
+    actions.length > 0 &&
+    actions.every(isWorkflowActionValid) &&
+    areActionNumbersValid;
+
   const canSubmit =
-    isNameValid && areConditionsValid && !isSaving;
+    isNameValid &&
+    areConditionsValid &&
+    areActionsValid &&
+    !isSaving;
 
   async function createWorkflow(
     status: WorkflowStatus,
@@ -154,6 +266,27 @@ export function WorkflowBuilder() {
     if (!areConditionsValid) {
       setError(
         "Complete all condition values before saving the workflow.",
+      );
+      return;
+    }
+
+    if (actions.length === 0) {
+      setError(
+        "Add at least one action before saving the workflow.",
+      );
+      return;
+    }
+
+    if (!actions.every(isWorkflowActionValid)) {
+      setError(
+        "Complete all required action settings before saving the workflow.",
+      );
+      return;
+    }
+
+    if (!areActionNumbersValid) {
+      setError(
+        "Due days and reminder hours must be valid non-negative numbers.",
       );
       return;
     }
@@ -175,20 +308,19 @@ export function WorkflowBuilder() {
           trigger: {
             type: triggerType,
           },
-          conditions: conditions.map((condition, index) => ({
-            field: condition.field,
-            operator: condition.operator,
-            value: parseConditionValue(condition),
+          conditions: conditions.map(
+            (condition, index) => ({
+              field: condition.field,
+              operator: condition.operator,
+              value: parseConditionValue(condition),
+              position: index,
+            }),
+          ),
+          actions: actions.map((action, index) => ({
+            type: action.type,
+            config: buildActionConfig(action),
             position: index,
           })),
-          ...(actions.length > 0
-            ? {
-                actions: actions.map((action, index) => ({
-                  type: action.type,
-                  position: index,
-                })),
-              }
-            : {}),
         }),
       });
 
