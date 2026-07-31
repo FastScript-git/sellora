@@ -17,6 +17,7 @@ import { WorkflowActionList } from "@/features/workflows/components/workflow-act
 import {
   isWorkflowActionValid,
   type WorkflowActionItem,
+  type WorkflowEmployeeOption,
 } from "@/features/workflows/components/workflow-action-card";
 import {
   WorkflowConditionList,
@@ -174,7 +175,13 @@ function buildActionConfig(
   }
 }
 
-export function WorkflowBuilder() {
+type WorkflowBuilderProps = {
+  employees: WorkflowEmployeeOption[];
+};
+
+export function WorkflowBuilder({
+  employees,
+}: WorkflowBuilderProps) {
   const router = useRouter();
   const params = useParams<{ locale: string }>();
 
@@ -455,6 +462,7 @@ export function WorkflowBuilder() {
 
           <WorkflowActionList
             actions={actions}
+            employees={employees}
             onChange={(nextActions) => {
               setActions(nextActions);
 

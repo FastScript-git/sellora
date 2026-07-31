@@ -24,6 +24,13 @@ export type WorkflowActionType =
   | "UPDATE_CONTACT_STATUS"
   | "ADD_TAG";
 
+export type WorkflowEmployeeOption = {
+  id: string;
+  name: string;
+  role: string;
+  status: "DRAFT" | "ACTIVE" | "PAUSED" | "ARCHIVED";
+};
+
 export type WorkflowActionConfig = {
   title?: string;
   description?: string;
@@ -46,6 +53,7 @@ type WorkflowActionCardProps = {
   index: number;
   isFirst: boolean;
   isLast: boolean;
+  employees: WorkflowEmployeeOption[];
   onChange: (
     actionId: string,
     updates: Partial<WorkflowActionItem>,
@@ -145,9 +153,11 @@ function getActionDescription(
 
 function ActionConfiguration({
   action,
+  employees,
   onConfigChange,
 }: {
   action: WorkflowActionItem;
+  employees: WorkflowEmployeeOption[];
   onConfigChange: (
     updates: Partial<WorkflowActionConfig>,
   ) => void;
@@ -157,9 +167,7 @@ function ActionConfiguration({
       return (
         <div className="grid gap-4">
           <div className="space-y-2">
-            <Label
-              htmlFor={`action-${action.id}-title`}
-            >
+            <Label htmlFor={`action-${action.id}-title`}>
               Task title
             </Label>
 
@@ -238,9 +246,7 @@ function ActionConfiguration({
             </div>
 
             <div className="space-y-2">
-              <Label
-                htmlFor={`action-${action.id}-due-days`}
-              >
+              <Label htmlFor={`action-${action.id}-due-days`}>
                 Due in days
               </Label>
 
@@ -289,26 +295,51 @@ function ActionConfiguration({
     case "ASSIGN_EMPLOYEE":
       return (
         <div className="space-y-2">
-          <Label
-            htmlFor={`action-${action.id}-employee`}
-          >
-            AI employee ID
-          </Label>
+          <Label>AI employee</Label>
 
-          <Input
-            id={`action-${action.id}-employee`}
-            value={action.config.employeeId ?? ""}
-            placeholder="Enter the AI employee ID"
-            onChange={(event) =>
-              onConfigChange({
-                employeeId: event.target.value,
-              })
-            }
-          />
+          {employees.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-4">
+              <p className="text-sm font-medium">
+                No AI employees available
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Create an AI employee before using this action.
+              </p>
+            </div>
+          ) : (
+            <Select
+              value={action.config.employeeId ?? ""}
+              onValueChange={(value) => {
+                if (value) {
+                  onConfigChange({
+                    employeeId: String(value),
+                  });
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select AI employee" />
+              </SelectTrigger>
+
+              <SelectContent>
+                {employees.map((employee) => (
+                  <SelectItem
+                    key={employee.id}
+                    value={employee.id}
+                  >
+                    <span>{employee.name}</span>
+                    <span className="text-muted-foreground">
+                      {employee.role}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <p className="text-xs text-muted-foreground">
-            The employee must belong to the current workspace and
-            must not be archived.
+            Archived AI employees are excluded from this list.
           </p>
         </div>
       );
@@ -352,8 +383,7 @@ function ActionConfiguration({
           </Select>
 
           <p className="text-xs text-muted-foreground">
-            This action requires a contact in the workflow runtime
-            context.
+            This action requires a contact in the workflow context.
           </p>
         </div>
       );
@@ -391,6 +421,7 @@ export function WorkflowActionCard({
   index,
   isFirst,
   isLast,
+  employees,
   onChange,
   onMoveUp,
   onMoveDown,
@@ -495,6 +526,7 @@ export function WorkflowActionCard({
         <div className="border-t pt-5">
           <ActionConfiguration
             action={action}
+            employees={employees}
             onConfigChange={updateConfig}
           />
         </div>

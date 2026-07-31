@@ -14,10 +14,12 @@ import {
   createDefaultActionConfig,
   WorkflowActionCard,
   type WorkflowActionItem,
+  type WorkflowEmployeeOption,
 } from "@/features/workflows/components/workflow-action-card";
 
 type WorkflowActionListProps = {
   actions: WorkflowActionItem[];
+  employees: WorkflowEmployeeOption[];
   onChange: (actions: WorkflowActionItem[]) => void;
 };
 
@@ -31,6 +33,7 @@ function createAction(): WorkflowActionItem {
 
 export function WorkflowActionList({
   actions,
+  employees,
   onChange,
 }: WorkflowActionListProps) {
   function addAction(): void {
@@ -151,6 +154,7 @@ export function WorkflowActionList({
                 index={index}
                 isFirst={index === 0}
                 isLast={index === actions.length - 1}
+                employees={employees}
                 onChange={updateAction}
                 onMoveUp={(actionId) =>
                   moveAction(actionId, "up")
