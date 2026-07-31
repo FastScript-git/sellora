@@ -37,6 +37,7 @@ import type {
   WorkflowTriggerType,
 } from "@/lib/generated/prisma/client";
 import { cn } from "@/lib/utils";
+import { WorkflowRunButton } from "@/features/workflows/components/workflow-run-button";
 
 type WorkflowDetailsData = NonNullable<
   Awaited<ReturnType<typeof getWorkflowById>>
@@ -387,6 +388,10 @@ export function WorkflowDetails({
               </p>
             </div>
           </div>
+
+          <WorkflowRunButton
+            workflowId={workflow.id}
+          />
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
