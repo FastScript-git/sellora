@@ -366,3 +366,106 @@ export async function deleteWorkflow({
     },
   });
 }
+
+type DuplicateWorkflowParams = {
+  workflowId: string;
+  workspaceId: string;
+};
+
+export async function duplicateWorkflow({
+  workflowId,
+  workspaceId,
+}: DuplicateWorkflowParams) {
+  return prisma.$transaction(async (transaction) => {
+    const sourceWorkflow =
+      await transaction.workflow.findFirst({
+        where: {
+          id: workflowId,
+          workspaceId,
+        },
+        include: {
+          trigger: true,
+          workflowConditions: {
+            orderBy: {
+              position: "asc",
+            },
+          },
+          workflowActions: {
+            orderBy: {
+              position: "asc",
+            },
+          },
+        },
+      });
+
+    if (!sourceWorkflow || !sourceWorkflow.trigger) {
+      return null;
+    }
+
+    return transaction.workflow.create({
+      data: {
+        workspaceId,
+        name: `${sourceWorkflow.name} (Copy)`,
+        description: sourceWorkflow.description,
+        status: "DRAFT",
+
+        trigger: {
+          create: {
+            type: sourceWorkflow.trigger.type,
+            ...(sourceWorkflow.trigger.config !== null
+              ? {
+                  config:
+                    sourceWorkflow.trigger.config,
+                }
+              : {}),
+          },
+        },
+
+        workflowConditions: {
+          create: sourceWorkflow.workflowConditions.map(
+            (condition, index) => ({
+              field: condition.field,
+              operator: condition.operator,
+              ...(condition.value !== null
+                ? {
+                    value: condition.value,
+                  }
+                : {}),
+              position: condition.position ?? index,
+            }),
+          ),
+        },
+
+        workflowActions: {
+          create: sourceWorkflow.workflowActions.map(
+            (action, index) => ({
+              type: action.type,
+              ...(action.config !== null
+                ? {
+                    config: action.config,
+                  }
+                : {}),
+              position: action.position ?? index,
+            }),
+          ),
+        },
+      },
+
+      include: {
+        trigger: true,
+
+        workflowConditions: {
+          orderBy: {
+            position: "asc",
+          },
+        },
+
+        workflowActions: {
+          orderBy: {
+            position: "asc",
+          },
+        },
+      },
+    });
+  });
+}

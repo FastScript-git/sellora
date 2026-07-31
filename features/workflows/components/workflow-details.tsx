@@ -9,6 +9,7 @@ import {
   Clock3,
   FilePenLine,
   GitBranch,
+  Pencil,
   History,
   Play,
   Settings2,
@@ -37,6 +38,8 @@ import type {
   WorkflowTriggerType,
 } from "@/lib/generated/prisma/client";
 import { cn } from "@/lib/utils";
+import { WorkflowArchiveButton } from "@/features/workflows/components/workflow-archive-button";
+import { WorkflowDuplicateButton } from "@/features/workflows/components/workflow-duplicate-button";
 import { WorkflowRunButton } from "@/features/workflows/components/workflow-run-button";
 
 type WorkflowDetailsData = NonNullable<
@@ -338,6 +341,7 @@ export function WorkflowDetails({
   
 
   const workflowsPath = `/${locale}/dashboard/workflows`;
+  const editWorkflowPath = `${workflowsPath}/${workflow.id}/edit`;
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8">
@@ -389,9 +393,36 @@ export function WorkflowDetails({
             </div>
           </div>
 
-          <WorkflowRunButton
-            workflowId={workflow.id}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={editWorkflowPath}
+              className={cn(
+                buttonVariants({
+                  variant: "outline",
+                }),
+                "gap-2",
+              )}
+            >
+              <Pencil className="size-4" />
+              {isUkrainian
+                ? "Редагувати workflow"
+                : "Edit workflow"}
+            </Link>
+
+            <WorkflowDuplicateButton
+              workflowId={workflow.id}
+              locale={locale}
+            />
+
+            <WorkflowRunButton
+              workflowId={workflow.id}
+            />
+
+            <WorkflowArchiveButton
+              workflowId={workflow.id}
+              locale={locale}
+            />
+          </div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">
