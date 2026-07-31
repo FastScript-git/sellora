@@ -1,9 +1,9 @@
-import type {
+import {
   Prisma,
-  WorkflowActionType,
-  WorkflowConditionOperator,
-  WorkflowStatus,
-  WorkflowTriggerType,
+  type WorkflowActionType,
+  type WorkflowConditionOperator,
+  type WorkflowStatus,
+  type WorkflowTriggerType,
 } from "@/lib/generated/prisma/client";
 
 import { prisma } from "@/lib/prisma";
@@ -89,17 +89,22 @@ export async function getWorkflowById({
   });
 }
 
-type CreateWorkflowConditionInput = {
+type WorkflowConditionInput = {
   field: string;
   operator: WorkflowConditionOperator;
   value?: Prisma.InputJsonValue;
   position?: number;
 };
 
-type CreateWorkflowActionInput = {
+type WorkflowActionInput = {
   type: WorkflowActionType;
   config?: Prisma.InputJsonValue;
   position?: number;
+};
+
+type WorkflowTriggerInput = {
+  type: WorkflowTriggerType;
+  config?: Prisma.InputJsonValue;
 };
 
 type CreateWorkflowParams = {
@@ -107,12 +112,9 @@ type CreateWorkflowParams = {
   name: string;
   description?: string | null;
   status?: WorkflowStatus;
-  trigger: {
-    type: WorkflowTriggerType;
-    config?: Prisma.InputJsonValue;
-  };
-  conditions?: CreateWorkflowConditionInput[];
-  actions?: CreateWorkflowActionInput[];
+  trigger: WorkflowTriggerInput;
+  conditions?: WorkflowConditionInput[];
+  actions?: WorkflowActionInput[];
 };
 
 export async function createWorkflow({
@@ -218,6 +220,133 @@ export async function updateWorkflowStatus({
     data: {
       status,
     },
+  });
+}
+
+type ReplaceWorkflowDefinitionParams = {
+  workflowId: string;
+  workspaceId: string;
+  name: string;
+  description?: string | null;
+  status: WorkflowStatus;
+  trigger: WorkflowTriggerInput;
+  conditions: WorkflowConditionInput[];
+  actions: WorkflowActionInput[];
+};
+
+export async function replaceWorkflowDefinition({
+  workflowId,
+  workspaceId,
+  name,
+  description,
+  status,
+  trigger,
+  conditions,
+  actions,
+}: ReplaceWorkflowDefinitionParams) {
+  return prisma.$transaction(async (transaction) => {
+    const existingWorkflow =
+      await transaction.workflow.findFirst({
+        where: {
+          id: workflowId,
+          workspaceId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    if (!existingWorkflow) {
+      return null;
+    }
+
+    await transaction.workflow.update({
+      where: {
+        id: workflowId,
+      },
+      data: {
+        name,
+        description,
+        status,
+      },
+    });
+
+    await transaction.workflowTrigger.upsert({
+      where: {
+        workflowId,
+      },
+      update: {
+        type: trigger.type,
+         ...(trigger.config !== undefined
+         ? { config: trigger.config }
+         : { config: Prisma.DbNull }),
+      },
+      create: {
+        workflowId,
+        type: trigger.type,
+        ...(trigger.config !== undefined
+          ? { config: trigger.config }
+          : {}),
+      },
+    });
+
+    await transaction.workflowCondition.deleteMany({
+      where: {
+        workflowId,
+      },
+    });
+
+    if (conditions.length > 0) {
+      await transaction.workflowCondition.createMany({
+        data: conditions.map((condition, index) => ({
+          workflowId,
+          field: condition.field,
+          operator: condition.operator,
+          ...(condition.value !== undefined
+            ? { value: condition.value }
+            : {}),
+          position: condition.position ?? index,
+        })),
+      });
+    }
+
+    await transaction.workflowAction.deleteMany({
+      where: {
+        workflowId,
+      },
+    });
+
+    if (actions.length > 0) {
+      await transaction.workflowAction.createMany({
+        data: actions.map((action, index) => ({
+          workflowId,
+          type: action.type,
+          ...(action.config !== undefined
+            ? { config: action.config }
+            : {}),
+          position: action.position ?? index,
+        })),
+      });
+    }
+
+    return transaction.workflow.findUnique({
+      where: {
+        id: workflowId,
+      },
+      include: {
+        trigger: true,
+        workflowConditions: {
+          orderBy: {
+            position: "asc",
+          },
+        },
+        workflowActions: {
+          orderBy: {
+            position: "asc",
+          },
+        },
+      },
+    });
   });
 }
 
