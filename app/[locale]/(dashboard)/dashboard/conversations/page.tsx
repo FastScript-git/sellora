@@ -19,6 +19,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ConversationComposer } from "@/features/conversations/components/conversation-composer";
 import { ConversationMessage } from "@/features/conversations/components/conversation-message";
 import {
   getWorkspaceInbox,
@@ -567,6 +568,11 @@ export default async function ConversationsPage({
                     </div>
                   )}
                 </div>
+
+                <ConversationComposer
+                  conversationId={selectedConversation.id}
+                  locale={locale}
+                />
               </section>
 
               <aside className="space-y-6 border-t bg-muted/10 p-5 xl:border-l xl:border-t-0">
