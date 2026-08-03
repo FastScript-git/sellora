@@ -150,6 +150,23 @@ export async function getWorkspaceInbox({
         },
       },
 
+      assignedMember: {
+        select: {
+          id: true,
+          role: true,
+
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              imageUrl: true,
+            },
+          },
+        },
+      },
+
       messages: {
         take: 1,
         orderBy: {
@@ -302,6 +319,23 @@ export async function getWorkspaceInboxConversation({
           id: true,
           type: true,
           name: true,
+        },
+      },
+
+      assignedMember: {
+        select: {
+          id: true,
+          role: true,
+
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              imageUrl: true,
+            },
+          },
         },
       },
 

@@ -85,10 +85,20 @@ export async function processKnowledgeIndexJob({
         break;
       }
 
-      case KnowledgeSourceType.FAQ:
-        throw new Error(
-          "FAQ indexing is not implemented yet.",
-        );
+      case KnowledgeSourceType.FAQ: {
+        if (!source.content) {
+          throw new Error(
+            "FAQ knowledge source does not contain any content.",
+          );
+        }
+
+        await indexKnowledgeSource({
+          knowledgeSourceId: source.id,
+          content: source.content,
+        });
+
+        break;
+      }
 
       default: {
         const unsupportedType: never = source.type;

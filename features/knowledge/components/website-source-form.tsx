@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -25,23 +26,49 @@ export function WebsiteSourceForm({
   employeeId,
   locale,
 }: WebsiteSourceFormProps) {
-  const [state, formAction, isPending] = useActionState(
-    createWebsiteSourceAction,
-    initialCreateWebsiteSourceState,
+  const t = useTranslations(
+    "aiEmployeeKnowledge.forms.website",
   );
 
-  const fieldErrors = state?.fieldErrors ?? {};
-  const message = state?.message ?? null;
-  const isSuccess = state?.success ?? false;
+  const [state, formAction, isPending] =
+    useActionState(
+      createWebsiteSourceAction,
+      initialCreateWebsiteSourceState,
+    );
+
+  const fieldErrors =
+    state?.fieldErrors ?? {};
+
+  const message =
+    state?.message ?? null;
+
+  const isSuccess =
+    state?.success ?? false;
 
   return (
-    <form action={formAction} className="space-y-6">
-      <input type="hidden" name="employeeId" value={employeeId} />
-      <input type="hidden" name="locale" value={locale} />
+    <form
+      action={formAction}
+      className="space-y-6"
+    >
+      <input
+        type="hidden"
+        name="employeeId"
+        value={employeeId}
+      />
+
+      <input
+        type="hidden"
+        name="locale"
+        value={locale}
+      />
 
       {message ? (
         <div
-          role={isSuccess ? "status" : "alert"}
+          role={
+            isSuccess
+              ? "status"
+              : "alert"
+          }
           className={
             isSuccess
               ? "rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-400"
@@ -53,45 +80,67 @@ export function WebsiteSourceForm({
       ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="title">Website name</Label>
+        <Label htmlFor="title">
+          {t("name")}
+        </Label>
 
         <Input
           id="title"
           name="title"
-          placeholder="Company website"
+          placeholder={t(
+            "namePlaceholder",
+          )}
           disabled={isPending}
-          aria-invalid={Boolean(fieldErrors.title)}
+          aria-invalid={Boolean(
+            fieldErrors.title,
+          )}
           aria-describedby={
-            fieldErrors.title ? "title-error" : undefined
+            fieldErrors.title
+              ? "title-error"
+              : undefined
           }
           required
         />
 
         {fieldErrors.title ? (
-          <p id="title-error" className="text-xs text-destructive">
+          <p
+            id="title-error"
+            className="text-xs text-destructive"
+          >
             {fieldErrors.title}
           </p>
         ) : null}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="sourceUrl">Website URL</Label>
+        <Label htmlFor="sourceUrl">
+          {t("url")}
+        </Label>
 
         <Input
           id="sourceUrl"
           name="sourceUrl"
           type="url"
-          placeholder="https://example.com"
+          placeholder={t(
+            "urlPlaceholder",
+          )}
           disabled={isPending}
-          aria-invalid={Boolean(fieldErrors.sourceUrl)}
+          aria-invalid={Boolean(
+            fieldErrors.sourceUrl,
+          )}
           aria-describedby={
-            fieldErrors.sourceUrl ? "source-url-error" : undefined
+            fieldErrors.sourceUrl
+              ? "source-url-error"
+              : undefined
           }
           required
         />
 
         {fieldErrors.sourceUrl ? (
-          <p id="source-url-error" className="text-xs text-destructive">
+          <p
+            id="source-url-error"
+            className="text-xs text-destructive"
+          >
             {fieldErrors.sourceUrl}
           </p>
         ) : null}
@@ -102,7 +151,9 @@ export function WebsiteSourceForm({
         disabled={isPending}
         className="w-full"
       >
-        {isPending ? "Adding..." : "Add Website"}
+        {isPending
+          ? t("submitting")
+          : t("submit")}
       </Button>
     </form>
   );

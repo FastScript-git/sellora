@@ -19,14 +19,16 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ConversationComposer } from "@/features/conversations/components/conversation-composer";
-import { ConversationMessage } from "@/features/conversations/components/conversation-message";
+import { ConversationHandoffCard } from "@/features/conversations/components/conversation-handoff-card";
+import { ConversationThread } from "@/features/conversations/components/conversation-thread";
+import { ConversationsLiveRefresh } from "@/features/conversations/components/conversations-live-refresh";
 import {
   getWorkspaceInbox,
   getWorkspaceInboxConversation,
   getWorkspaceInboxFilterOptions,
   type InboxConversationStatus,
 } from "@/features/conversations/repositories/inbox.repository";
+import { getWorkspaceMembers } from "@/features/conversations/repositories/conversation.repository";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 import { cn } from "@/lib/utils";
 
@@ -72,7 +74,11 @@ export default async function ConversationsPage({
 
   const status = normalizeStatus(rawStatus);
 
-  const [conversations, filterOptions] = await Promise.all([
+  const [
+    conversations,
+    filterOptions,
+    workspaceMembers,
+  ] = await Promise.all([
     getWorkspaceInbox({
       workspaceId: workspace.id,
       search,
@@ -84,6 +90,10 @@ export default async function ConversationsPage({
     getWorkspaceInboxFilterOptions({
       workspaceId: workspace.id,
     }),
+
+    getWorkspaceMembers(
+      workspace.id,
+    ),
   ]);
 
   const selectedConversationId =
@@ -238,6 +248,7 @@ export default async function ConversationsPage({
 
   return (
     <div className="space-y-6">
+      <ConversationsLiveRefresh />
       <section>
         <h1 className="text-3xl font-semibold tracking-tight">
           {copy.title}
@@ -545,7 +556,7 @@ export default async function ConversationsPage({
                   </span>
                 </header>
 
-                <div className="max-h-[640px] flex-1 overflow-y-auto">
+                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
                   {selectedConversation.messages.length ===
                   0 ? (
                     <div className="flex min-h-[500px] items-center justify-center px-6 text-center">
@@ -554,25 +565,28 @@ export default async function ConversationsPage({
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-5 px-5 py-6">
-                      {selectedConversation.messages.map(
-                        (message) => (
-                          <ConversationMessage
-                            key={message.id}
-                            role={message.role}
-                            content={message.content}
-                            createdAt={message.createdAt}
-                          />
-                        ),
-                      )}
-                    </div>
+                    <ConversationThread
+                      key={
+                        selectedConversation.messages.at(-1)?.id ??
+                        selectedConversation.id
+                      }
+                      conversationId={
+                        selectedConversation.id
+                      }
+                      initialMessages={
+                        selectedConversation.messages
+                      }
+                      locale={locale}
+                      showComposer
+                      showAIReply
+                      aiReplyDisabled={
+                        selectedConversation.messages.length === 0 ||
+                        selectedConversation.mode === "HUMAN"
+                      }
+                    />
                   )}
                 </div>
 
-                <ConversationComposer
-                  conversationId={selectedConversation.id}
-                  locale={locale}
-                />
               </section>
 
               <aside className="space-y-6 border-t bg-muted/10 p-5 xl:border-l xl:border-t-0">
@@ -597,6 +611,20 @@ export default async function ConversationsPage({
                     </div>
                   </div>
                 </section>
+
+                <ConversationHandoffCard
+                  conversationId={
+                    selectedConversation.id
+                  }
+                  initialMode={
+                    selectedConversation.mode
+                  }
+                  initialAssignedMemberId={
+                    selectedConversation.assignedMemberId
+                  }
+                  members={workspaceMembers}
+                  locale={locale}
+                />
 
                 <section className="border-t pt-5">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

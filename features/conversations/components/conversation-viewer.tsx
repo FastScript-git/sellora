@@ -1,4 +1,8 @@
-import { Bot, MessageSquare, UserRound } from "lucide-react";
+import {
+  Bot,
+  MessageSquare,
+  UserRound,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 
 import {
@@ -7,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ConversationMessage } from "@/features/conversations/components/conversation-message";
+import { ConversationThread } from "@/features/conversations/components/conversation-thread";
 import { getConversationDetails } from "@/features/conversations/services/get-conversation-details";
 
 type ConversationViewerProps = {
@@ -23,120 +27,142 @@ export async function ConversationViewer({
   workspaceId,
   locale,
 }: ConversationViewerProps) {
-  const conversation = await getConversationDetails({
-    conversationId,
-    employeeId,
-    workspaceId,
-  });
+  const conversation =
+    await getConversationDetails({
+      conversationId,
+      employeeId,
+      workspaceId,
+    });
 
   if (!conversation) {
     notFound();
   }
 
-  const isUkrainian = locale === "uk";
+  const isUkrainian =
+    locale === "uk";
 
   const copy = isUkrainian
     ? {
         fallbackTitle: "Розмова",
         messages: "повідомлень",
-        empty: "У цій розмові поки немає повідомлень.",
+        empty:
+          "У цій розмові поки немає повідомлень.",
         employee: "ШІ-співробітник",
         contact: "Контакт",
-        anonymous: "Анонімний відвідувач",
+        anonymous:
+          "Анонімний відвідувач",
         aiSummary: "AI-резюме",
-        noSummary: "AI-резюме поки не створено.",
+        noSummary:
+          "AI-резюме поки не створено.",
         leadScore: "Оцінка ліда",
         sentiment: "Настрій",
       }
     : {
         fallbackTitle: "Conversation",
         messages: "messages",
-        empty: "This conversation does not contain messages yet.",
+        empty:
+          "This conversation does not contain messages yet.",
         employee: "AI Employee",
         contact: "Contact",
-        anonymous: "Anonymous visitor",
+        anonymous:
+          "Anonymous visitor",
         aiSummary: "AI Summary",
-        noSummary: "No AI summary yet.",
+        noSummary:
+          "No AI summary yet.",
         leadScore: "Lead score",
         sentiment: "Sentiment",
       };
 
-  const contactName = conversation.contact
-    ? [
-        conversation.contact.firstName,
-        conversation.contact.lastName,
-      ]
-        .filter(Boolean)
-        .join(" ") ||
-      conversation.contact.email ||
-      copy.anonymous
-    : null;
+  const contactName =
+    conversation.contact
+      ? [
+          conversation.contact
+            .firstName,
+          conversation.contact
+            .lastName,
+        ]
+          .filter(Boolean)
+          .join(" ") ||
+        conversation.contact.email ||
+        copy.anonymous
+      : null;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <Card className="overflow-hidden">
+    <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-6">
+      <Card className="min-w-0 overflow-hidden">
         <CardHeader className="border-b">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <CardTitle className="truncate text-xl">
-                {conversation.title || copy.fallbackTitle}
+              <CardTitle className="break-words text-lg sm:text-xl">
+                {conversation.title ||
+                  copy.fallbackTitle}
               </CardTitle>
 
-              <p className="mt-1 text-sm text-muted-foreground">
-                {conversation.employee.name}
+              <p className="mt-1 break-words text-sm leading-5 text-muted-foreground">
+                {
+                  conversation.employee
+                    .name
+                }
               </p>
             </div>
 
             <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs text-muted-foreground">
-              <MessageSquare className="size-3.5" />
-              {conversation.messages.length} {copy.messages}
+              <MessageSquare className="size-3.5 shrink-0" />
+
+              {
+                conversation.messages
+                  .length
+              }{" "}
+              {copy.messages}
             </span>
           </div>
         </CardHeader>
 
         <CardContent className="p-0">
-          {conversation.messages.length === 0 ? (
-            <div className="flex min-h-96 items-center justify-center px-6 text-center">
-              <p className="text-sm text-muted-foreground">
+          {conversation.messages
+            .length === 0 ? (
+            <div className="flex min-h-80 items-center justify-center px-4 py-12 text-center sm:min-h-96 sm:px-6">
+              <p className="max-w-md break-words text-sm leading-6 text-muted-foreground">
                 {copy.empty}
               </p>
             </div>
           ) : (
-            <div className="space-y-5 px-5 py-6 sm:px-6">
-              {conversation.messages.map((message) => (
-                <ConversationMessage
-                  key={message.id}
-                  role={message.role}
-                  content={message.content}
-                  createdAt={message.createdAt}
-                />
-              ))}
-            </div>
+            <ConversationThread
+              conversationId={conversation.id}
+              initialMessages={conversation.messages}
+              locale={locale}
+            />
           )}
         </CardContent>
       </Card>
 
-      <aside className="space-y-6">
-        <Card>
+      <aside className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:space-y-6">
+        <Card className="min-w-0">
           <CardHeader>
-            <CardTitle className="text-base">
+            <CardTitle className="break-words text-base">
               {copy.employee}
             </CardTitle>
           </CardHeader>
 
           <CardContent>
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
                 <Bot className="size-4 text-muted-foreground" />
               </span>
 
-              <div className="min-w-0">
-                <p className="truncate font-medium">
-                  {conversation.employee.name}
+              <div className="min-w-0 flex-1">
+                <p className="break-words font-medium">
+                  {
+                    conversation.employee
+                      .name
+                  }
                 </p>
 
-                <p className="mt-1 truncate text-sm text-muted-foreground">
-                  {conversation.employee.role}
+                <p className="mt-1 break-words text-sm leading-5 text-muted-foreground">
+                  {
+                    conversation.employee
+                      .role
+                  }
                 </p>
               </div>
             </div>
@@ -144,61 +170,67 @@ export async function ConversationViewer({
         </Card>
 
         {conversation.contact ? (
-          <Card>
+          <Card className="min-w-0">
             <CardHeader>
-              <CardTitle className="text-base">
+              <CardTitle className="break-words text-base">
                 {copy.contact}
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3">
+            <CardContent className="min-w-0 space-y-4">
+              <div className="flex min-w-0 items-center gap-3">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
                   <UserRound className="size-4 text-muted-foreground" />
                 </span>
 
-                <div className="min-w-0">
-                  <p className="truncate font-medium">
+                <div className="min-w-0 flex-1">
+                  <p className="break-words font-medium">
                     {contactName}
                   </p>
 
-                  <p className="mt-1 truncate text-sm text-muted-foreground">
-                    {conversation.contact.email || "—"}
+                  <p className="mt-1 break-all text-sm leading-5 text-muted-foreground">
+                    {conversation.contact
+                      .email || "—"}
                   </p>
                 </div>
               </div>
 
-              <section className="rounded-xl border bg-background/50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <section className="min-w-0 rounded-xl border bg-background/50 p-4">
+                <p className="break-words text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   {copy.aiSummary}
                 </p>
 
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {conversation.contact.summary ||
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">
+                  {conversation.contact
+                    .summary ||
                     copy.noSummary}
                 </p>
               </section>
 
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                <div className="flex items-center justify-between rounded-xl border px-4 py-3">
-                  <span className="text-sm text-muted-foreground">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                <div className="flex min-w-0 flex-col gap-2 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between xl:flex-row">
+                  <span className="break-words text-sm text-muted-foreground">
                     {copy.leadScore}
                   </span>
 
-                  <span className="font-semibold tabular-nums">
-                    {conversation.contact.leadScore !== null
+                  <span className="shrink-0 font-semibold tabular-nums">
+                    {conversation.contact
+                      .leadScore !== null
                       ? `${conversation.contact.leadScore}/100`
                       : "—"}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between rounded-xl border px-4 py-3">
-                  <span className="text-sm text-muted-foreground">
+                <div className="flex min-w-0 flex-col gap-2 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between xl:flex-row">
+                  <span className="break-words text-sm text-muted-foreground">
                     {copy.sentiment}
                   </span>
 
-                  <span className="text-sm font-medium">
-                    {conversation.contact.sentiment}
+                  <span className="break-words text-sm font-medium">
+                    {
+                      conversation.contact
+                        .sentiment
+                    }
                   </span>
                 </div>
               </div>

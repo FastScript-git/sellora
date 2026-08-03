@@ -1,0 +1,435 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum AIEmployeeStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum KnowledgeSourceType {
+  WEBSITE
+  PDF
+  FAQ
+  NOTE
+}
+
+enum KnowledgeSourceStatus {
+  PENDING
+  INDEXING
+  INDEXED
+  FAILED
+}
+
+enum AIEmployeeLanguage {
+  EN
+  UK
+}
+
+enum KnowledgeIndexJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ContactSentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
+
+enum ContactStatus {
+  LEAD
+  QUALIFIED
+  CUSTOMER
+  CLOSED
+}
+
+enum ContactTimelineEventType {
+  CONTACT_CREATED
+
+  CONVERSATION_STARTED
+
+  USER_MESSAGE
+
+  AI_MESSAGE
+
+  AI_SUMMARY_UPDATED
+
+  SENTIMENT_CHANGED
+
+  LEAD_SCORE_CHANGED
+
+  TAGS_UPDATED
+
+  STATUS_CHANGED
+}
+
+model User {
+  id             String            @id @default(cuid())
+  externalAuthId String            @unique
+  email          String            @unique
+  firstName      String?
+  lastName       String?
+  imageUrl       String?
+  memberships    WorkspaceMember[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([email])
+}
+
+model Workspace {
+  id          String            @id @default(cuid())
+  name        String
+  slug        String            @unique
+  memberships WorkspaceMember[]
+  aiEmployees AIEmployee[]
+  contacts    Contact[]
+  tasks       Task[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  role        WorkspaceRole @default(MEMBER)
+  userId      String
+  workspaceId String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+}
+
+model AIEmployee {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  name        String
+  role        String
+  description String?
+
+  status   AIEmployeeStatus   @default(DRAFT)
+  language AIEmployeeLanguage @default(EN)
+  tone     String?
+
+  instructions String?
+
+  identity      String?
+  goals         String?
+  rules         String?
+  responseStyle String?
+  restrictions  String?
+
+  knowledgeSources KnowledgeSource[]
+  conversations    Conversation[]
+  channels         Channel[]
+  tasks            Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+}
+
+model Contact {
+  id          String @id @default(cuid())
+  workspaceId String
+
+  firstName String?
+  lastName  String?
+  email     String?
+  phone     String?
+
+  company  String?
+  jobTitle String?
+
+  avatarUrl String?
+
+  notes   String?
+  summary String?
+
+  sentiment ContactSentiment @default(NEUTRAL)
+
+  status ContactStatus @default(LEAD)
+
+  lastInteractionAt DateTime?
+
+  tags Json?
+
+  leadScore Int?
+
+  nextAction String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  conversations Conversation[]
+  timeline      ContactTimelineEvent[]
+  tasks         Task[]
+
+  @@index([workspaceId])
+  @@index([email])
+  @@index([phone])
+}
+
+model ContactTimelineEvent {
+  id String @id @default(cuid())
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  type ContactTimelineEventType
+
+  title String
+
+  description String?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([contactId, createdAt])
+}
+
+model KnowledgeSource {
+  id String @id @default(cuid())
+
+  employeeId String
+  employee   AIEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  type KnowledgeSourceType
+
+  title String
+
+  sourceUrl String?
+  content   String?
+
+  storageKey    String? @unique
+  fileName      String?
+  mimeType      String?
+  fileSizeBytes Int?
+
+  status KnowledgeSourceStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chunks    KnowledgeChunk[]
+  indexJobs KnowledgeIndexJob[]
+
+  @@index([employeeId])
+  @@index([employeeId, type])
+}
+
+model KnowledgeChunk {
+  id String @id @default(cuid())
+
+  knowledgeSourceId String
+  knowledgeSource   KnowledgeSource @relation(fields: [knowledgeSourceId], references: [id], onDelete: Cascade)
+
+  chunkIndex Int
+
+  content String
+
+  embedding Unsupported("vector(1536)")?
+
+  tokenCount Int?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([knowledgeSourceId])
+  @@index([knowledgeSourceId, chunkIndex])
+}
+
+model KnowledgeIndexJob {
+  id String @id @default(cuid())
+
+  knowledgeSourceId String
+  knowledgeSource   KnowledgeSource @relation(fields: [knowledgeSourceId], references: [id], onDelete: Cascade)
+
+  status KnowledgeIndexJobStatus @default(PENDING)
+
+  attempts Int @default(0)
+
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  error String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([knowledgeSourceId])
+  @@index([status, createdAt])
+  @@index([knowledgeSourceId, status])
+}
+
+model Conversation {
+  id String @id @default(cuid())
+
+  employeeId String
+  contactId  String?
+  channelId  String?
+
+  employee AIEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  contact  Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  channel  Channel?   @relation(fields: [channelId], references: [id], onDelete: SetNull)
+
+  title String?
+
+  status      ConversationStatus @default(OPEN)
+  unreadCount Int                @default(0)
+
+  lastMessageAt DateTime?
+  closedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages ConversationMessage[]
+
+  @@index([employeeId])
+  @@index([contactId])
+  @@index([channelId])
+  @@index([status])
+  @@index([employeeId, status])
+  @@index([lastMessageAt])
+}
+
+model ConversationMessage {
+  id String @id @default(cuid())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  role ConversationRole
+
+  content String
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model Channel {
+  id String @id @default(cuid())
+
+  employeeId String
+  employee   AIEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  conversations Conversation[]
+
+  type ChannelType
+
+  name String
+
+  widgetKey String? @unique
+
+  widgetTitle String?
+
+  widgetGreeting String?
+
+  widgetPrimaryColor String? @default("#2563eb")
+
+  widgetPosition String? @default("bottom-right")
+
+  isEnabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([employeeId, type])
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum ConversationRole {
+  USER
+  ASSISTANT
+}
+
+enum ChannelType {
+  WEBSITE
+  TELEGRAM
+  WHATSAPP
+  MESSENGER
+  INSTAGRAM
+  API
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Task {
+  id          String  @id @default(cuid())
+  workspaceId String
+  contactId   String?
+  employeeId  String?
+
+  title       String
+  description String?
+
+  status   TaskStatus   @default(TODO)
+  priority TaskPriority @default(MEDIUM)
+
+  dueAt       DateTime?
+  completedAt DateTime?
+
+  reminderAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact   Contact?    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  employee  AIEmployee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, dueAt])
+  @@index([contactId])
+  @@index([employeeId])
+}

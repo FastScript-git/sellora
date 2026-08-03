@@ -40,6 +40,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { WorkflowArchiveButton } from "@/features/workflows/components/workflow-archive-button";
 import { WorkflowDuplicateButton } from "@/features/workflows/components/workflow-duplicate-button";
+import { WorkflowRestoreButton } from "@/features/workflows/components/workflow-restore-button";
 import { WorkflowRunButton } from "@/features/workflows/components/workflow-run-button";
 
 type WorkflowDetailsData = NonNullable<
@@ -394,34 +395,43 @@ export function WorkflowDetails({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={editWorkflowPath}
-              className={cn(
-                buttonVariants({
-                  variant: "outline",
-                }),
-                "gap-2",
-              )}
-            >
-              <Pencil className="size-4" />
-              {isUkrainian
-                ? "Редагувати workflow"
-                : "Edit workflow"}
-            </Link>
-
             <WorkflowDuplicateButton
               workflowId={workflow.id}
               locale={locale}
             />
 
-            <WorkflowRunButton
-              workflowId={workflow.id}
-            />
+            {workflow.status === "ARCHIVED" ? (
+              <WorkflowRestoreButton
+                workflowId={workflow.id}
+                locale={locale}
+              />
+            ) : (
+              <>
+                <Link
+                  href={editWorkflowPath}
+                  className={cn(
+                    buttonVariants({
+                      variant: "outline",
+                    }),
+                    "gap-2",
+                  )}
+                >
+                  <Pencil className="size-4" />
+                  {isUkrainian
+                    ? "Редагувати workflow"
+                    : "Edit workflow"}
+                </Link>
 
-            <WorkflowArchiveButton
-              workflowId={workflow.id}
-              locale={locale}
-            />
+                <WorkflowRunButton
+                  workflowId={workflow.id}
+                />
+
+                <WorkflowArchiveButton
+                  workflowId={workflow.id}
+                  locale={locale}
+                />
+              </>
+            )}
           </div>
         </div>
 

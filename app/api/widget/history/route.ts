@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { validateWidgetRequest } from "@/features/channels/services/validate-widget-request";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -7,28 +8,39 @@ export const dynamic = "force-dynamic";
 
 const MAX_HISTORY_MESSAGES = 100;
 
-function getCorsHeaders() {
+function getCorsHeaders(request?: Request) {
+  const origin = request?.headers.get("origin");
+
   return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Origin":
+      origin && origin !== "null"
+        ? origin
+        : "*",
+    "Access-Control-Allow-Methods":
+      "GET, OPTIONS",
+    "Access-Control-Allow-Headers":
+      "Content-Type",
+    Vary: "Origin",
   };
 }
 
 function jsonResponse(
   body: Record<string, unknown>,
   status = 200,
+  request?: Request,
 ) {
   return NextResponse.json(body, {
     status,
-    headers: getCorsHeaders(),
+    headers: getCorsHeaders(request),
   });
 }
 
-export async function OPTIONS() {
+export async function OPTIONS(
+  request: Request,
+) {
   return new NextResponse(null, {
     status: 204,
-    headers: getCorsHeaders(),
+    headers: getCorsHeaders(request),
   });
 }
 
@@ -36,10 +48,14 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
 
   const widgetKey =
-    requestUrl.searchParams.get("widgetKey")?.trim() ?? "";
+    requestUrl.searchParams
+      .get("widgetKey")
+      ?.trim() ?? "";
 
   const conversationId =
-    requestUrl.searchParams.get("conversationId")?.trim() ?? "";
+    requestUrl.searchParams
+      .get("conversationId")
+      ?.trim() ?? "";
 
   if (!widgetKey) {
     return jsonResponse(
@@ -48,6 +64,7 @@ export async function GET(request: Request) {
         error: "Widget key is required.",
       },
       400,
+      request,
     );
   }
 
@@ -58,70 +75,66 @@ export async function GET(request: Request) {
         error: "Conversation ID is required.",
       },
       400,
+      request,
     );
   }
 
   try {
-    const channel = await prisma.channel.findUnique({
-      where: {
+    const validation =
+      await validateWidgetRequest({
+        request,
         widgetKey,
-      },
-      select: {
-        type: true,
-        isEnabled: true,
-        employee: {
-          select: {
-            id: true,
-            status: true,
-          },
-        },
-      },
-    });
+      });
 
-    if (
-      !channel ||
-      channel.type !== "WEBSITE" ||
-      !channel.isEnabled ||
-      channel.employee.status !== "ACTIVE"
-    ) {
+    if (!validation.success) {
       return jsonResponse(
         {
           success: false,
-          error: "Widget was not found or is unavailable.",
+          error: validation.error,
+          code: validation.code,
         },
-        404,
+        validation.status,
+        request,
       );
     }
 
-    const conversation = await prisma.conversation.findFirst({
-      where: {
-        id: conversationId,
-        employeeId: channel.employee.id,
-      },
-      select: {
-        id: true,
-        messages: {
-          orderBy: {
-            createdAt: "asc",
-          },
-          take: MAX_HISTORY_MESSAGES,
-          select: {
-            id: true,
-            role: true,
-            content: true,
-            createdAt: true,
+    const conversation =
+      await prisma.conversation.findFirst({
+        where: {
+          id: conversationId,
+          employeeId:
+            validation.channel.employee.id,
+        },
+
+        select: {
+          id: true,
+
+          messages: {
+            orderBy: {
+              createdAt: "asc",
+            },
+
+            take: MAX_HISTORY_MESSAGES,
+
+            select: {
+              id: true,
+              role: true,
+              content: true,
+              createdAt: true,
+            },
           },
         },
-      },
-    });
+      });
 
     if (!conversation) {
       return jsonResponse(
         {
           success: false,
-          error: "Conversation was not found.",
+          error:
+            "Conversation was not found.",
         },
         404,
+        request,
       );
     }
 
@@ -138,14 +151,19 @@ export async function GET(request: Request) {
             ? ("user" as const)
             : ("employee" as const),
         content: message.content,
-        createdAt: message.createdAt.toISOString(),
+        createdAt:
+          message.createdAt.toISOString(),
       }));
 
-    return jsonResponse({
-      success: true,
-      conversationId: conversation.id,
-      messages,
-    });
+    return jsonResponse(
+      {
+        success: true,
+        conversationId: conversation.id,
+        messages,
+      },
+      200,
+      request,
+    );
   } catch (error) {
     console.error(
       "[Widget History API] Failed to load conversation history.",
@@ -155,9 +173,11 @@ export async function GET(request: Request) {
     return jsonResponse(
       {
         success: false,
-        error: "Conversation history could not be loaded.",
+        error:
+          "Conversation history could not be loaded.",
       },
       500,
+      request,
     );
   }
 }

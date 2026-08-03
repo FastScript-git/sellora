@@ -4,67 +4,95 @@ import {
   MessagesSquare,
   Users,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
 
 type EmployeeAnalyticsCardsProps = {
   conversations: number;
   messages: number;
   contacts: number;
   knowledgeSources: number;
+  locale: string;
 };
 
-const cards = [
-  {
-    key: "conversations",
-    label: "Conversations",
-    icon: MessagesSquare,
-  },
-  {
-    key: "messages",
-    label: "Messages",
-    icon: MessageSquare,
-  },
-  {
-    key: "contacts",
-    label: "Contacts",
-    icon: Users,
-  },
-  {
-    key: "knowledgeSources",
-    label: "Knowledge Sources",
-    icon: BookOpen,
-  },
-] as const;
+export function EmployeeAnalyticsCards({
+  conversations,
+  messages,
+  contacts,
+  knowledgeSources,
+  locale,
+}: EmployeeAnalyticsCardsProps) {
+  const t = useTranslations(
+    "aiEmployeeAnalytics.metrics",
+  );
 
-export function EmployeeAnalyticsCards(
-  props: EmployeeAnalyticsCardsProps,
-) {
+  const numberFormatter =
+    new Intl.NumberFormat(locale);
+
+  const cards = [
+    {
+      key: "conversations",
+      label: t("conversations"),
+      value: conversations,
+      icon: MessagesSquare,
+    },
+    {
+      key: "messages",
+      label: t("messages"),
+      value: messages,
+      icon: MessageSquare,
+    },
+    {
+      key: "contacts",
+      label: t("contacts"),
+      value: contacts,
+      icon: Users,
+    },
+    {
+      key: "knowledgeSources",
+      label: t("knowledgeSources"),
+      value: knowledgeSources,
+      icon: BookOpen,
+    },
+  ] as const;
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section
+      aria-label={t("label")}
+      className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+    >
       {cards.map((card) => {
         const Icon = card.icon;
 
         return (
-          <Card key={card.key}>
-            <CardContent className="flex items-center justify-between p-6">
-              <div>
-                <p className="text-sm text-muted-foreground">
+          <Card
+            key={card.key}
+            className="min-w-0"
+          >
+            <CardContent className="flex min-h-28 min-w-0 items-center justify-between gap-3 p-4">
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-xs leading-5 text-muted-foreground">
                   {card.label}
                 </p>
 
-                <p className="mt-2 text-3xl font-semibold">
-                  {props[card.key]}
+                <p className="mt-2 break-all text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">
+                  {numberFormatter.format(
+                    card.value,
+                  )}
                 </p>
               </div>
 
-              <span className="flex size-12 items-center justify-center rounded-xl border bg-muted/40">
-                <Icon className="size-5 text-muted-foreground" />
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40 sm:size-11">
+                <Icon className="size-4 text-muted-foreground sm:size-5" />
               </span>
             </CardContent>
           </Card>
         );
       })}
-    </div>
+    </section>
   );
 }

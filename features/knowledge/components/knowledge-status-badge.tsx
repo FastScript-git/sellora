@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 import type { KnowledgeSourceStatus } from "@/lib/generated/prisma/client";
 import { cn } from "@/lib/utils";
 
@@ -8,55 +12,66 @@ type KnowledgeStatusBadgeProps = {
 const statusConfig: Record<
   KnowledgeSourceStatus,
   {
-    label: string;
+    translationKey:
+      | "pending"
+      | "indexing"
+      | "indexed"
+      | "failed";
     className: string;
     dotClassName: string;
   }
 > = {
   PENDING: {
-    label: "Pending",
+    translationKey: "pending",
     className:
-      "border-amber-500/30 bg-amber-500/10 text-amber-400",
-    dotClassName: "bg-amber-400",
+      "border-amber-500/30 bg-amber-500/10 text-amber-500",
+    dotClassName: "bg-amber-500",
   },
   INDEXING: {
-    label: "Indexing",
+    translationKey: "indexing",
     className:
-      "border-blue-500/30 bg-blue-500/10 text-blue-400",
-    dotClassName: "bg-blue-400",
+      "border-blue-500/30 bg-blue-500/10 text-blue-500",
+    dotClassName: "bg-blue-500",
   },
   INDEXED: {
-    label: "Indexed",
+    translationKey: "indexed",
     className:
-      "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
-    dotClassName: "bg-emerald-400",
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-500",
+    dotClassName: "bg-emerald-500",
   },
   FAILED: {
-    label: "Failed",
+    translationKey: "failed",
     className:
-      "border-red-500/30 bg-red-500/10 text-red-400",
-    dotClassName: "bg-red-400",
+      "border-red-500/30 bg-red-500/10 text-red-500",
+    dotClassName: "bg-red-500",
   },
 };
 
 export function KnowledgeStatusBadge({
   status,
 }: KnowledgeStatusBadgeProps) {
+  const t = useTranslations(
+    "aiEmployeeKnowledge.statuses",
+  );
+
   const config = statusConfig[status];
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium",
+        "inline-flex shrink-0 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium",
         config.className,
       )}
     >
       <span
         aria-hidden="true"
-        className={cn("size-1.5 rounded-full", config.dotClassName)}
+        className={cn(
+          "size-1.5 rounded-full",
+          config.dotClassName,
+        )}
       />
 
-      {config.label}
+      {t(config.translationKey)}
     </span>
   );
 }

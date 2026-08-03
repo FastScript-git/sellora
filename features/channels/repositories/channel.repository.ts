@@ -8,6 +8,7 @@ export async function getEmployeeChannels(
     where: {
       employeeId,
     },
+
     orderBy: {
       createdAt: "asc",
     },
@@ -40,28 +41,83 @@ export async function getWebsiteChannel({
   });
 }
 
-export async function updateWebsiteChannel({
-  channelId,
-  widgetTitle,
-  widgetGreeting,
-  widgetPrimaryColor,
-  widgetPosition,
-}: {
+type UpdateWebsiteChannelParams = {
   channelId: string;
+  isEnabled: boolean;
   widgetTitle: string | null;
   widgetGreeting: string | null;
   widgetPrimaryColor: string;
   widgetPosition: string;
-}) {
+  allowedDomains: string[];
+};
+
+export async function updateWebsiteChannel({
+  channelId,
+  isEnabled,
+  widgetTitle,
+  widgetGreeting,
+  widgetPrimaryColor,
+  widgetPosition,
+  allowedDomains,
+}: UpdateWebsiteChannelParams) {
   return prisma.channel.update({
     where: {
       id: channelId,
     },
+
     data: {
+      isEnabled,
       widgetTitle,
       widgetGreeting,
       widgetPrimaryColor,
       widgetPosition,
+      allowedDomains,
+    },
+  });
+}
+
+type UpdateWebsiteChannelAllowedDomainsParams = {
+  channelId: string;
+  allowedDomains: string[];
+};
+
+export async function updateWebsiteChannelAllowedDomains({
+  channelId,
+  allowedDomains,
+}: UpdateWebsiteChannelAllowedDomainsParams) {
+  return prisma.channel.update({
+    where: {
+      id: channelId,
+    },
+
+    data: {
+      allowedDomains,
+    },
+  });
+}
+
+export async function getWebsiteChannelSecurityConfig({
+  widgetKey,
+}: {
+  widgetKey: string;
+}) {
+  return prisma.channel.findUnique({
+    where: {
+      widgetKey,
+    },
+
+    select: {
+      id: true,
+      type: true,
+      isEnabled: true,
+      allowedDomains: true,
+
+      employee: {
+        select: {
+          id: true,
+          status: true,
+        },
+      },
     },
   });
 }

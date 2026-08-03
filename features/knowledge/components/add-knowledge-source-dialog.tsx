@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   ArrowLeft,
   FileText,
@@ -9,6 +8,8 @@ import {
   NotebookPen,
   Plus,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,82 +19,63 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FaqSourceForm } from "@/features/knowledge/components/faq-source-form";
 import { NoteSourceForm } from "@/features/knowledge/components/note-source-form";
 import { PdfSourceForm } from "@/features/knowledge/components/pdf-source-form";
 import { WebsiteSourceForm } from "@/features/knowledge/components/website-source-form";
 
-type SourceType = "website" | "pdf" | "faq" | "note";
+type SourceType =
+  | "website"
+  | "pdf"
+  | "faq"
+  | "note";
 
 type AddKnowledgeSourceDialogProps = {
   employeeId: string;
   locale: string;
 };
 
-const options = [
+type SourceOption = {
+  key: SourceType;
+  icon: typeof Globe;
+};
+
+const sourceOptions: SourceOption[] = [
   {
     key: "website",
     icon: Globe,
-    title: "Website",
-    description: "Import pages from your website",
   },
   {
     key: "pdf",
     icon: FileText,
-    title: "PDF",
-    description: "Upload manuals and documents",
   },
   {
     key: "faq",
     icon: HelpCircle,
-    title: "FAQ",
-    description: "Create structured questions and answers",
   },
   {
     key: "note",
     icon: NotebookPen,
-    title: "Note",
-    description: "Write custom knowledge manually",
   },
-] satisfies Array<{
-  key: SourceType;
-  icon: typeof Globe;
-  title: string;
-  description: string;
-}>;
-
-const sourceContent: Record<
-  Exclude<SourceType, "faq">,
-  {
-    title: string;
-    description: string;
-  }
-> = {
-  website: {
-    title: "Add Website",
-    description:
-      "Add a public website that this AI Employee can use as a knowledge source.",
-  },
-  pdf: {
-    title: "Upload PDF",
-    description:
-      "Upload a PDF document that this AI Employee can use in conversations.",
-  },
-  note: {
-    title: "Add Note",
-    description:
-      "Write custom knowledge that this AI Employee can use in conversations.",
-  },
-};
+];
 
 export function AddKnowledgeSourceDialog({
   employeeId,
   locale,
 }: AddKnowledgeSourceDialogProps) {
-  const [open, setOpen] = useState(false);
+  const t = useTranslations(
+    "aiEmployeeKnowledge.addSource",
+  );
+
+  const [open, setOpen] =
+    useState(false);
+
   const [selectedType, setSelectedType] =
     useState<SourceType | null>(null);
 
-  function handleOpenChange(nextOpen: boolean) {
+  function handleOpenChange(
+    nextOpen: boolean,
+  ) {
     setOpen(nextOpen);
 
     if (!nextOpen) {
@@ -101,10 +83,51 @@ export function AddKnowledgeSourceDialog({
     }
   }
 
-  const selectedContent =
-    selectedType && selectedType !== "faq"
-      ? sourceContent[selectedType]
-      : null;
+  function renderSelectedForm() {
+    if (selectedType === "website") {
+      return (
+        <WebsiteSourceForm
+          employeeId={employeeId}
+          locale={locale}
+        />
+      );
+    }
+
+    if (selectedType === "pdf") {
+      return (
+        <PdfSourceForm
+          employeeId={employeeId}
+          locale={locale}
+          onSuccess={() =>
+            handleOpenChange(false)
+          }
+        />
+      );
+    }
+
+    if (selectedType === "faq") {
+      return (
+        <FaqSourceForm
+          employeeId={employeeId}
+          locale={locale}
+          onSuccess={() =>
+            handleOpenChange(false)
+          }
+        />
+      );
+    }
+
+    if (selectedType === "note") {
+      return (
+        <NoteSourceForm
+          employeeId={employeeId}
+          locale={locale}
+        />
+      );
+    }
+
+    return null;
+  }
 
   return (
     <>
@@ -113,121 +136,98 @@ export function AddKnowledgeSourceDialog({
         onClick={() => setOpen(true)}
       >
         <Plus className="size-4" />
-        Add knowledge source
+        {t("button")}
       </Button>
 
       <Dialog
         open={open}
         onOpenChange={handleOpenChange}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-          {selectedType && selectedContent ? (
+        <DialogContent className="max-h-[90dvh] overflow-y-auto p-4 sm:max-w-2xl sm:p-6">
+          {selectedType ? (
             <>
               <DialogHeader>
-                <div className="mb-2">
+                <div className="mb-1">
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
+                    className="-ml-2"
                     onClick={() =>
                       setSelectedType(null)
                     }
                   >
                     <ArrowLeft className="size-4" />
-                    Back
+                    {t("back")}
                   </Button>
                 </div>
 
                 <DialogTitle>
-                  {selectedContent.title}
+                  {t(
+                    `selected.${selectedType}.title`,
+                  )}
                 </DialogTitle>
 
                 <DialogDescription>
-                  {selectedContent.description}
+                  {t(
+                    `selected.${selectedType}.description`,
+                  )}
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="pt-4">
-                {selectedType === "website" ? (
-                  <WebsiteSourceForm
-                    employeeId={employeeId}
-                    locale={locale}
-                  />
-                ) : null}
-
-                {selectedType === "pdf" ? (
-                  <PdfSourceForm
-                    employeeId={employeeId}
-                    locale={locale}
-                    onSuccess={() =>
-                      handleOpenChange(false)
-                    }
-                  />
-                ) : null}
-
-                {selectedType === "note" ? (
-                  <NoteSourceForm
-                    employeeId={employeeId}
-                    locale={locale}
-                  />
-                ) : null}
+              <div className="min-w-0 pt-4">
+                {renderSelectedForm()}
               </div>
             </>
           ) : (
             <>
               <DialogHeader>
                 <DialogTitle>
-                  Add Knowledge Source
+                  {t("dialogTitle")}
                 </DialogTitle>
 
                 <DialogDescription>
-                  Choose how you want to add knowledge to
-                  this AI Employee.
+                  {t("dialogDescription")}
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="grid gap-4 pt-4">
-                {options.map((option) => {
-                  const Icon = option.icon;
-                  const isAvailable =
-                    option.key !== "faq";
+              <div className="grid gap-3 pt-4 sm:grid-cols-2">
+                {sourceOptions.map(
+                  (option) => {
+                    const Icon = option.icon;
 
-                  return (
-                    <button
-                      key={option.key}
-                      type="button"
-                      disabled={!isAvailable}
-                      onClick={() => {
-                        if (isAvailable) {
-                          setSelectedType(option.key);
+                    return (
+                      <button
+                        key={option.key}
+                        type="button"
+                        onClick={() =>
+                          setSelectedType(
+                            option.key,
+                          )
                         }
-                      }}
-                      className="flex items-center gap-4 rounded-xl border p-5 text-left transition-all hover:border-primary hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-transparent"
-                    >
-                      <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
-                        <Icon className="size-6" />
-                      </div>
+                        className="flex min-h-32 items-start gap-4 rounded-xl border p-4 text-left transition-colors hover:border-primary/50 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
+                          <Icon className="size-5 text-muted-foreground" />
+                        </span>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-3">
-                          <h3 className="font-semibold">
-                            {option.title}
-                          </h3>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold">
+                            {t(
+                              `options.${option.key}.title`,
+                            )}
+                          </span>
 
-                          {!isAvailable ? (
-                            <span className="rounded-full border px-2 py-1 text-[10px] font-medium text-muted-foreground">
-                              Coming soon
-                            </span>
-                          ) : null}
-                        </div>
-
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {option.description}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
+                          <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                            {t(
+                              `options.${option.key}.description`,
+                            )}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  },
+                )}
               </div>
             </>
           )}

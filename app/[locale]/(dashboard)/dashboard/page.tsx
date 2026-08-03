@@ -1,25 +1,24 @@
-import { WorkspaceHeader } from "@/components/dashboard/workspace-header";
 import Link from "next/link";
 import {
-  ArrowRight,
   BookOpen,
   Bot,
   MessageSquare,
   Plus,
-  Radio,
   Sparkles,
-  Workflow,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
+import { WorkspaceHeader } from "@/components/dashboard/workspace-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { getAIEmployees } from "@/features/ai-employees/queries";
+import { AIEmployeesWidget } from "@/features/dashboard/components/ai-employees-widget";
+import { RecentActivityFeed } from "@/features/dashboard/components/recent-activity-feed";
+import { RecentConversationsWidget } from "@/features/dashboard/components/recent-conversations-widget";
+import { UpcomingMeetingsWidget } from "@/features/dashboard/components/upcoming-meetings-widget";
+import { getDashboardData } from "@/features/dashboard/services/dashboard.service";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 type DashboardPageProps = {
@@ -32,281 +31,183 @@ export default async function DashboardPage({
   params,
 }: DashboardPageProps) {
   const { locale } = await params;
+
   const t = await getTranslations("dashboard");
 
   const workspace = await getCurrentWorkspace();
 
-  const employees = await getAIEmployees({
+  const dashboard = await getDashboardData({
     workspaceId: workspace.id,
+    locale,
   });
 
-  const activeEmployees = employees.filter(
-    (employee) => employee.status === "ACTIVE",
-  ).length;
-
-  const recentEmployees = employees.slice(0, 3);
-
-  const employeesHref = `/${locale}/dashboard/employees`;
-  const createEmployeeHref = `/${locale}/dashboard/employees/new`;
+  const createEmployeeHref =
+    `/${locale}/dashboard/employees/new`;
 
   const metrics = [
     {
       key: "aiEmployees",
       title: t("metrics.aiEmployees.title"),
-      value: employees.length.toString(),
-      description: t("metrics.aiEmployees.description", {
-        active: activeEmployees,
-      }),
+      value: dashboard.overview.aiEmployees,
+      description: t(
+        "metrics.aiEmployees.description",
+        {
+          active:
+            dashboard.overview.activeEmployees,
+        },
+      ),
       icon: Bot,
     },
     {
       key: "conversations",
       title: t("metrics.conversations.title"),
-      value: "0",
-      description: t("metrics.conversations.description"),
+      value: dashboard.overview.conversations,
+      description: t(
+        "metrics.conversations.description",
+      ),
       icon: MessageSquare,
     },
     {
       key: "resolutionRate",
       title: t("metrics.resolutionRate.title"),
-      value: "—",
-      description: t("metrics.resolutionRate.description"),
+      value:
+        dashboard.overview.conversations > 0
+          ? `${dashboard.overview.conversationCloseRate}%`
+          : "—",
+      description: t(
+        "metrics.resolutionRate.description",
+      ),
       icon: Sparkles,
     },
     {
       key: "knowledgeSources",
-      title: t("metrics.knowledgeSources.title"),
-      value: "0",
-      description: t("metrics.knowledgeSources.description"),
+      title: t(
+        "metrics.knowledgeSources.title",
+      ),
+      value:
+        dashboard.overview.knowledgeSources,
+      description: t(
+        "metrics.knowledgeSources.description",
+      ),
       icon: BookOpen,
-    },
-  ];
-
-  const quickActions = [
-    {
-      key: "employee",
-      title: t("quickActions.createEmployee.title"),
-      description: t("quickActions.createEmployee.description"),
-      href: createEmployeeHref,
-      icon: Plus,
-    },
-    {
-      key: "knowledge",
-      title: t("quickActions.addKnowledge.title"),
-      description: t("quickActions.addKnowledge.description"),
-      href: `/${locale}/dashboard/knowledge`,
-      icon: BookOpen,
-    },
-    {
-      key: "channel",
-      title: t("quickActions.connectChannel.title"),
-      description: t("quickActions.connectChannel.description"),
-      href: `/${locale}/dashboard/channels`,
-      icon: Radio,
-    },
-    {
-      key: "automation",
-      title: t("quickActions.createAutomation.title"),
-      description: t("quickActions.createAutomation.description"),
-      href: `/${locale}/dashboard/automations`,
-      icon: Workflow,
     },
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-6">
-  <WorkspaceHeader
-    title={t("welcome")}
-    description={t("description")}
-  />
+    <div className="space-y-5">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <WorkspaceHeader
+          title={t("welcome")}
+          description={t("description")}
+        />
 
-  <div className="flex justify-end">
-    <Button
-      nativeButton={false}
-      render={<Link href={createEmployeeHref} />}
-    >
-      <Plus className="size-4" />
-      {t("createEmployee")}
-    </Button>
-  </div>
-</div>
+        <Button
+          className="shrink-0"
+          nativeButton={false}
+          render={
+            <Link href={createEmployeeHref} />
+          }
+        >
+          <Plus className="size-4" />
+          {t("createEmployee")}
+        </Button>
+      </header>
 
       <section
         aria-label={t("metricsLabel")}
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="overflow-hidden rounded-xl border bg-card"
       >
-        {metrics.map((metric) => {
-          const Icon = metric.icon;
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4">
+          {metrics.map((metric, index) => {
+            const Icon = metric.icon;
 
-          return (
-            <Card key={metric.key}>
-              <CardHeader className="flex flex-row items-center justify-between gap-4 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {metric.title}
-                </CardTitle>
-
-                <span className="flex size-9 items-center justify-center rounded-lg border bg-muted/40">
+            return (
+              <div
+                key={metric.key}
+                className={[
+                  "flex min-h-20 items-center gap-3 px-4 py-3",
+                  index > 0
+                    ? "border-t sm:border-t-0 sm:border-l"
+                    : "",
+                  index === 2
+                    ? "sm:border-l-0 sm:border-t xl:border-l xl:border-t-0"
+                    : "",
+                ].join(" ")}
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
                   <Icon className="size-4 text-muted-foreground" />
                 </span>
-              </CardHeader>
 
-              <CardContent>
-                <p className="text-3xl font-semibold tracking-tight">
-                  {metric.value}
-                </p>
-
-                <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                  {metric.description}
-                </p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <div>
-              <CardTitle>{t("employees.title")}</CardTitle>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("employees.description")}
-              </p>
-            </div>
-
-            <Link
-              href={employeesHref}
-              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {t("employees.viewAll")}
-              <ArrowRight className="size-4" />
-            </Link>
-          </CardHeader>
-
-          <CardContent>
-            {recentEmployees.length === 0 ? (
-              <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed px-6 py-10 text-center">
-                <span className="flex size-11 items-center justify-center rounded-xl border bg-muted/40">
-                  <Bot className="size-5 text-muted-foreground" />
-                </span>
-
-                <h3 className="mt-4 font-semibold">
-                  {t("employees.emptyTitle")}
-                </h3>
-
-                <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-                  {t("employees.emptyDescription")}
-                </p>
-
-                <Button
-                  className="mt-5"
-                  nativeButton={false}
-                  render={<Link href={createEmployeeHref} />}
-                >
-                  <Plus className="size-4" />
-                  {t("createEmployee")}
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {recentEmployees.map((employee) => (
-                  <Link
-                    key={employee.id}
-                    href={`/${locale}/dashboard/employees/${employee.id}`}
-                    className="group flex items-center gap-4 rounded-xl border p-4 transition-colors hover:bg-muted/30"
-                  >
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
-                      <Bot className="size-4 text-muted-foreground" />
-                    </span>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">
-                        {employee.name}
-                      </p>
-
-                      <p className="mt-1 truncate text-sm text-muted-foreground">
-                        {employee.role}
-                      </p>
-                    </div>
-
-                    <span className="rounded-full border px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                      {employee.status}
-                    </span>
-
-                    <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("quickActions.title")}</CardTitle>
-
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("quickActions.description")}
-            </p>
-          </CardHeader>
-
-          <CardContent className="space-y-3">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-
-              return (
-                <Link
-                  key={action.key}
-                  href={action.href}
-                  className="group flex items-start gap-4 rounded-xl border p-4 transition-colors hover:bg-muted/30"
-                >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/40">
-                    <Icon className="size-4 text-muted-foreground" />
-                  </span>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">
-                      {action.title}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="truncate text-xs font-medium text-muted-foreground">
+                      {metric.title}
                     </p>
 
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      {action.description}
+                    <p className="shrink-0 text-xl font-semibold tracking-tight tabular-nums">
+                      {metric.value}
                     </p>
                   </div>
 
-                  <ArrowRight className="mt-1 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              );
-            })}
+                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                    {metric.description}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="grid items-start gap-5 xl:grid-cols-2">
+        <AIEmployeesWidget
+          employees={
+            dashboard.employeePerformance
+          }
+          locale={locale}
+        />
+
+        <Card className="h-full">
+          <CardContent className="p-5">
+            <div className="mb-4">
+              <h2 className="font-semibold">
+                {t("activity.title")}
+              </h2>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t("activity.description")}
+              </p>
+            </div>
+
+            <RecentActivityFeed
+              items={dashboard.recentActivity.slice(
+                0,
+                5,
+              )}
+              locale={locale}
+            />
           </CardContent>
         </Card>
       </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("activity.title")}</CardTitle>
+      <section className="grid items-start gap-5 xl:grid-cols-2">
+        <RecentConversationsWidget
+          conversations={
+            dashboard.recentConversations.slice(
+              0,
+              4,
+            )
+          }
+          locale={locale}
+        />
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("activity.description")}
-          </p>
-        </CardHeader>
-
-        <CardContent>
-          <div className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed px-6 py-10 text-center">
-            <MessageSquare className="size-5 text-muted-foreground" />
-
-            <p className="mt-4 text-sm font-medium">
-              {t("activity.emptyTitle")}
-            </p>
-
-            <p className="mt-2 max-w-md text-xs leading-5 text-muted-foreground">
-              {t("activity.emptyDescription")}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        <UpcomingMeetingsWidget
+          meetings={
+            dashboard.upcomingMeetings.slice(0, 4)
+          }
+          locale={locale}
+        />
+      </section>
     </div>
   );
 }

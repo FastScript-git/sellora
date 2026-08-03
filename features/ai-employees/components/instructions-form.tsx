@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type ReactNode,
   useActionState,
   useEffect,
   useMemo,
@@ -10,20 +11,23 @@ import {
 import {
   Ban,
   CheckCircle2,
+  Loader2,
   MessageSquareText,
+  RotateCcw,
+  Save,
   ShieldCheck,
   Target,
   UserRound,
 } from "lucide-react";
 
-import { FormSaveBar } from "@/components/forms/form-save-bar";
-import { FormSection } from "@/components/forms/form-section";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   updateInstructionsAction,
   type UpdateInstructionsActionState,
 } from "@/features/ai-employees/actions/update-instructions";
+import { cn } from "@/lib/utils";
 
 type InstructionsFormValues = {
   identity: string;
@@ -33,42 +37,20 @@ type InstructionsFormValues = {
   restrictions: string;
 };
 
+type InstructionTranslation = {
+  title: string;
+  description: string;
+  label: string;
+  placeholder: string;
+  hint: string;
+};
+
 type InstructionsFormTranslations = {
-  identity: {
-    title: string;
-    description: string;
-    label: string;
-    placeholder: string;
-    hint: string;
-  };
-  goals: {
-    title: string;
-    description: string;
-    label: string;
-    placeholder: string;
-    hint: string;
-  };
-  rules: {
-    title: string;
-    description: string;
-    label: string;
-    placeholder: string;
-    hint: string;
-  };
-  responseStyle: {
-    title: string;
-    description: string;
-    label: string;
-    placeholder: string;
-    hint: string;
-  };
-  restrictions: {
-    title: string;
-    description: string;
-    label: string;
-    placeholder: string;
-    hint: string;
-  };
+  identity: InstructionTranslation;
+  goals: InstructionTranslation;
+  rules: InstructionTranslation;
+  responseStyle: InstructionTranslation;
+  restrictions: InstructionTranslation;
   save: string;
   saving: string;
   saved: string;
@@ -83,14 +65,13 @@ type InstructionsFormProps = {
 
 type InstructionFieldProps = {
   id: keyof InstructionsFormValues;
-  icon: React.ReactNode;
-  label: string;
-  placeholder: string;
-  hint: string;
+  icon: ReactNode;
+  translation: InstructionTranslation;
   value: string;
   error?: string;
   rows: number;
   disabled: boolean;
+  className?: string;
   onChange: (value: string) => void;
 };
 
@@ -121,49 +102,64 @@ export function InstructionsForm({
   initialValues,
   translations,
 }: InstructionsFormProps) {
+  const isUkrainian = locale === "uk";
+
+  const copy = isUkrainian
+    ? {
+        unsaved: "Є незбережені зміни",
+        unsavedDescription:
+          "Збережіть налаштування перед переходом на іншу сторінку.",
+        cancel: "Скасувати",
+        configured: "Заповнено",
+        empty: "Не заповнено",
+      }
+    : {
+        unsaved: "You have unsaved changes",
+        unsavedDescription:
+          "Save the configuration before leaving this page.",
+        cancel: "Cancel",
+        configured: "Configured",
+        empty: "Not configured",
+      };
+
   const [values, setValues] =
     useState<InstructionsFormValues>(initialValues);
 
   const [savedValues, setSavedValues] =
     useState<InstructionsFormValues>(initialValues);
 
-  const [successMessage, setSuccessMessage] = useState<string | null>(
-    null,
-  );
-
-  const valuesRef = useRef(values);
+  const submittedValuesRef =
+    useRef<InstructionsFormValues>(initialValues);
 
   const [state, formAction, isPending] = useActionState(
     updateInstructionsAction,
     initialActionState,
   );
 
-  valuesRef.current = values;
-
   useEffect(() => {
     if (!state.success) {
       return;
     }
 
-    setSavedValues(valuesRef.current);
-    setSuccessMessage(translations.saved);
-
     const timeoutId = window.setTimeout(() => {
-      setSuccessMessage(null);
-    }, 3000);
+      setSavedValues(submittedValuesRef.current);
+    }, 0);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [state, translations.saved]);
+  }, [state.success]);
 
   const isDirty = useMemo(
     () => !areValuesEqual(values, savedValues),
     [values, savedValues],
   );
 
+  const completedFields = Object.values(values).filter(
+    (value) => value.trim().length > 0,
+  ).length;
+
   const fieldErrors = state.fieldErrors ?? {};
-  const errorMessage = !state.success ? state.message : null;
 
   function updateField(
     field: keyof InstructionsFormValues,
@@ -179,200 +175,286 @@ export function InstructionsForm({
     setValues(savedValues);
   }
 
-  return (
-    <>
-      {successMessage ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed right-6 top-6 z-50 flex max-w-sm items-center gap-3 rounded-xl border border-emerald-500/30 bg-background/95 px-4 py-3 text-sm shadow-xl backdrop-blur"
-        >
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
-            <CheckCircle2 className="size-4 text-emerald-400" />
-          </span>
+  function handleSubmit() {
+    submittedValuesRef.current = values;
+  }
 
-          <span className="font-medium text-foreground">
-            {successMessage}
-          </span>
+  return (
+    <form
+      action={formAction}
+      onSubmit={handleSubmit}
+      className="space-y-4"
+    >
+      <input
+        type="hidden"
+        name="employeeId"
+        value={employeeId}
+      />
+
+      <input
+        type="hidden"
+        name="locale"
+        value={locale}
+      />
+
+      <section className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-medium">
+            {completedFields}/5{" "}
+            {completedFields > 0
+              ? copy.configured
+              : copy.empty}
+          </p>
+
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {isDirty
+              ? copy.unsavedDescription
+              : translations.saved}
+          </p>
+        </div>
+
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          {isDirty ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={cancelChanges}
+              disabled={isPending}
+              className="w-full sm:w-auto"
+            >
+              <RotateCcw className="size-4" />
+              {copy.cancel}
+            </Button>
+          ) : null}
+
+          <Button
+            type="submit"
+            size="sm"
+            disabled={!isDirty || isPending}
+            className="w-full sm:w-auto"
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                {translations.saving}
+              </>
+            ) : state.success && !isDirty ? (
+              <>
+                <CheckCircle2 className="size-4" />
+                {translations.saved}
+              </>
+            ) : (
+              <>
+                <Save className="size-4" />
+                {translations.save}
+              </>
+            )}
+          </Button>
+        </div>
+      </section>
+
+      {!state.success && state.message ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+        >
+          {state.message}
         </div>
       ) : null}
 
-      <form action={formAction} className="space-y-6">
-        <input type="hidden" name="employeeId" value={employeeId} />
-        <input type="hidden" name="locale" value={locale} />
-
-        {errorMessage ? (
-          <div
-            role="alert"
-            className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-          >
-            {errorMessage}
-          </div>
-        ) : null}
-
-        <FormSection
-          title={translations.identity.title}
-          description={translations.identity.description}
-        >
-          <InstructionField
-            id="identity"
-            icon={<UserRound className="size-4" />}
-            label={translations.identity.label}
-            placeholder={translations.identity.placeholder}
-            hint={translations.identity.hint}
-            value={values.identity}
-            error={fieldErrors.identity}
-            onChange={(value) => updateField("identity", value)}
-            rows={7}
-            disabled={isPending}
-          />
-        </FormSection>
-
-        <FormSection
-          title={translations.goals.title}
-          description={translations.goals.description}
-        >
-          <InstructionField
-            id="goals"
-            icon={<Target className="size-4" />}
-            label={translations.goals.label}
-            placeholder={translations.goals.placeholder}
-            hint={translations.goals.hint}
-            value={values.goals}
-            error={fieldErrors.goals}
-            onChange={(value) => updateField("goals", value)}
-            rows={7}
-            disabled={isPending}
-          />
-        </FormSection>
-
-        <FormSection
-          title={translations.rules.title}
-          description={translations.rules.description}
-        >
-          <InstructionField
-            id="rules"
-            icon={<ShieldCheck className="size-4" />}
-            label={translations.rules.label}
-            placeholder={translations.rules.placeholder}
-            hint={translations.rules.hint}
-            value={values.rules}
-            error={fieldErrors.rules}
-            onChange={(value) => updateField("rules", value)}
-            rows={8}
-            disabled={isPending}
-          />
-        </FormSection>
-
-        <FormSection
-          title={translations.responseStyle.title}
-          description={translations.responseStyle.description}
-        >
-          <InstructionField
-            id="responseStyle"
-            icon={<MessageSquareText className="size-4" />}
-            label={translations.responseStyle.label}
-            placeholder={translations.responseStyle.placeholder}
-            hint={translations.responseStyle.hint}
-            value={values.responseStyle}
-            error={fieldErrors.responseStyle}
-            onChange={(value) =>
-              updateField("responseStyle", value)
-            }
-            rows={6}
-            disabled={isPending}
-          />
-        </FormSection>
-
-        <FormSection
-          title={translations.restrictions.title}
-          description={translations.restrictions.description}
-        >
-          <InstructionField
-            id="restrictions"
-            icon={<Ban className="size-4" />}
-            label={translations.restrictions.label}
-            placeholder={translations.restrictions.placeholder}
-            hint={translations.restrictions.hint}
-            value={values.restrictions}
-            error={fieldErrors.restrictions}
-            onChange={(value) =>
-              updateField("restrictions", value)
-            }
-            rows={7}
-            disabled={isPending}
-          />
-        </FormSection>
-
-        <FormSaveBar
-          dirty={isDirty}
-          pending={isPending}
-          onCancel={cancelChanges}
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <InstructionField
+          id="identity"
+          icon={<UserRound className="size-4" />}
+          translation={translations.identity}
+          value={values.identity}
+          error={fieldErrors.identity}
+          rows={6}
+          disabled={isPending}
+          onChange={(value) =>
+            updateField("identity", value)
+          }
         />
-      </form>
-    </>
+
+        <InstructionField
+          id="goals"
+          icon={<Target className="size-4" />}
+          translation={translations.goals}
+          value={values.goals}
+          error={fieldErrors.goals}
+          rows={6}
+          disabled={isPending}
+          onChange={(value) =>
+            updateField("goals", value)
+          }
+        />
+
+        <InstructionField
+          id="rules"
+          icon={<ShieldCheck className="size-4" />}
+          translation={translations.rules}
+          value={values.rules}
+          error={fieldErrors.rules}
+          rows={7}
+          disabled={isPending}
+          onChange={(value) =>
+            updateField("rules", value)
+          }
+        />
+
+        <InstructionField
+          id="responseStyle"
+          icon={
+            <MessageSquareText className="size-4" />
+          }
+          translation={translations.responseStyle}
+          value={values.responseStyle}
+          error={fieldErrors.responseStyle}
+          rows={7}
+          disabled={isPending}
+          onChange={(value) =>
+            updateField("responseStyle", value)
+          }
+        />
+
+        <InstructionField
+          id="restrictions"
+          icon={<Ban className="size-4" />}
+          translation={translations.restrictions}
+          value={values.restrictions}
+          error={fieldErrors.restrictions}
+          rows={6}
+          disabled={isPending}
+          className="lg:col-span-2"
+          onChange={(value) =>
+            updateField("restrictions", value)
+          }
+        />
+      </div>
+
+      {isDirty ? (
+        <div className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 xl:hidden">
+          <div className="flex items-center justify-between gap-3 rounded-xl border bg-background/95 px-4 py-3 shadow-xl backdrop-blur">
+            <div className="min-w-0">
+              <p className="break-words text-sm font-medium">
+                {copy.unsaved}
+              </p>
+
+              <p className="line-clamp-2 text-xs leading-5 text-muted-foreground">
+                {copy.unsavedDescription}
+              </p>
+            </div>
+
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isPending}
+            >
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
+
+              {isPending
+                ? translations.saving
+                : translations.save}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </form>
   );
 }
 
 function InstructionField({
   id,
   icon,
-  label,
-  placeholder,
-  hint,
+  translation,
   value,
   error,
   rows,
   disabled,
+  className,
   onChange,
 }: InstructionFieldProps) {
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
 
   return (
-    <div className="grid gap-3">
-      <div className="flex items-center justify-between gap-4">
-        <Label htmlFor={id} className="flex items-center gap-2">
-          <span className="text-muted-foreground">{icon}</span>
-          {label}
-        </Label>
+    <section
+      className={cn(
+        "overflow-hidden rounded-xl border bg-card",
+        className,
+      )}
+    >
+      <header className="border-b px-4 py-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border bg-muted/40 text-muted-foreground">
+              {icon}
+            </span>
 
-        {value.length > 0 ? (
-          <span className="text-xs tabular-nums text-muted-foreground">
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold">
+                {translation.title}
+              </h2>
+
+              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                {translation.description}
+              </p>
+            </div>
+          </div>
+
+          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
             {value.length}/{MAX_FIELD_LENGTH}
           </span>
-        ) : null}
+        </div>
+      </header>
+
+      <div className="space-y-2 p-4">
+        <Label
+          htmlFor={id}
+          className="text-xs"
+        >
+          {translation.label}
+        </Label>
+
+        <Textarea
+          id={id}
+          name={id}
+          value={value}
+          rows={rows}
+          maxLength={MAX_FIELD_LENGTH}
+          placeholder={translation.placeholder}
+          disabled={disabled}
+          aria-invalid={Boolean(error)}
+          aria-describedby={
+            error ? errorId : hintId
+          }
+          onChange={(event) =>
+            onChange(event.target.value)
+          }
+          className="min-h-36 resize-y text-sm leading-6 md:min-h-40"
+        />
+
+        {error ? (
+          <p
+            id={errorId}
+            className="text-xs leading-5 text-destructive"
+          >
+            {error}
+          </p>
+        ) : (
+          <p
+            id={hintId}
+            className="line-clamp-2 text-xs leading-5 text-muted-foreground"
+          >
+            {translation.hint}
+          </p>
+        )}
       </div>
-
-      <Textarea
-        id={id}
-        name={id}
-        value={value}
-        rows={rows}
-        maxLength={MAX_FIELD_LENGTH}
-        placeholder={placeholder}
-        onChange={(event) => onChange(event.target.value)}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? errorId : hintId}
-        disabled={disabled}
-        className="min-h-36 resize-y leading-6"
-      />
-
-      {error ? (
-        <p
-          id={errorId}
-          className="text-xs leading-5 text-destructive"
-        >
-          {error}
-        </p>
-      ) : (
-        <p
-          id={hintId}
-          className="text-xs leading-5 text-muted-foreground"
-        >
-          {hint}
-        </p>
-      )}
-    </div>
+    </section>
   );
 }

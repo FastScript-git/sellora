@@ -84,12 +84,40 @@ export async function getKnowledgeSourceById(
     where: {
       id,
     },
+
     include: {
       chunks: {
         orderBy: {
           chunkIndex: "asc",
         },
+
+        select: {
+          id: true,
+          chunkIndex: true,
+          content: true,
+          tokenCount: true,
+          metadata: true,
+          createdAt: true,
+        },
       },
+
+      indexJobs: {
+        orderBy: {
+          createdAt: "desc",
+        },
+
+        select: {
+          id: true,
+          status: true,
+          attempts: true,
+          startedAt: true,
+          finishedAt: true,
+          error: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+
       _count: {
         select: {
           chunks: true,
@@ -154,5 +182,44 @@ export async function createDocumentKnowledgeSourceWithJob(
       source,
       indexJob,
     };
+  });
+}
+type RenameKnowledgeSourceParams = {
+  sourceId: string;
+  employeeId: string;
+  title: string;
+};
+
+export async function renameKnowledgeSource({
+  sourceId,
+  employeeId,
+  title,
+}: RenameKnowledgeSourceParams) {
+  return prisma.knowledgeSource.updateMany({
+    where: {
+      id: sourceId,
+      employeeId,
+    },
+
+    data: {
+      title,
+    },
+  });
+}
+
+type DeleteKnowledgeSourceForEmployeeParams = {
+  sourceId: string;
+  employeeId: string;
+};
+
+export async function deleteKnowledgeSourceForEmployee({
+  sourceId,
+  employeeId,
+}: DeleteKnowledgeSourceForEmployeeParams) {
+  return prisma.knowledgeSource.deleteMany({
+    where: {
+      id: sourceId,
+      employeeId,
+    },
   });
 }

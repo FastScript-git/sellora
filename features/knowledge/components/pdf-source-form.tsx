@@ -1,11 +1,5 @@
 "use client";
 
-import {
-  useRef,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-} from "react";
 import { upload } from "@vercel/blob/client";
 import {
   CheckCircle2,
@@ -14,7 +8,14 @@ import {
   UploadCloud,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useRef,
+  useState,
+} from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,9 +32,12 @@ type FieldErrors = Partial<
   Record<"title" | "file", string>
 >;
 
-const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+const MAX_FILE_SIZE_BYTES =
+  20 * 1024 * 1024;
 
-function sanitizeFileName(fileName: string) {
+function sanitizeFileName(
+  fileName: string,
+) {
   return fileName
     .trim()
     .replace(/\s+/g, "-")
@@ -45,7 +49,8 @@ function createPdfBlobPath(
   employeeId: string,
   fileName: string,
 ) {
-  const safeFileName = sanitizeFileName(fileName);
+  const safeFileName =
+    sanitizeFileName(fileName);
 
   return [
     "knowledge",
@@ -54,10 +59,15 @@ function createPdfBlobPath(
   ].join("/");
 }
 
-function formatFileSize(sizeBytes: number) {
-  const megabytes = sizeBytes / (1024 * 1024);
+function formatFileSize(
+  sizeBytes: number,
+) {
+  const megabytes =
+    sizeBytes / (1024 * 1024);
 
-  return `${megabytes.toFixed(megabytes >= 10 ? 0 : 1)} MB`;
+  return `${megabytes.toFixed(
+    megabytes >= 10 ? 0 : 1,
+  )} MB`;
 }
 
 export function PdfSourceForm({
@@ -65,22 +75,48 @@ export function PdfSourceForm({
   locale,
   onSuccess,
 }: PdfSourceFormProps) {
-  const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [title, setTitle] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
-  const [message, setMessage] = useState<string | null>(
-    null,
+  const t = useTranslations(
+    "aiEmployeeKnowledge.forms.pdf",
   );
-  const [fieldErrors, setFieldErrors] =
-    useState<FieldErrors>({});
+
+  const router = useRouter();
+
+  const fileInputRef =
+    useRef<HTMLInputElement>(null);
+
+  const [title, setTitle] =
+    useState("");
+
+  const [file, setFile] =
+    useState<File | null>(null);
+
+  const [progress, setProgress] =
+    useState(0);
+
+  const [
+    isUploading,
+    setIsUploading,
+  ] = useState(false);
+
+  const [
+    isSuccessful,
+    setIsSuccessful,
+  ] = useState(false);
+
+  const [message, setMessage] =
+    useState<string | null>(null);
+
+  const [
+    fieldErrors,
+    setFieldErrors,
+  ] = useState<FieldErrors>({});
 
   function clearSelectedFile() {
     setFile(null);
     setProgress(0);
+    setMessage(null);
+    setIsSuccessful(false);
+
     setFieldErrors((current) => ({
       ...current,
       file: undefined,
@@ -94,9 +130,11 @@ export function PdfSourceForm({
   function handleFileChange(
     event: ChangeEvent<HTMLInputElement>,
   ) {
-    const selectedFile = event.target.files?.[0] ?? null;
+    const selectedFile =
+      event.target.files?.[0] ?? null;
 
     setMessage(null);
+    setIsSuccessful(false);
     setProgress(0);
     setFile(selectedFile);
 
@@ -105,7 +143,10 @@ export function PdfSourceForm({
       title.trim().length === 0
     ) {
       setTitle(
-        selectedFile.name.replace(/\.pdf$/i, ""),
+        selectedFile.name.replace(
+          /\.pdf$/i,
+          "",
+        ),
       );
     }
 
@@ -121,30 +162,41 @@ export function PdfSourceForm({
     event.preventDefault();
 
     setMessage(null);
+    setIsSuccessful(false);
     setFieldErrors({});
 
-    const parsed = createPdfSourceSchema.safeParse({
-      employeeId,
-      locale,
-      title,
-      file,
-    });
+    const parsed =
+      createPdfSourceSchema.safeParse({
+        employeeId,
+        locale,
+        title,
+        file,
+      });
 
     if (!parsed.success) {
-      const nextFieldErrors: FieldErrors = {};
+      const nextFieldErrors:
+        FieldErrors = {};
 
-      for (const issue of parsed.error.issues) {
+      for (
+        const issue of
+        parsed.error.issues
+      ) {
         const field = issue.path[0];
 
-        if (field === "title" || field === "file") {
-          nextFieldErrors[field] ??= issue.message;
+        if (
+          field === "title" ||
+          field === "file"
+        ) {
+          nextFieldErrors[field] ??=
+            issue.message;
         }
       }
 
-      setFieldErrors(nextFieldErrors);
-      setMessage(
-        "Please correct the highlighted fields.",
+      setFieldErrors(
+        nextFieldErrors,
       );
+
+      setMessage(t("validation"));
 
       return;
     }
@@ -153,35 +205,50 @@ export function PdfSourceForm({
     setProgress(0);
 
     try {
-      const pathname = createPdfBlobPath(
-        parsed.data.employeeId,
-        parsed.data.file.name,
-      );
+      const pathname =
+        createPdfBlobPath(
+          parsed.data.employeeId,
+          parsed.data.file.name,
+        );
 
-      await upload(pathname, parsed.data.file, {
-        access: "private",
-        handleUploadUrl:
-          "/api/knowledge/pdf/upload",
-        contentType: "application/pdf",
-        multipart: true,
-        clientPayload: JSON.stringify({
-          employeeId: parsed.data.employeeId,
-          locale: parsed.data.locale,
-          title: parsed.data.title,
-          fileName: parsed.data.file.name,
-          fileSizeBytes: parsed.data.file.size,
-        }),
-        onUploadProgress: ({
-          percentage,
-        }) => {
-          setProgress(Math.round(percentage));
+      await upload(
+        pathname,
+        parsed.data.file,
+        {
+          access: "private",
+          handleUploadUrl:
+            "/api/knowledge/pdf/upload",
+          contentType:
+            "application/pdf",
+          multipart: true,
+
+          clientPayload:
+            JSON.stringify({
+              employeeId:
+                parsed.data.employeeId,
+              locale:
+                parsed.data.locale,
+              title:
+                parsed.data.title,
+              fileName:
+                parsed.data.file.name,
+              fileSizeBytes:
+                parsed.data.file.size,
+            }),
+
+          onUploadProgress: ({
+            percentage,
+          }) => {
+            setProgress(
+              Math.round(percentage),
+            );
+          },
         },
-      });
+      );
 
       setProgress(100);
-      setMessage(
-        "PDF uploaded successfully. Indexing will start shortly.",
-      );
+      setIsSuccessful(true);
+      setMessage(t("success"));
 
       router.refresh();
 
@@ -189,22 +256,24 @@ export function PdfSourceForm({
         onSuccess?.();
       }, 700);
     } catch (error) {
-      console.error("PDF upload failed:", error);
+      console.error(
+        "PDF upload failed:",
+        error,
+      );
 
       setProgress(0);
+      setIsSuccessful(false);
+
       setMessage(
-        error instanceof Error
+        error instanceof Error &&
+          error.message
           ? error.message
-          : "Unable to upload the PDF document.",
+          : t("uploadFailed"),
       );
     } finally {
       setIsUploading(false);
     }
   }
-
-  const isSuccessful =
-    progress === 100 &&
-    message?.startsWith("PDF uploaded") === true;
 
   return (
     <form
@@ -213,7 +282,7 @@ export function PdfSourceForm({
     >
       <div className="space-y-2">
         <Label htmlFor="pdf-source-title">
-          Title
+          {t("title")}
         </Label>
 
         <Input
@@ -222,14 +291,26 @@ export function PdfSourceForm({
           type="text"
           value={title}
           disabled={isUploading}
-          placeholder="Product manual"
-          aria-invalid={Boolean(fieldErrors.title)}
+          placeholder={t(
+            "titlePlaceholder",
+          )}
+          aria-invalid={Boolean(
+            fieldErrors.title,
+          )}
           onChange={(event) => {
-            setTitle(event.target.value);
-            setFieldErrors((current) => ({
-              ...current,
-              title: undefined,
-            }));
+            setTitle(
+              event.target.value,
+            );
+
+            setMessage(null);
+            setIsSuccessful(false);
+
+            setFieldErrors(
+              (current) => ({
+                ...current,
+                title: undefined,
+              }),
+            );
           }}
         />
 
@@ -242,7 +323,7 @@ export function PdfSourceForm({
 
       <div className="space-y-2">
         <Label htmlFor="pdf-source-file">
-          PDF document
+          {t("document")}
         </Label>
 
         <input
@@ -257,8 +338,8 @@ export function PdfSourceForm({
         />
 
         {file ? (
-          <div className="flex items-center gap-4 rounded-xl border bg-muted/30 p-4">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-background">
+          <div className="flex min-w-0 items-center gap-3 rounded-xl border bg-muted/30 p-3 sm:gap-4 sm:p-4">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-background sm:size-11">
               <FileText className="size-5 text-muted-foreground" />
             </div>
 
@@ -268,7 +349,9 @@ export function PdfSourceForm({
               </p>
 
               <p className="mt-1 text-xs text-muted-foreground">
-                {formatFileSize(file.size)}
+                {formatFileSize(
+                  file.size,
+                )}
               </p>
             </div>
 
@@ -277,8 +360,12 @@ export function PdfSourceForm({
               variant="ghost"
               size="icon"
               disabled={isUploading}
-              aria-label="Remove selected PDF"
-              onClick={clearSelectedFile}
+              aria-label={t(
+                "removeFile",
+              )}
+              onClick={
+                clearSelectedFile
+              }
             >
               <X className="size-4" />
             </Button>
@@ -287,7 +374,7 @@ export function PdfSourceForm({
           <button
             type="button"
             disabled={isUploading}
-            className="flex w-full flex-col items-center justify-center rounded-xl border border-dashed px-6 py-10 text-center transition-colors hover:border-primary/60 hover:bg-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex w-full flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-center transition-colors hover:border-primary/60 hover:bg-accent/40 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-10"
             onClick={() =>
               fileInputRef.current?.click()
             }
@@ -297,12 +384,18 @@ export function PdfSourceForm({
             </div>
 
             <p className="mt-4 text-sm font-medium">
-              Choose a PDF document
+              {t("chooseFile")}
             </p>
 
             <p className="mt-1 text-xs text-muted-foreground">
-              Maximum file size:{" "}
-              {formatFileSize(MAX_FILE_SIZE_BYTES)}
+              {t(
+                "maximumFileSize",
+                {
+                  size: formatFileSize(
+                    MAX_FILE_SIZE_BYTES,
+                  ),
+                },
+              )}
             </p>
           </button>
         )}
@@ -314,16 +407,21 @@ export function PdfSourceForm({
         ) : null}
       </div>
 
-      {isUploading || progress > 0 ? (
+      {isUploading ||
+      progress > 0 ? (
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
             <span>
               {isSuccessful
-                ? "Upload complete"
-                : "Uploading document"}
+                ? t("uploadComplete")
+                : t(
+                    "uploadingDocument",
+                  )}
             </span>
 
-            <span>{progress}%</span>
+            <span className="shrink-0 tabular-nums">
+              {progress}%
+            </span>
           </div>
 
           <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -339,6 +437,11 @@ export function PdfSourceForm({
 
       {message ? (
         <div
+          role={
+            isSuccessful
+              ? "status"
+              : "alert"
+          }
           className={
             isSuccessful
               ? "flex items-start gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-500"
@@ -361,12 +464,18 @@ export function PdfSourceForm({
         {isUploading ? (
           <>
             <LoaderCircle className="size-4 animate-spin" />
-            Uploading {progress}%
+
+            {t(
+              "uploadingProgress",
+              {
+                progress,
+              },
+            )}
           </>
         ) : (
           <>
             <UploadCloud className="size-4" />
-            Upload PDF
+            {t("submit")}
           </>
         )}
       </Button>

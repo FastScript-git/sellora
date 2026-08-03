@@ -1,4 +1,6 @@
 (() => {
+  const HISTORY_POLL_INTERVAL_MS = 4000;
+
   const currentScript =
     document.currentScript ||
     document.querySelector(
@@ -12,7 +14,8 @@
     return;
   }
 
-  const widgetKey = currentScript.dataset.widgetKey?.trim();
+  const widgetKey =
+    currentScript.dataset.widgetKey?.trim();
 
   if (!widgetKey) {
     console.error(
@@ -33,6 +36,7 @@
   const apiBaseUrl = scriptUrl.origin;
   const widgetAssetsBaseUrl =
     `${apiBaseUrl}/widget`;
+
   const conversationStorageKey =
     `sellora-conversation-${widgetKey}`;
 
@@ -46,33 +50,42 @@
       return existingPromise;
     }
 
-    const promise = new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = src;
-      script.async = true;
+    const promise = new Promise(
+      (resolve, reject) => {
+        const script =
+          document.createElement("script");
 
-      script.addEventListener("load", resolve, {
-        once: true,
-      });
+        script.src = src;
+        script.async = true;
 
-      script.addEventListener(
-        "error",
-        () => {
-          reject(
-            new Error(
-              `[Sellora Widget] Failed to load ${src}`,
-            ),
-          );
-        },
-        {
-          once: true,
-        },
-      );
+        script.addEventListener(
+          "load",
+          resolve,
+          {
+            once: true,
+          },
+        );
 
-      document.head.append(script);
-    });
+        script.addEventListener(
+          "error",
+          () => {
+            reject(
+              new Error(
+                `[Sellora Widget] Failed to load ${src}`,
+              ),
+            );
+          },
+          {
+            once: true,
+          },
+        );
 
-    window.__selloraWidgetScriptPromises[src] = promise;
+        document.head.append(script);
+      },
+    );
+
+    window.__selloraWidgetScriptPromises[src] =
+      promise;
 
     return promise;
   }
@@ -88,6 +101,11 @@
 
     let conversationId = "";
     let isSending = false;
+    let historyRequestInFlight = false;
+    let historyPollTimer = null;
+    let isDestroyed = false;
+
+    const seenMessageIds = new Set();
 
     try {
       conversationId =
@@ -101,9 +119,10 @@
       );
     }
 
-    const ui = window.SelloraWidgetUI.createWidgetUI({
-      widgetKey,
-    });
+    const ui =
+      window.SelloraWidgetUI.createWidgetUI({
+        widgetKey,
+      });
 
     function updateComposerState() {
       const hasMessage = Boolean(
@@ -116,13 +135,295 @@
       ui.input.disabled = isSending;
     }
 
+    function rememberMessageIds(messages) {
+      if (!Array.isArray(messages)) {
+        return;
+      }
+
+      messages.forEach((message) => {
+        if (
+          message &&
+          typeof message.id === "string"
+        ) {
+          seenMessageIds.add(message.id);
+        }
+      });
+    }
+
+    function clearConversation() {
+      conversationId = "";
+      seenMessageIds.clear();
+
+      try {
+        window.localStorage.removeItem(
+          conversationStorageKey,
+        );
+      } catch (error) {
+        console.warn(
+          "[Sellora Widget] Could not remove stale conversation ID.",
+          error,
+        );
+      }
+
+      stopHistoryPolling();
+      ui.renderHistory([]);
+    }
+
+    function stopHistoryPolling() {
+      if (historyPollTimer !== null) {
+        window.clearTimeout(
+          historyPollTimer,
+        );
+
+        historyPollTimer = null;
+      }
+    }
+
+    function scheduleHistoryPoll() {
+      stopHistoryPolling();
+
+      if (
+        isDestroyed ||
+        !conversationId ||
+        document.hidden
+      ) {
+        return;
+      }
+
+      historyPollTimer =
+        window.setTimeout(async () => {
+          await synchronizeHistory();
+          scheduleHistoryPoll();
+        }, HISTORY_POLL_INTERVAL_MS);
+    }
+
+    function startHistoryPolling() {
+      if (
+        isDestroyed ||
+        !conversationId ||
+        document.hidden
+      ) {
+        return;
+      }
+
+      scheduleHistoryPoll();
+    }
+
+    async function trackWidgetEvent(type) {
+      try {
+        await fetch(
+          `${apiBaseUrl}/api/widget/${encodeURIComponent(widgetKey)}/events`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              type,
+              pageUrl:
+                window.location.href,
+              referrer:
+                document.referrer ||
+                undefined,
+            }),
+          },
+        );
+      } catch (error) {
+        console.warn(
+          "[Sellora Widget] Failed to track event.",
+          error,
+        );
+      }
+    }
+
+    async function requestHistory() {
+      if (!conversationId) {
+        return {
+          success: true,
+          messages: [],
+        };
+      }
+
+      const url = new URL(
+        `${apiBaseUrl}/api/widget/history`,
+      );
+
+      url.searchParams.set(
+        "widgetKey",
+        widgetKey,
+      );
+
+      url.searchParams.set(
+        "conversationId",
+        conversationId,
+      );
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok || !payload.success) {
+        if (response.status === 404) {
+          clearConversation();
+
+          return {
+            success: false,
+            stale: true,
+            messages: [],
+          };
+        }
+
+        throw new Error(
+          payload.error ||
+            "Conversation history could not be loaded.",
+        );
+      }
+
+      return {
+        success: true,
+        stale: false,
+        messages: Array.isArray(
+          payload.messages,
+        )
+          ? payload.messages
+          : [],
+      };
+    }
+
+    async function loadHistory() {
+      if (!conversationId) {
+        ui.renderHistory([]);
+        return;
+      }
+
+      try {
+        const result =
+          await requestHistory();
+
+        if (!result.success) {
+          return;
+        }
+
+        seenMessageIds.clear();
+        rememberMessageIds(
+          result.messages,
+        );
+
+        ui.renderHistory(
+          result.messages,
+        );
+      } catch (error) {
+        console.error(
+          "[Sellora Widget] Failed to load conversation history.",
+          error,
+        );
+
+        ui.renderHistory([]);
+      }
+    }
+
+    async function synchronizeHistory({
+      markOnly = false,
+      force = false,
+    } = {}) {
+      if (
+        isDestroyed ||
+        !conversationId ||
+        historyRequestInFlight ||
+        (!force &&
+          (document.hidden || isSending))
+      ) {
+        return;
+      }
+
+      historyRequestInFlight = true;
+
+      try {
+        const result =
+          await requestHistory();
+
+        if (!result.success) {
+          return;
+        }
+
+        const newMessages =
+          result.messages.filter(
+            (message) =>
+              message &&
+              typeof message.id ===
+                "string" &&
+              !seenMessageIds.has(
+                message.id,
+              ),
+          );
+
+        rememberMessageIds(
+          result.messages,
+        );
+
+        if (markOnly) {
+          return;
+        }
+
+        newMessages.forEach(
+          (message) => {
+            if (
+              typeof message.content !==
+              "string"
+            ) {
+              return;
+            }
+
+            const role =
+              message.role === "user"
+                ? "user"
+                : "employee";
+
+            ui.createMessageRow({
+              content:
+                message.content,
+              role,
+            });
+
+            if (
+              role === "employee" &&
+              !ui.isOpen()
+            ) {
+              ui.incrementUnreadMessages();
+            }
+          },
+        );
+      } catch (error) {
+        console.warn(
+          "[Sellora Widget] Failed to synchronize conversation history.",
+          error,
+        );
+      } finally {
+        historyRequestInFlight = false;
+      }
+    }
+
     async function sendMessage(message) {
       if (isSending) {
         return;
       }
 
+      const isNewConversation =
+        !conversationId;
+
       isSending = true;
       updateComposerState();
+
+      void trackWidgetEvent(
+        "USER_MESSAGE",
+      );
 
       const typingIndicator =
         ui.createTypingIndicator();
@@ -133,28 +434,47 @@
           {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
+              "Content-Type":
+                "application/json",
               Accept: "application/json",
             },
             body: JSON.stringify({
               widgetKey,
               conversationId:
-                conversationId || undefined,
+                conversationId ||
+                undefined,
               message,
             }),
           },
         );
 
-        const payload = await response.json();
+        const payload =
+          await response.json();
 
-        if (!response.ok || !payload.success) {
+        if (
+          !response.ok ||
+          !payload.success
+        ) {
           throw new Error(
             payload.error ||
               "Unable to send message.",
           );
         }
 
-        conversationId = payload.conversationId;
+        conversationId =
+          payload.conversationId;
+
+        if (isNewConversation) {
+          void trackWidgetEvent(
+            "CONVERSATION_STARTED",
+          );
+        }
+
+        if (!payload.awaitingHuman) {
+          void trackWidgetEvent(
+            "AI_RESPONSE",
+          );
+        }
 
         try {
           window.localStorage.setItem(
@@ -170,14 +490,32 @@
 
         typingIndicator.remove();
 
-        ui.createMessageRow({
-          content: payload.message,
-          role: "employee",
+        if (
+          typeof payload.message ===
+            "string" &&
+          payload.message.trim()
+        ) {
+          ui.createMessageRow({
+            content: payload.message,
+            role: "employee",
+          });
+
+          if (!ui.isOpen()) {
+            ui.incrementUnreadMessages();
+          }
+        }
+
+        /*
+         * The user message and the AI response are already
+         * rendered locally. Mark their server IDs as seen so
+         * the polling cycle does not add duplicates.
+         */
+        await synchronizeHistory({
+          markOnly: true,
+          force: true,
         });
 
-        if (!ui.isOpen()) {
-          ui.incrementUnreadMessages();
-        }
+        startHistoryPolling();
       } catch (error) {
         typingIndicator.remove();
 
@@ -199,21 +537,48 @@
       }
     }
 
-    ui.launcher.addEventListener("click", () => {
-      ui.setOpen(!ui.isOpen());
-    });
+    ui.launcher.addEventListener(
+      "click",
+      () => {
+        const opening =
+          !ui.isOpen();
 
-    ui.closeButton.addEventListener("click", () => {
-      ui.setOpen(false);
-    });
+        ui.setOpen(opening);
 
-    ui.input.addEventListener("input", () => {
-      updateComposerState();
+        if (opening) {
+          void trackWidgetEvent(
+            "OPEN",
+          );
 
-      ui.input.style.height = "auto";
-      ui.input.style.height =
-        `${Math.min(ui.input.scrollHeight, 120)}px`;
-    });
+          void synchronizeHistory({
+            force: true,
+          });
+        }
+      },
+    );
+
+    ui.closeButton.addEventListener(
+      "click",
+      () => {
+        ui.setOpen(false);
+      },
+    );
+
+    ui.input.addEventListener(
+      "input",
+      () => {
+        updateComposerState();
+
+        ui.input.style.height =
+          "auto";
+
+        ui.input.style.height =
+          `${Math.min(
+            ui.input.scrollHeight,
+            120,
+          )}px`;
+      },
+    );
 
     ui.input.addEventListener(
       "keydown",
@@ -229,26 +594,35 @@
       },
     );
 
-    ui.form.addEventListener("submit", (event) => {
-      event.preventDefault();
+    ui.form.addEventListener(
+      "submit",
+      (event) => {
+        event.preventDefault();
 
-      const message = ui.input.value.trim();
+        const message =
+          ui.input.value.trim();
 
-      if (!message || isSending) {
-        return;
-      }
+        if (
+          !message ||
+          isSending
+        ) {
+          return;
+        }
 
-      ui.createMessageRow({
-        content: message,
-        role: "user",
-      });
+        ui.createMessageRow({
+          content: message,
+          role: "user",
+        });
 
-      ui.input.value = "";
-      ui.input.style.height = "auto";
-      updateComposerState();
+        ui.input.value = "";
+        ui.input.style.height =
+          "auto";
 
-      void sendMessage(message);
-    });
+        updateComposerState();
+
+        void sendMessage(message);
+      },
+    );
 
     async function loadWidgetConfig() {
       try {
@@ -257,22 +631,29 @@
           {
             method: "GET",
             headers: {
-              Accept: "application/json",
+              Accept:
+                "application/json",
             },
             cache: "no-store",
           },
         );
 
-        const payload = await response.json();
+        const payload =
+          await response.json();
 
-        if (!response.ok || !payload.success) {
+        if (
+          !response.ok ||
+          !payload.success
+        ) {
           throw new Error(
             payload.error ||
               "Widget configuration could not be loaded.",
           );
         }
 
-        ui.applyConfig(payload.widget);
+        ui.applyConfig(
+          payload.widget,
+        );
 
         return true;
       } catch (error) {
@@ -287,68 +668,68 @@
       }
     }
 
-    async function loadHistory() {
-      if (!conversationId) {
-        ui.renderHistory([]);
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        stopHistoryPolling();
         return;
       }
 
-      try {
-        const url = new URL(
-          `${apiBaseUrl}/api/widget/history`,
-        );
+      void synchronizeHistory({
+        force: true,
+      });
 
-        url.searchParams.set("widgetKey", widgetKey);
-        url.searchParams.set(
-          "conversationId",
-          conversationId,
-        );
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-          cache: "no-store",
-        });
-
-        const payload = await response.json();
-
-        if (!response.ok || !payload.success) {
-          if (response.status === 404) {
-            conversationId = "";
-
-            try {
-              window.localStorage.removeItem(
-                conversationStorageKey,
-              );
-            } catch (error) {
-              console.warn(
-                "[Sellora Widget] Could not remove stale conversation ID.",
-                error,
-              );
-            }
-
-            ui.renderHistory([]);
-            return;
-          }
-
-          throw new Error(
-            payload.error ||
-              "Conversation history could not be loaded.",
-          );
-        }
-
-        ui.renderHistory(payload.messages);
-      } catch (error) {
-        console.error(
-          "[Sellora Widget] Failed to load conversation history.",
-          error,
-        );
-
-        ui.renderHistory([]);
-      }
+      startHistoryPolling();
     }
+
+    function cleanup() {
+      if (isDestroyed) {
+        return;
+      }
+
+      isDestroyed = true;
+
+      stopHistoryPolling();
+
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange,
+      );
+
+      window.removeEventListener(
+        "pagehide",
+        cleanup,
+      );
+
+      removalObserver.disconnect();
+    }
+
+    const removalObserver =
+      new MutationObserver(() => {
+        if (!ui.root.isConnected) {
+          cleanup();
+        }
+      });
+
+    removalObserver.observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true,
+      },
+    );
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange,
+    );
+
+    window.addEventListener(
+      "pagehide",
+      cleanup,
+      {
+        once: true,
+      },
+    );
 
     async function initializeWidget() {
       updateComposerState();
@@ -357,19 +738,25 @@
         await loadWidgetConfig();
 
       if (!configLoaded) {
+        cleanup();
         return;
       }
 
       await loadHistory();
+      startHistoryPolling();
+
+      void trackWidgetEvent("VIEW");
     }
 
     void initializeWidget();
   }
 
-  void bootstrapWidget().catch((error) => {
-    console.error(
-      "[Sellora Widget] Failed to initialize.",
-      error,
-    );
-  });
+  void bootstrapWidget().catch(
+    (error) => {
+      console.error(
+        "[Sellora Widget] Failed to initialize.",
+        error,
+      );
+    },
+  );
 })();

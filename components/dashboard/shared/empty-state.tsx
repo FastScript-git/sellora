@@ -1,7 +1,6 @@
+import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-
-import Link from "next/link";
 
 import {
   Button,
@@ -9,16 +8,28 @@ import {
 } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+type EmptyStateAction = {
+  label: string;
+  href?: string;
+  onClick?: () => void;
+  icon?: LucideIcon;
+  variant?:
+    | "default"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "destructive";
+};
+
 type EmptyStateProps = {
   icon: LucideIcon;
   title: string;
-  description: string;
-  action?: {
-    label: string;
-    onClick?: () => void;
-    href?: string;
-  };
+  description?: string;
+  action?: EmptyStateAction;
+  secondaryAction?: EmptyStateAction;
   footer?: ReactNode;
+  compact?: boolean;
+  tone?: "default" | "success" | "warning" | "danger";
   className?: string;
 };
 
@@ -27,53 +38,160 @@ export function EmptyState({
   title,
   description,
   action,
+  secondaryAction,
   footer,
+  compact = false,
+  tone = "default",
   className,
 }: EmptyStateProps) {
   return (
-    <div
+    <section
       className={cn(
-        "flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-dashed bg-card px-8 py-12 text-center",
+        "flex flex-col items-center justify-center rounded-xl border border-dashed bg-card text-center",
+        compact
+          ? "min-h-56 px-5 py-8"
+          : "min-h-[360px] px-6 py-12 sm:px-8",
+        tone === "success" &&
+          "border-emerald-500/25 bg-emerald-500/5",
+        tone === "warning" &&
+          "border-amber-500/25 bg-amber-500/5",
+        tone === "danger" &&
+          "border-destructive/25 bg-destructive/5",
         className,
       )}
     >
-      <div className="mb-6 flex size-16 items-center justify-center rounded-2xl border bg-muted">
-        <Icon className="size-8 text-muted-foreground" />
-      </div>
+      <span
+        className={cn(
+          "flex shrink-0 items-center justify-center rounded-xl border bg-muted/50 text-muted-foreground",
+          compact ? "size-11" : "size-14",
+          tone === "success" &&
+            "border-emerald-500/25 bg-emerald-500/10 text-emerald-500",
+          tone === "warning" &&
+            "border-amber-500/25 bg-amber-500/10 text-amber-500",
+          tone === "danger" &&
+            "border-destructive/25 bg-destructive/10 text-destructive",
+        )}
+      >
+        <Icon
+          aria-hidden="true"
+          className={compact ? "size-5" : "size-6"}
+        />
+      </span>
 
-      <h2 className="text-xl font-semibold">
+      <h2
+        className={cn(
+          "font-semibold tracking-tight",
+          compact ? "mt-4 text-base" : "mt-5 text-lg",
+        )}
+      >
         {title}
       </h2>
 
-      <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
-        {description}
-      </p>
-
-      {action ? (
-        <div className="mt-8">
-          {action.href ? (
-            <Link
-              href={action.href}
-              className={buttonVariants()}
-            >
-              {action.label}
-            </Link>
-          ) : (
-            <Button
-              type="button"
-              onClick={action.onClick}
-            >
-              {action.label}
-            </Button>
+      {description ? (
+        <p
+          className={cn(
+            "max-w-md text-muted-foreground",
+            compact
+              ? "mt-2 text-xs leading-5"
+              : "mt-2 text-sm leading-6",
           )}
+        >
+          {description}
+        </p>
+      ) : null}
+
+      {action || secondaryAction ? (
+        <div
+          className={cn(
+            "flex w-full flex-col items-center justify-center gap-2 sm:w-auto sm:flex-row",
+            compact ? "mt-5" : "mt-6",
+          )}
+        >
+          {action ? (
+            <EmptyStateActionButton
+              action={action}
+              fullWidth
+            />
+          ) : null}
+
+          {secondaryAction ? (
+            <EmptyStateActionButton
+              action={{
+                ...secondaryAction,
+                variant:
+                  secondaryAction.variant ??
+                  "outline",
+              }}
+              fullWidth
+            />
+          ) : null}
         </div>
       ) : null}
 
       {footer ? (
-        <div className="mt-8">
+        <div
+          className={cn(
+            "max-w-lg text-xs leading-5 text-muted-foreground",
+            compact ? "mt-5" : "mt-6",
+          )}
+        >
           {footer}
         </div>
       ) : null}
-    </div>
+    </section>
+  );
+}
+
+function EmptyStateActionButton({
+  action,
+  fullWidth,
+}: {
+  action: EmptyStateAction;
+  fullWidth?: boolean;
+}) {
+  const Icon = action.icon;
+  const variant = action.variant ?? "default";
+
+  const content = (
+    <>
+      {Icon ? (
+        <Icon
+          aria-hidden="true"
+          className="size-4"
+        />
+      ) : null}
+
+      {action.label}
+    </>
+  );
+
+  if (action.href) {
+    return (
+      <Link
+        href={action.href}
+        className={cn(
+          buttonVariants({
+            variant,
+          }),
+          fullWidth &&
+            "w-full sm:w-auto",
+        )}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <Button
+      type="button"
+      variant={variant}
+      onClick={action.onClick}
+      className={cn(
+        fullWidth && "w-full sm:w-auto",
+      )}
+    >
+      {content}
+    </Button>
   );
 }

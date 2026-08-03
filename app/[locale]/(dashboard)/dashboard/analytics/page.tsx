@@ -54,6 +54,7 @@ export default async function WorkspaceAnalyticsPage({
         description:
           "Відстежуйте розмови, лідів, канали та ефективність AI-співробітників.",
         period: "Останні 30 днів",
+        widgetAnalytics: "Аналітика віджета",
 
         performanceTitle:
           "Ефективність AI-співробітників",
@@ -115,6 +116,7 @@ export default async function WorkspaceAnalyticsPage({
         description:
           "Track conversations, leads, channels and AI employee performance.",
         period: "Last 30 days",
+        widgetAnalytics: "Widget Analytics",
 
         performanceTitle: "AI employee performance",
         performanceDescription:
@@ -201,12 +203,28 @@ export default async function WorkspaceAnalyticsPage({
           </p>
         </div>
 
-        <Badge
-          variant="outline"
-          className="w-fit px-3 py-1.5"
-        >
-          {copy.period}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge
+            variant="outline"
+            className="w-fit px-3 py-1.5"
+          >
+            {copy.period}
+          </Badge>
+
+          <Link
+            href={`/${locale}/dashboard/analytics/widget`}
+            className={cn(
+              buttonVariants({
+                variant: "outline",
+              }),
+              "gap-2",
+            )}
+          >
+            <Globe2 className="size-4" />
+            {copy.widgetAnalytics}
+            <ArrowRight className="size-4" />
+          </Link>
+        </div>
       </header>
 
       <WorkspaceAnalyticsCards

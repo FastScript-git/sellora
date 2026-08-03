@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   BarChart3,
+  CalendarDays,
   Zap,
   BookOpen,
   Bot,
@@ -74,6 +75,11 @@ const navigationItems = [
     labelKey: "tasks",
     path: "/dashboard/tasks",
     icon: ClipboardList,
+  },
+  {
+    labelKey: "calendar",
+    path: "/dashboard/calendar",
+    icon: CalendarDays,
   },
   {
     labelKey: "analytics",

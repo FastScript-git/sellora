@@ -7,6 +7,15 @@ export const updateWidgetSettingsSchema = z.object({
 
   locale: z.enum(["en", "uk"]),
 
+  isEnabled: z.preprocess(
+    (value) =>
+      value === true ||
+      value === "true" ||
+      value === "on" ||
+      value === "1",
+    z.boolean(),
+  ),
+
   widgetTitle: z
     .string()
     .trim()
@@ -35,4 +44,11 @@ export const updateWidgetSettingsSchema = z.object({
     "bottom-right",
     "bottom-left",
   ]),
+  allowedDomains: z
+  .string()
+  .trim()
+  .max(
+    5000,
+    "Allowed domains list is too large.",
+  ),
 });

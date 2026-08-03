@@ -1,5 +1,14 @@
+import {
+  BarChart3,
+  ShieldCheck,
+} from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import {
+  PageHeader,
+  PageHeaderNote,
+} from "@/components/dashboard/shared/page-header";
 import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
 import { EmployeeAnalyticsCards } from "@/features/analytics/components/employee-analytics-cards";
 import { RecentConversationsTable } from "@/features/analytics/components/recent-conversations-table";
@@ -17,55 +26,67 @@ type EmployeeAnalyticsPageProps = {
 export default async function EmployeeAnalyticsPage({
   params,
 }: EmployeeAnalyticsPageProps) {
-  const { locale, employeeId } = await params;
+  const { locale, employeeId } =
+    await params;
 
-  const workspace = await getCurrentWorkspace();
+  const [workspace, t] =
+    await Promise.all([
+      getCurrentWorkspace(),
+      getTranslations({
+        locale,
+        namespace:
+          "aiEmployeeAnalytics",
+      }),
+    ]);
 
-  const employee = await getAIEmployee({
-    employeeId,
-    workspaceId: workspace.id,
-  });
+  const employee =
+    await getAIEmployee({
+      employeeId,
+      workspaceId: workspace.id,
+    });
 
   if (!employee) {
     notFound();
   }
 
-  const [analytics, conversations] = await Promise.all([
-    getEmployeeAnalytics(employee.id),
-    getRecentEmployeeConversations(employee.id),
-  ]);
-
-  const isUkrainian = locale === "uk";
-
-  const copy = isUkrainian
-    ? {
-        title: "Аналітика",
-        description:
-          "Ключові показники роботи AI Employee та останні розмови.",
-      }
-    : {
-        title: "Analytics",
-        description:
-          "Key AI Employee metrics and recent conversations.",
-      };
+  const [analytics, conversations] =
+    await Promise.all([
+      getEmployeeAnalytics(
+        employee.id,
+      ),
+      getRecentEmployeeConversations(
+        employee.id,
+      ),
+    ]);
 
   return (
-    <div className="space-y-8">
-      <section>
-        <h2 className="text-2xl font-semibold tracking-tight">
-          {copy.title}
-        </h2>
-
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          {copy.description}
-        </p>
-      </section>
+    <div className="min-w-0 space-y-4">
+      <PageHeader
+        compact
+        icon={BarChart3}
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("description")}
+        aside={
+          <PageHeaderNote
+            icon={ShieldCheck}
+            tone="success"
+          >
+            {t("note")}
+          </PageHeaderNote>
+        }
+      />
 
       <EmployeeAnalyticsCards
-        conversations={analytics.conversations}
+        conversations={
+          analytics.conversations
+        }
         messages={analytics.messages}
         contacts={analytics.contacts}
-        knowledgeSources={analytics.knowledgeSources}
+        knowledgeSources={
+          analytics.knowledgeSources
+        }
+        locale={locale}
       />
 
       <RecentConversationsTable

@@ -10,8 +10,8 @@ import {
 } from "@/features/conversations/services/conversation.service";
 import { createAnonymousContact } from "@/features/contacts/repositories/contact.repository";
 import { updateContactIntelligence } from "@/features/contacts/services/contact-intelligence.service";
+import { validateWidgetRequest } from "@/features/channels/services/validate-widget-request";
 import { searchKnowledge } from "@/features/knowledge/services/search-knowledge";
-import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,21 +26,28 @@ type WidgetChatBody = {
   message?: unknown;
 };
 
-function getCorsHeaders() {
+function getCorsHeaders(request?: Request) {
+  const origin = request?.headers.get("origin");
+
   return {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": origin && origin !== "null" ? origin : "*",
+
     "Access-Control-Allow-Methods": "POST, OPTIONS",
+
     "Access-Control-Allow-Headers": "Content-Type",
+
+    Vary: "Origin",
   };
 }
 
 function jsonResponse(
   body: Record<string, unknown>,
   status = 200,
+  request?: Request,
 ) {
   return NextResponse.json(body, {
     status,
-    headers: getCorsHeaders(),
+    headers: getCorsHeaders(request),
   });
 }
 
@@ -58,21 +65,13 @@ function buildEmployeeInstructions(employee: {
     `Role:\n${employee.role}`,
     `Language:\n${employee.language}`,
     employee.tone ? `Tone:\n${employee.tone}` : null,
-    employee.identity
-      ? `Identity:\n${employee.identity}`
-      : null,
-    employee.goals
-      ? `Goals:\n${employee.goals}`
-      : null,
-    employee.rules
-      ? `Rules:\n${employee.rules}`
-      : null,
+    employee.identity ? `Identity:\n${employee.identity}` : null,
+    employee.goals ? `Goals:\n${employee.goals}` : null,
+    employee.rules ? `Rules:\n${employee.rules}` : null,
     employee.responseStyle
       ? `Response style:\n${employee.responseStyle}`
       : null,
-    employee.restrictions
-      ? `Restrictions:\n${employee.restrictions}`
-      : null,
+    employee.restrictions ? `Restrictions:\n${employee.restrictions}` : null,
   ];
 
   return sections
@@ -80,10 +79,10 @@ function buildEmployeeInstructions(employee: {
     .join("\n\n");
 }
 
-export async function OPTIONS() {
+export async function OPTIONS(request: Request) {
   return new NextResponse(null, {
     status: 204,
-    headers: getCorsHeaders(),
+    headers: getCorsHeaders(request),
   });
 }
 
@@ -99,23 +98,17 @@ export async function POST(request: Request) {
         error: "Request body must contain valid JSON.",
       },
       400,
+      request,
     );
   }
 
   const widgetKey =
-    typeof body.widgetKey === "string"
-      ? body.widgetKey.trim()
-      : "";
+    typeof body.widgetKey === "string" ? body.widgetKey.trim() : "";
 
   const conversationId =
-    typeof body.conversationId === "string"
-      ? body.conversationId.trim()
-      : "";
+    typeof body.conversationId === "string" ? body.conversationId.trim() : "";
 
-  const message =
-    typeof body.message === "string"
-      ? body.message.trim()
-      : "";
+  const message = typeof body.message === "string" ? body.message.trim() : "";
 
   if (!widgetKey) {
     return jsonResponse(
@@ -124,6 +117,7 @@ export async function POST(request: Request) {
         error: "Widget key is required.",
       },
       400,
+      request,
     );
   }
 
@@ -134,6 +128,7 @@ export async function POST(request: Request) {
         error: "Message is required.",
       },
       400,
+      request,
     );
   }
 
@@ -141,56 +136,32 @@ export async function POST(request: Request) {
     return jsonResponse(
       {
         success: false,
-        error:
-          `Message must contain at most ${MAX_MESSAGE_LENGTH} characters.`,
+        error: `Message must contain at most ${MAX_MESSAGE_LENGTH} characters.`,
       },
       400,
+      request,
     );
   }
 
   try {
-    const channel = await prisma.channel.findUnique({
-      where: {
-        widgetKey,
-      },
-      select: {
-        type: true,
-        isEnabled: true,
-        employee: {
-          select: {
-            id: true,
-            workspaceId: true,
-            name: true,
-            role: true,
-            language: true,
-            tone: true,
-            identity: true,
-            goals: true,
-            rules: true,
-            responseStyle: true,
-            restrictions: true,
-            status: true,
-          },
-        },
-      },
+    const validation = await validateWidgetRequest({
+      request,
+      widgetKey,
     });
 
-    if (
-      !channel ||
-      channel.type !== "WEBSITE" ||
-      !channel.isEnabled ||
-      channel.employee.status !== "ACTIVE"
-    ) {
+    if (!validation.success) {
       return jsonResponse(
         {
           success: false,
-          error: "Widget was not found or is unavailable.",
+          error: validation.error,
+          code: validation.code,
         },
-        404,
+        validation.status,
+        request,
       );
     }
 
-    const employee = channel.employee;
+    const employee = validation.channel.employee;
 
     let activeConversationId = conversationId;
     let activeContactId: string | null = null;
@@ -201,9 +172,7 @@ export async function POST(request: Request) {
     }> = [];
 
     if (activeConversationId) {
-      const conversation = await getConversationHistory(
-        activeConversationId,
-      );
+      const conversation = await getConversationHistory(activeConversationId);
 
       if (conversation.employeeId !== employee.id) {
         return jsonResponse(
@@ -212,6 +181,7 @@ export async function POST(request: Request) {
             error: "Conversation is unavailable.",
           },
           404,
+          request,
         );
       }
 
@@ -219,18 +189,47 @@ export async function POST(request: Request) {
 
       conversationHistory = conversation.messages
         .slice(-CONVERSATION_HISTORY_LIMIT)
-        .map((conversationMessage) => ({
-          role:
-            conversationMessage.role === "USER"
-              ? ("user" as const)
-              : ("assistant" as const),
-          content: conversationMessage.content,
-        }));
+        .map(
+          (conversationMessage: {
+            role: "USER" | "ASSISTANT";
+            content: string;
+          }) => ({
+            role:
+              conversationMessage.role === "USER"
+                ? ("user" as const)
+                : ("assistant" as const),
+            content: conversationMessage.content,
+          }),
+        );
 
       await saveUserMessage({
         conversationId: activeConversationId,
         content: message,
       });
+
+      if (conversation.mode === "HUMAN") {
+        if (activeContactId) {
+          await updateContactIntelligence({
+            contactId: activeContactId,
+          });
+        }
+
+        const handoffMessage =
+          employee.language === "UK"
+            ? "Ваше повідомлення передано оператору. Він відповість вам найближчим часом."
+            : "Your message has been sent to a human operator. They will reply as soon as possible.";
+
+        return jsonResponse(
+          {
+            success: true,
+            conversationId: activeConversationId,
+            message: handoffMessage,
+            awaitingHuman: true,
+          },
+          200,
+          request,
+        );
+      }
     } else {
       const contact = await createAnonymousContact({
         workspaceId: employee.workspaceId,
@@ -253,12 +252,11 @@ export async function POST(request: Request) {
       limit: KNOWLEDGE_RESULT_LIMIT,
     });
 
-    const knowledge = knowledgeResults.map(
-      (result, index) =>
-        [
-          `[Knowledge source ${index + 1}: ${result.sourceTitle}]`,
-          result.content,
-        ].join("\n"),
+    const knowledge = knowledgeResults.map((result, index) =>
+      [
+        `[Knowledge source ${index + 1}: ${result.sourceTitle}]`,
+        result.content,
+      ].join("\n"),
     );
 
     const prompt = buildPrompt({
@@ -297,11 +295,15 @@ export async function POST(request: Request) {
       });
     }
 
-    return jsonResponse({
-      success: true,
-      conversationId: activeConversationId,
-      message: normalizedResponse,
-    });
+    return jsonResponse(
+      {
+        success: true,
+        conversationId: activeConversationId,
+        message: normalizedResponse,
+      },
+      200,
+      request,
+    );
   } catch (error) {
     console.error("Widget chat request failed:", error);
 
@@ -311,6 +313,7 @@ export async function POST(request: Request) {
         error: "Unable to generate a response.",
       },
       500,
+      request,
     );
   }
 }

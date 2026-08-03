@@ -4,10 +4,12 @@ import {
   Loader2,
   Send,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   type FormEvent,
   type KeyboardEvent,
+  useRef,
   useState,
 } from "react";
 
@@ -22,8 +24,14 @@ type ConversationComposerProps = {
 type CreateMessageResponse = {
   success: boolean;
   error?: string;
-  fieldErrors?: Record<string, string[] | undefined>;
+  fieldErrors?: Record<
+    string,
+    string[] | undefined
+  >;
 };
+
+const MAX_CONTENT_LENGTH = 10000;
+const MAX_TEXTAREA_HEIGHT = 240;
 
 function getErrorMessage(
   data: CreateMessageResponse,
@@ -34,11 +42,16 @@ function getErrorMessage(
   }
 
   const fieldError = data.fieldErrors
-    ? Object.values(data.fieldErrors)
+    ? Object.values(
+        data.fieldErrors,
+      )
         .flat()
         .find(
-          (message): message is string =>
-            typeof message === "string",
+          (
+            message,
+          ): message is string =>
+            typeof message ===
+            "string",
         )
     : undefined;
 
@@ -47,35 +60,68 @@ function getErrorMessage(
 
 export function ConversationComposer({
   conversationId,
-  locale,
 }: ConversationComposerProps) {
+  const t = useTranslations(
+    "aiEmployeeConversationComposer",
+  );
+
   const router = useRouter();
 
-  const [content, setContent] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const textareaRef =
+    useRef<HTMLTextAreaElement | null>(
+      null,
+    );
 
-  const isUkrainian = locale === "uk";
-  const trimmedContent = content.trim();
+  const [content, setContent] =
+    useState("");
 
-  const copy = isUkrainian
-    ? {
-        placeholder: "Напишіть повідомлення...",
-        send: "Надіслати",
-        sending: "Надсилання...",
-        hint: "Enter — надіслати, Shift + Enter — новий рядок",
-        fallbackError: "Не вдалося надіслати повідомлення.",
-      }
-    : {
-        placeholder: "Write a message...",
-        send: "Send",
-        sending: "Sending...",
-        hint: "Enter to send, Shift + Enter for a new line",
-        fallbackError: "Failed to send message.",
-      };
+  const [isSending, setIsSending] =
+    useState(false);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const trimmedContent =
+    content.trim();
+
+  function resizeTextarea(
+    textarea: HTMLTextAreaElement,
+  ) {
+    textarea.style.height = "auto";
+
+    const nextHeight = Math.min(
+      textarea.scrollHeight,
+      MAX_TEXTAREA_HEIGHT,
+    );
+
+    textarea.style.height =
+      `${nextHeight}px`;
+
+    textarea.style.overflowY =
+      textarea.scrollHeight >
+      MAX_TEXTAREA_HEIGHT
+        ? "auto"
+        : "hidden";
+  }
+
+  function resetTextareaHeight() {
+    const textarea =
+      textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "auto";
+    textarea.style.overflowY =
+      "hidden";
+  }
 
   async function sendMessage(): Promise<void> {
-    if (!trimmedContent || isSending) {
+    if (
+      !trimmedContent ||
+      isSending
+    ) {
       return;
     }
 
@@ -88,10 +134,12 @@ export function ConversationComposer({
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
           body: JSON.stringify({
-            content: trimmedContent,
+            content:
+              trimmedContent,
           }),
         },
       );
@@ -99,19 +147,30 @@ export function ConversationComposer({
       const data =
         (await response.json()) as CreateMessageResponse;
 
-      if (!response.ok || !data.success) {
+      if (
+        !response.ok ||
+        !data.success
+      ) {
         throw new Error(
-          getErrorMessage(data, copy.fallbackError),
+          getErrorMessage(
+            data,
+            t("fallbackError"),
+          ),
         );
       }
 
       setContent("");
+
+      window.requestAnimationFrame(
+        resetTextareaHeight,
+      );
+
       router.refresh();
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : copy.fallbackError,
+          : t("fallbackError"),
       );
     } finally {
       setIsSending(false);
@@ -131,7 +190,8 @@ export function ConversationComposer({
     if (
       event.key === "Enter" &&
       !event.shiftKey &&
-      !event.nativeEvent.isComposing
+      !event.nativeEvent
+        .isComposing
     ) {
       event.preventDefault();
       void sendMessage();
@@ -141,28 +201,39 @@ export function ConversationComposer({
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-t bg-background p-4"
+      className="border-t bg-background p-3 sm:p-4"
     >
       {error ? (
         <div
           role="alert"
-          className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          className="mb-3 break-words rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm leading-5 text-destructive"
         >
           {error}
         </div>
       ) : null}
 
-      <div className="rounded-xl border bg-background p-2 shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
+      <div className="min-w-0 rounded-xl border bg-background p-2 shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
         <Textarea
+          ref={textareaRef}
           value={content}
-          rows={3}
-          maxLength={10000}
+          rows={1}
+          maxLength={
+            MAX_CONTENT_LENGTH
+          }
           disabled={isSending}
-          placeholder={copy.placeholder}
-          className="min-h-20 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
+          placeholder={t(
+            "placeholder",
+          )}
+          className="max-h-60 min-h-16 resize-none overflow-y-hidden border-0 bg-transparent px-2 py-2 shadow-none focus-visible:ring-0"
           onKeyDown={handleKeyDown}
           onChange={(event) => {
-            setContent(event.target.value);
+            const nextValue =
+              event.target.value;
+
+            setContent(nextValue);
+            resizeTextarea(
+              event.target,
+            );
 
             if (error) {
               setError(null);
@@ -171,29 +242,34 @@ export function ConversationComposer({
         />
 
         <div className="flex flex-col gap-2 border-t px-1 pt-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-muted-foreground">
-            {copy.hint}
+          <p className="break-words text-xs leading-5 text-muted-foreground">
+            {t("hint")}
           </p>
 
-          <div className="flex items-center justify-end gap-3">
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {content.length}/10000
+          <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+              {content.length}/
+              {MAX_CONTENT_LENGTH}
             </span>
 
             <Button
               type="submit"
               size="sm"
-              disabled={!trimmedContent || isSending}
+              className="min-w-28 cursor-pointer"
+              disabled={
+                !trimmedContent ||
+                isSending
+              }
             >
               {isSending ? (
-                <Loader2 className="animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
               ) : (
-                <Send />
+                <Send className="size-4" />
               )}
 
               {isSending
-                ? copy.sending
-                : copy.send}
+                ? t("sending")
+                : t("send")}
             </Button>
           </div>
         </div>

@@ -1,9 +1,10 @@
-import Link from "next/link";
 import {
   ArrowRight,
   MessageSquare,
   Plus,
 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -27,170 +28,169 @@ type ConversationsPageProps = {
 export default async function ConversationsPage({
   params,
 }: ConversationsPageProps) {
-  const { locale, employeeId } = await params;
+  const { locale, employeeId } =
+    await params;
 
-  const workspace = await getCurrentWorkspace();
+  const [workspace, t] =
+    await Promise.all([
+      getCurrentWorkspace(),
+      getTranslations({
+        locale,
+        namespace:
+          "aiEmployeeConversations",
+      }),
+    ]);
 
-  const employee = await getAIEmployee({
-    employeeId,
-    workspaceId: workspace.id,
-  });
+  const employee =
+    await getAIEmployee({
+      employeeId,
+      workspaceId: workspace.id,
+    });
 
   if (!employee) {
     notFound();
   }
 
-  const conversations = await getConversationsByEmployee(
-    employee.id,
-  );
-
-  const isUkrainian = locale === "uk";
-
-  const copy = isUkrainian
-    ? {
-        title: "Розмови",
-        description:
-          "Переглядайте збережені діалоги цього ШІ-співробітника.",
-        newConversation: "Новий тестовий діалог",
-        emptyTitle: "Розмов поки немає",
-        emptyDescription:
-          "Відкрийте Test Chat і надішліть перше повідомлення, щоб створити діалог.",
-        openTestChat: "Відкрити Test Chat",
-        messages: "повідомлень",
-        untitled: "Новий діалог",
-        noPreview: "У цьому діалозі ще немає повідомлень.",
-        openConversation: "Відкрити розмову",
-      }
-    : {
-        title: "Conversations",
-        description:
-          "Review saved conversations handled by this AI Employee.",
-        newConversation: "New test conversation",
-        emptyTitle: "No conversations yet",
-        emptyDescription:
-          "Open Test Chat and send the first message to create a conversation.",
-        openTestChat: "Open Test Chat",
-        messages: "messages",
-        untitled: "New conversation",
-        noPreview: "This conversation does not contain messages yet.",
-        openConversation: "Open conversation",
-      };
+  const conversations =
+    await getConversationsByEmployee(
+      employee.id,
+    );
 
   const testChatHref =
     `/${locale}/dashboard/employees/${employee.id}/test-chat`;
 
-  const dateFormatter = new Intl.DateTimeFormat(
-    isUkrainian ? "uk-UA" : "en-US",
-    {
+  const dateFormatter =
+    new Intl.DateTimeFormat(locale, {
       dateStyle: "medium",
       timeStyle: "short",
-    },
-  );
+    });
 
   return (
-    <div className="space-y-8">
-      <section className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {copy.title}
+    <div className="min-w-0 space-y-6">
+      <section className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">
+            {t("title")}
           </h1>
 
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {copy.description}
+          <p className="mt-2 max-w-3xl break-words text-sm leading-6 text-muted-foreground">
+            {t("description")}
           </p>
         </div>
 
         <Button
+          className="w-full shrink-0 sm:w-auto"
           nativeButton={false}
-          render={<Link href={testChatHref} />}
+          render={
+            <Link href={testChatHref} />
+          }
         >
           <Plus className="size-4" />
-          {copy.newConversation}
+          {t("newConversation")}
         </Button>
       </section>
 
       {conversations.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex min-h-96 flex-col items-center justify-center px-6 py-16 text-center">
+        <Card className="min-w-0 border-dashed">
+          <CardContent className="flex min-h-80 flex-col items-center justify-center px-4 py-12 text-center sm:min-h-96 sm:px-6 sm:py-16">
             <span className="flex size-12 items-center justify-center rounded-xl border bg-muted/40">
               <MessageSquare className="size-5 text-muted-foreground" />
             </span>
 
-            <h2 className="mt-5 text-lg font-semibold">
-              {copy.emptyTitle}
+            <h2 className="mt-5 break-words text-lg font-semibold">
+              {t("emptyTitle")}
             </h2>
 
-            <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-              {copy.emptyDescription}
+            <p className="mt-2 max-w-md break-words text-sm leading-6 text-muted-foreground">
+              {t("emptyDescription")}
             </p>
 
             <Button
-              className="mt-6"
+              className="mt-6 w-full sm:w-auto"
               nativeButton={false}
-              render={<Link href={testChatHref} />}
+              render={
+                <Link href={testChatHref} />
+              }
             >
-              {copy.openTestChat}
+              {t("openTestChat")}
               <ArrowRight className="size-4" />
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <section className="space-y-3">
-          {conversations.map((conversation) => {
-            const latestMessage = conversation.messages[0];
+        <section className="min-w-0 space-y-3">
+          {conversations.map(
+            (conversation) => {
+              const latestMessage =
+                conversation.messages[0];
 
-            const conversationHref =
-              `/${locale}/dashboard/employees/${employee.id}` +
-              `/conversations/${conversation.id}`;
+              const conversationHref =
+                `/${locale}/dashboard/employees/${employee.id}` +
+                `/conversations/${conversation.id}`;
 
-            return (
-              <Link
-                key={conversation.id}
-                href={conversationHref}
-                aria-label={copy.openConversation}
-                className="block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Card className="transition-colors hover:border-foreground/20 hover:bg-muted/10">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <CardTitle className="truncate text-base">
-                          {conversation.title || copy.untitled}
-                        </CardTitle>
+              return (
+                <Link
+                  key={conversation.id}
+                  href={conversationHref}
+                  aria-label={t(
+                    "openConversation",
+                  )}
+                  className="block min-w-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Card className="min-w-0 transition-colors hover:border-foreground/20 hover:bg-muted/10">
+                    <CardHeader className="pb-3">
+                      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <CardTitle className="break-words text-base sm:truncate">
+                            {conversation.title ||
+                              t("untitled")}
+                          </CardTitle>
 
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {dateFormatter.format(
-                            conversation.updatedAt,
-                          )}
-                        </p>
+                          <time
+                            dateTime={conversation.updatedAt.toISOString()}
+                            className="mt-1 block text-xs leading-5 text-muted-foreground"
+                          >
+                            {dateFormatter.format(
+                              conversation.updatedAt,
+                            )}
+                          </time>
+                        </div>
+
+                        <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                          <span className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
+                            {t(
+                              "messageCount",
+                              {
+                                count:
+                                  conversation
+                                    ._count
+                                    .messages,
+                              },
+                            )}
+                          </span>
+
+                          <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                        </div>
                       </div>
+                    </CardHeader>
 
-                      <div className="flex shrink-0 items-center gap-3">
-                        <span className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
-                          {conversation._count.messages}{" "}
-                          {copy.messages}
+                    <CardContent>
+                      <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
+                          <MessageSquare className="size-4 text-muted-foreground" />
                         </span>
 
-                        <ArrowRight className="size-4 text-muted-foreground" />
+                        <p className="min-w-0 flex-1 line-clamp-2 break-words text-sm leading-6 text-muted-foreground">
+                          {latestMessage?.content ||
+                            t("noPreview")}
+                        </p>
                       </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent>
-                    <div className="flex items-center gap-4">
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
-                        <MessageSquare className="size-4 text-muted-foreground" />
-                      </span>
-
-                      <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-                        {latestMessage?.content || copy.noPreview}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            },
+          )}
         </section>
       )}
     </div>

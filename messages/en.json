@@ -12,7 +12,8 @@
     "tasks": "Tasks",
     "analytics": "Analytics",
     "settings": "Settings",
-    "billing": "Billing"
+    "billing": "Billing",
+    "calendar": "Calendar"
   },
   "sidebar": {
     "freePlan": "Free plan",
@@ -25,210 +26,710 @@
     "changeTheme": "Change theme",
     "notifications": "Notifications",
     "openUserMenu": "Open user menu",
-    "workspaceOwner": "Workspace owner"
+    "workspaceOwner": "Workspace owner",
+    "dashboardTitle": "Dashboard",
+    "searchLabel": "Search Sellora",
+    "searchEmpty": "No matching sections found.",
+    "searchHint": "Quick navigation",
+    "english": "English",
+    "ukrainian": "Ukrainian",
+    "lightTheme": "Light theme",
+    "darkTheme": "Dark theme",
+    "notificationsEmpty": "You have no new notifications.",
+    "profile": "Profile",
+    "workspaceSettings": "Workspace settings",
+    "billing": "Billing",
+    "signOut": "Sign out",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "employees": "AI Employees",
+      "knowledge": "Knowledge Base",
+      "conversations": "Conversations",
+      "channels": "Channels",
+      "workflows": "Workflows",
+      "automations": "Automations",
+      "contacts": "Contacts",
+      "pipeline": "Sales Pipeline",
+      "tasks": "Tasks",
+      "calendar": "Calendar",
+      "analytics": "Analytics",
+      "settings": "Settings",
+      "billing": "Billing"
+    }
   },
   "dashboard": {
-  "overview": "Overview",
-  "welcome": "Welcome to Sellora",
-  "description": "Manage your AI workforce, knowledge and customer operations from one workspace.",
-  "createEmployee": "Create AI Employee",
-  "metricsLabel": "Workspace metrics",
-  "metrics": {
-    "aiEmployees": {
-      "title": "AI Employees",
-      "description": "{active} currently active"
-    },
-    "conversations": {
-      "title": "Conversations",
-      "description": "No conversations yet"
-    },
-    "resolutionRate": {
-      "title": "AI Resolution Rate",
-      "description": "Not enough data"
-    },
-    "knowledgeSources": {
-      "title": "Knowledge Sources",
-      "description": "No sources connected"
-    }
-  },
-  "employees": {
-    "title": "AI Employees",
-    "description": "Your recently created digital employees.",
-    "viewAll": "View all",
-    "emptyTitle": "No AI Employees yet",
-    "emptyDescription": "Create your first AI Employee to start building your digital workforce."
-  },
-  "quickActions": {
-    "title": "Quick actions",
-    "description": "Continue setting up your Sellora workspace.",
-    "createEmployee": {
-      "title": "Create AI Employee",
-      "description": "Add a new digital employee to your workspace."
-    },
-    "addKnowledge": {
-      "title": "Add knowledge",
-      "description": "Connect business information and verified sources."
-    },
-    "connectChannel": {
-      "title": "Connect a channel",
-      "description": "Prepare your website or API integration."
-    },
-    "createAutomation": {
-      "title": "Create automation",
-      "description": "Build a workflow for repetitive business tasks."
-    }
-  },
-  "activity": {
-    "title": "Recent activity",
-    "description": "Important events across your workspace.",
-    "emptyTitle": "No activity yet",
-    "emptyDescription": "Employee activity, conversations and knowledge updates will appear here."
-  }
-}
-  ,
-"aiEmployees": {
-  "title": "AI Employees",
-  "description": "Create and manage digital AI Employees for your business.",
-  "create": "Create AI Employee",
-  "searchPlaceholder": "Search AI Employees...",
-  "emptyTitle": "Create your first AI Employee",
-  "emptyDescription": "Build a digital employee that can answer customers, use your business knowledge and work across connected channels.",
-  "createFirst": "Create first AI Employee"
-}
-,
-"aiEmployeeCreate": {
-  "back": "Back to AI Employees",
-  "title": "Create AI Employee",
-  "description": "Set up the core identity and communication style of your new digital employee.",
-  "basicInformation": {
-    "title": "Basic information",
-    "description": "Define who this AI Employee is and what role they perform."
-  },
-  "communication": {
-    "title": "Communication",
-    "description": "Choose the default language and tone used in customer conversations."
-  },
-  "fields": {
-    "name": {
-      "label": "Name",
-      "placeholder": "For example, Alex",
-      "hint": "Use a clear and recognizable name."
-    },
-    "role": {
-      "label": "Role",
-      "placeholder": "For example, Customer Support Specialist",
-      "hint": "Describe the employee's primary business role."
-    },
-    "description": {
-      "label": "Primary goal",
-      "placeholder": "Describe what this AI Employee should help customers accomplish...",
-      "hint": "You will add detailed instructions after creating the employee."
-    },
-    "language": {
-      "label": "Default language",
-      "english": "English",
-      "ukrainian": "Ukrainian"
-    },
-    "tone": {
-      "label": "Tone of voice",
-      "professional": "Professional",
-      "friendly": "Friendly",
-      "concise": "Concise",
-      "empathetic": "Empathetic"
-    }
-  },
-  "cancel": "Cancel",
-  "createDraft": "Create draft",
-  "creating": "Creating..."
-},
-"aiEmployeeDetails": {
-  "back": "Back to AI Employees",
-  "navigationLabel": "AI Employee navigation",
-  "statuses": {
-    "draft": "Draft",
-    "active": "Active",
-    "paused": "Paused",
-    "archived": "Archived"
-  },
-  "tabs": {
     "overview": "Overview",
-    "instructions": "Instructions",
-    "knowledge": "Knowledge",
-    "channels": "Channels",
-    "tools": "Tools",
-    "testChat": "Test Chat",
-    "conversations": "Conversations",
-    "analytics": "Analytics",
-    "settings": "Settings"
-  },
-  "overview": {
-    "title": "Overview",
-    "noDescription": "No description added yet."
-  },
-  "configuration": {
-    "title": "Configuration",
-    "language": "Language",
-    "tone": "Tone",
-    "created": "Created",
-    "updated": "Updated",
-    "notSet": "Not set"
-  }
-},
-"aiEmployeeInstructions": {
-  "title": "Instructions",
-  "description": "Define the identity, objectives and behavioral boundaries of this AI Employee.",
-  "identity": {
-    "title": "Identity",
-    "description": "Describe who this AI Employee is and how they should understand their role.",
-    "label": "Employee identity",
-    "placeholder": "You are an experienced customer support specialist working for our company. Your responsibility is to help customers clearly, accurately and professionally...",
-    "hint": "Explain the employee’s expertise, responsibilities and position in the business."
-  },
-  "goals": {
-    "title": "Goals",
-    "description": "Define the outcomes this AI Employee should work toward.",
-    "label": "Primary goals",
-    "placeholder": "- Help customers resolve their questions\n- Recommend suitable products\n- Collect qualified lead information\n- Escalate complex requests to a human",
-    "hint": "Write one clear objective per line. Keep goals measurable and business-focused."
-  },
-  "rules": {
-    "title": "Rules",
-    "description": "Set mandatory behavioral rules that must be followed in every conversation.",
-    "label": "Behavior rules",
-    "placeholder": "- Always use verified business information\n- Never invent product details\n- Ask clarifying questions when needed\n- Be transparent when information is unavailable",
-    "hint": "Rules should be specific, unambiguous and easy for the AI Employee to follow."
-  },
-  "responseStyle": {
-    "title": "Response style",
-    "description": "Describe how answers should be structured and presented to customers.",
-    "label": "Communication style",
-    "placeholder": "Use concise paragraphs, clear language and short lists when useful. Avoid unnecessary jargon. End with one relevant next step when appropriate.",
-    "hint": "Tone and language are configured separately. Focus here on structure, length and formatting."
-  },
-  "restrictions": {
-    "title": "Restrictions",
-    "description": "Specify topics and actions that are not allowed.",
-    "label": "Prohibited behavior",
-    "placeholder": "- Do not provide legal or medical advice\n- Do not disclose confidential business information\n- Do not promise discounts without authorization\n- Do not discuss topics unrelated to the business",
-    "hint": "Include safety limits, prohibited topics and situations that require human escalation."
-  },
-  "save": "Save changes",
-  "saving": "Saving...",
-  "saved": "All changes are saved."
-},
-"knowledge": {
-  "title": "Knowledge",
-  "description": "Connect the knowledge your AI Employee should use.",
-  "list": {
-    "types": {
-      "website": "Website",
-      "pdf": "PDF",
-      "faq": "FAQ",
-      "note": "Note",
-      "knowledge": "Knowledge"
+    "welcome": "Welcome to Sellora",
+    "description": "Manage your AI workforce, knowledge and customer operations from one workspace.",
+    "createEmployee": "Create AI Employee",
+    "metricsLabel": "Workspace metrics",
+    "metrics": {
+      "aiEmployees": {
+        "title": "AI Employees",
+        "description": "{active} currently active"
+      },
+      "conversations": {
+        "title": "Conversations",
+        "description": "No conversations yet"
+      },
+      "resolutionRate": {
+        "title": "AI Resolution Rate",
+        "description": "Not enough data"
+      },
+      "knowledgeSources": {
+        "title": "Knowledge Sources",
+        "description": "No sources connected"
+      }
     },
-    "chunks": "{count, plural, one {# chunk} other {# chunks}}",
-    "updated": "Updated {date}"
+    "employees": {
+      "title": "AI Employees",
+      "description": "Your recently created digital employees.",
+      "viewAll": "View all",
+      "emptyTitle": "No AI Employees yet",
+      "emptyDescription": "Create your first AI Employee to start building your digital workforce."
+    },
+    "quickActions": {
+      "title": "Quick actions",
+      "description": "Continue setting up your Sellora workspace.",
+      "createEmployee": {
+        "title": "Create AI Employee",
+        "description": "Add a new digital employee to your workspace."
+      },
+      "addKnowledge": {
+        "title": "Add knowledge",
+        "description": "Connect business information and verified sources."
+      },
+      "connectChannel": {
+        "title": "Connect a channel",
+        "description": "Prepare your website or API integration."
+      },
+      "createAutomation": {
+        "title": "Create automation",
+        "description": "Build a workflow for repetitive business tasks."
+      }
+    },
+    "activity": {
+      "title": "Recent activity",
+      "description": "Important events across your workspace.",
+      "emptyTitle": "No activity yet",
+      "emptyDescription": "Employee activity, conversations and knowledge updates will appear here."
+    }
+  },
+  "aiEmployees": {
+    "title": "AI Employees",
+    "description": "Create and manage digital AI Employees for your business.",
+    "create": "Create AI Employee",
+    "searchPlaceholder": "Search AI Employees...",
+    "emptyTitle": "Create your first AI Employee",
+    "emptyDescription": "Build a digital employee that can answer customers, use your business knowledge and work across connected channels.",
+    "createFirst": "Create first AI Employee"
+  },
+  "aiEmployeeCreate": {
+    "back": "Back to AI Employees",
+    "title": "Create AI Employee",
+    "description": "Set up the core identity and communication style of your new digital employee.",
+    "basicInformation": {
+      "title": "Basic information",
+      "description": "Define who this AI Employee is and what role they perform."
+    },
+    "communication": {
+      "title": "Communication",
+      "description": "Choose the default language and tone used in customer conversations."
+    },
+    "fields": {
+      "name": {
+        "label": "Name",
+        "placeholder": "For example, Alex",
+        "hint": "Use a clear and recognizable name."
+      },
+      "role": {
+        "label": "Role",
+        "placeholder": "For example, Customer Support Specialist",
+        "hint": "Describe the employee's primary business role."
+      },
+      "description": {
+        "label": "Primary goal",
+        "placeholder": "Describe what this AI Employee should help customers accomplish...",
+        "hint": "You will add detailed instructions after creating the employee."
+      },
+      "language": {
+        "label": "Default language",
+        "english": "English",
+        "ukrainian": "Ukrainian"
+      },
+      "tone": {
+        "label": "Tone of voice",
+        "professional": "Professional",
+        "friendly": "Friendly",
+        "concise": "Concise",
+        "empathetic": "Empathetic"
+      }
+    },
+    "cancel": "Cancel",
+    "createDraft": "Create draft",
+    "creating": "Creating..."
+  },
+  "aiEmployeeDetails": {
+    "back": "Back to AI Employees",
+    "navigationLabel": "AI Employee navigation",
+    "statuses": {
+      "draft": "Draft",
+      "active": "Active",
+      "paused": "Paused",
+      "archived": "Archived"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "instructions": "Instructions",
+      "knowledge": "Knowledge",
+      "channels": "Channels",
+      "tools": "Tools",
+      "testChat": "Test Chat",
+      "conversations": "Conversations",
+      "analytics": "Analytics",
+      "settings": "Settings",
+      "more": "More"
+    },
+    "overview": {
+      "title": "Overview",
+      "noDescription": "No description added yet."
+    },
+    "configuration": {
+      "title": "Configuration",
+      "language": "Language",
+      "tone": "Tone",
+      "created": "Created",
+      "updated": "Updated",
+      "notSet": "Not set"
+    }
+  },
+  "aiEmployeeInstructions": {
+    "title": "Instructions",
+    "description": "Define the identity, objectives and behavioral boundaries of this AI Employee.",
+    "identity": {
+      "title": "Identity",
+      "description": "Describe who this AI Employee is and how they should understand their role.",
+      "label": "Employee identity",
+      "placeholder": "You are an experienced customer support specialist working for our company. Your responsibility is to help customers clearly, accurately and professionally...",
+      "hint": "Explain the employee’s expertise, responsibilities and position in the business."
+    },
+    "goals": {
+      "title": "Goals",
+      "description": "Define the outcomes this AI Employee should work toward.",
+      "label": "Primary goals",
+      "placeholder": "- Help customers resolve their questions\n- Recommend suitable products\n- Collect qualified lead information\n- Escalate complex requests to a human",
+      "hint": "Write one clear objective per line. Keep goals measurable and business-focused."
+    },
+    "rules": {
+      "title": "Rules",
+      "description": "Set mandatory behavioral rules that must be followed in every conversation.",
+      "label": "Behavior rules",
+      "placeholder": "- Always use verified business information\n- Never invent product details\n- Ask clarifying questions when needed\n- Be transparent when information is unavailable",
+      "hint": "Rules should be specific, unambiguous and easy for the AI Employee to follow."
+    },
+    "responseStyle": {
+      "title": "Response style",
+      "description": "Describe how answers should be structured and presented to customers.",
+      "label": "Communication style",
+      "placeholder": "Use concise paragraphs, clear language and short lists when useful. Avoid unnecessary jargon. End with one relevant next step when appropriate.",
+      "hint": "Tone and language are configured separately. Focus here on structure, length and formatting."
+    },
+    "restrictions": {
+      "title": "Restrictions",
+      "description": "Specify topics and actions that are not allowed.",
+      "label": "Prohibited behavior",
+      "placeholder": "- Do not provide legal or medical advice\n- Do not disclose confidential business information\n- Do not promise discounts without authorization\n- Do not discuss topics unrelated to the business",
+      "hint": "Include safety limits, prohibited topics and situations that require human escalation."
+    },
+    "save": "Save changes",
+    "saving": "Saving...",
+    "saved": "All changes are saved."
+  },
+  "knowledge": {
+    "title": "Knowledge",
+    "description": "Connect the knowledge your AI Employee should use.",
+    "list": {
+      "types": {
+        "website": "Website",
+        "pdf": "PDF",
+        "faq": "FAQ",
+        "note": "Note",
+        "knowledge": "Knowledge"
+      },
+      "chunks": "{count, plural, one {# chunk} other {# chunks}}",
+      "updated": "Updated {date}"
+    }
+  },
+  "aiEmployeeSettings": {
+    "eyebrow": "Configuration",
+    "title": "Settings",
+    "description": "Manage the core profile, language, status and behavior of this AI Employee.",
+    "security": "Changes apply only to this AI Employee in the current workspace.",
+    "general": {
+      "title": "General settings",
+      "description": "Update the AI Employee name, role and description.",
+      "name": "Name",
+      "namePlaceholder": "For example: Sales Assistant",
+      "role": "Role",
+      "rolePlaceholder": "For example: Sales manager",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Briefly describe what this AI Employee is responsible for."
+    },
+    "behavior": {
+      "title": "Language and behavior",
+      "description": "Configure operating status, language and response tone.",
+      "status": "Status",
+      "language": "Language",
+      "tone": "Tone",
+      "tonePlaceholder": "For example: professional"
+    },
+    "statuses": {
+      "draft": "Draft",
+      "active": "Active",
+      "paused": "Paused"
+    },
+    "languages": {
+      "en": "English",
+      "uk": "Ukrainian"
+    },
+    "actions": {
+      "save": "Save changes",
+      "saving": "Saving...",
+      "saved": "Saved",
+      "unsaved": "You have unsaved changes"
+    },
+    "danger": {
+      "title": "Danger zone",
+      "description": "Archiving hides the AI Employee and disables its activity.",
+      "archive": "Archive AI Employee",
+      "archiving": "Archiving...",
+      "confirmation": "Archive this AI Employee? This cannot be undone from the interface."
+    },
+    "messages": {
+      "saved": "Settings saved.",
+      "notFound": "AI Employee was not found.",
+      "saveFailed": "Failed to save settings.",
+      "archiveFailed": "Failed to archive the AI Employee.",
+      "invalidSettings": "Invalid AI Employee settings.",
+      "invalidArchive": "Invalid archive request."
+    }
+  },
+  "aiEmployeeTestChat": {
+    "eyebrow": "Testing",
+    "title": "Test Chat",
+    "description": "Inspect responses, knowledge retrieval, prompts, latency and token usage before connecting a live channel.",
+    "safePreview": "Test messages are kept separate from the Website Widget.",
+    "chat": {
+      "title": "Conversation",
+      "description": "Test this AI Employee before connecting a live channel.",
+      "preview": "AI preview",
+      "newChat": "New chat",
+      "welcome": "Hello! I’m {employeeName}. Send me a message to test how I respond.",
+      "thinking": "{employeeName} is thinking…",
+      "placeholder": "Message {employeeName}...",
+      "send": "Send message",
+      "hint": "Enter to send · Shift + Enter for a new line",
+      "sourcesUsed": "Sources used"
+    },
+    "statuses": {
+      "active": "Active",
+      "draft": "Draft",
+      "paused": "Paused",
+      "archived": "Archived"
+    },
+    "inspector": {
+      "title": "AI Inspector",
+      "emptyDescription": "Send a message to inspect the model, latency, tokens, knowledge retrieval and trace.",
+      "noData": "No data yet",
+      "noDataDescription": "Diagnostics will appear after the AI Employee generates its first response.",
+      "runtime": "Runtime diagnostics for the latest AI response.",
+      "model": "Model",
+      "latency": "Latency",
+      "inputTokens": "Input tokens",
+      "outputTokens": "Output tokens",
+      "totalTokens": "Total tokens",
+      "knowledge": "Knowledge chunks",
+      "usage": "Usage",
+      "input": "Input",
+      "output": "Output",
+      "total": "Total",
+      "tokens": "{count} tokens",
+      "prompt": "Prompt preview",
+      "promptUnavailable": "Prompt preview is not available yet.",
+      "trace": "AI Trace",
+      "milliseconds": "ms"
+    }
+  },
+  "aiEmployeeTools": {
+    "eyebrow": "Capabilities",
+    "title": "Tools",
+    "description": "Control the actions, integrations and business-system access available to this AI Employee.",
+    "security": "Every tool is enabled separately and protected at the workspace level.",
+    "capabilities": {
+      "title": "AI capabilities",
+      "description": "Control which actions this AI Employee is allowed to perform.",
+      "enabledCount": "{enabled}/{available} enabled"
+    },
+    "states": {
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "comingSoon": "Coming soon",
+      "saving": "Saving...",
+      "planned": "Planned"
+    },
+    "integrations": {
+      "title": "Integrations",
+      "description": "External service connections will be added in future sprints."
+    },
+    "customApi": {
+      "title": "Custom API",
+      "description": "Connect your own REST APIs and allow the AI to perform business operations.",
+      "restApi": "REST API"
+    },
+    "tools": {
+      "KNOWLEDGE_SEARCH": {
+        "title": "Knowledge search",
+        "description": "Retrieve relevant information from indexed knowledge sources."
+      },
+      "LEAD_COLLECTION": {
+        "title": "Lead collection",
+        "description": "Collect names, emails, phone numbers and other lead details."
+      },
+      "CONTACT_CREATION": {
+        "title": "Contact creation",
+        "description": "Automatically create contacts in the Sellora CRM."
+      },
+      "HUMAN_HANDOFF": {
+        "title": "Human handoff",
+        "description": "Escalate complex conversations to a human operator."
+      },
+      "WEB_SEARCH": {
+        "title": "Web search",
+        "description": "Search the public web for current information."
+      },
+      "EMAIL": {
+        "title": "Email",
+        "description": "Send emails and work with incoming messages."
+      },
+      "CALENDAR": {
+        "title": "Calendar",
+        "description": "Check availability and schedule meetings."
+      },
+      "CRM": {
+        "title": "CRM access",
+        "description": "Read and update customer records and deals."
+      },
+      "CUSTOM_API": {
+        "title": "Custom API",
+        "description": "Call custom APIs provided by your business."
+      }
+    },
+    "messages": {
+      "invalidSettings": "Invalid AI tool settings.",
+      "employeeNotFound": "AI Employee was not found.",
+      "updateFailed": "Failed to update the tool."
+    }
+  },
+  "aiEmployeeKnowledge": {
+    "page": {
+      "eyebrow": "Knowledge",
+      "title": "Knowledge Base",
+      "description": "Add websites, PDFs and notes that this AI Employee can use when answering customers.",
+      "security": "Knowledge is isolated to this AI Employee and the current workspace.",
+      "totalSources": "Total sources",
+      "indexed": "Indexed",
+      "processing": "Processing",
+      "failed": "Failed",
+      "websites": "Websites",
+      "pdfs": "PDF files",
+      "notes": "Notes",
+      "overview": "Knowledge overview",
+      "chunks": "Total chunks",
+      "sourcesTitle": "Knowledge sources",
+      "sourcesDescription": "Content this AI Employee can use when answering customers."
+    },
+    "source": {
+      "back": "Back to Knowledge",
+      "sourceType": "Source type",
+      "status": "Status",
+      "chunks": "Chunks",
+      "tokens": "Tokens",
+      "jobs": "Index jobs",
+      "updated": "Updated",
+      "metadata": {
+        "title": "Metadata",
+        "description": "Core technical details for this source.",
+        "fileName": "File name",
+        "fileSize": "File size",
+        "mimeType": "MIME type",
+        "sourceUrl": "Source URL",
+        "created": "Created",
+        "rawContent": "Stored content",
+        "noRawContent": "Raw content is not stored for this source."
+      },
+      "chunksSection": {
+        "title": "Knowledge chunks",
+        "description": "Segments used by vector search.",
+        "empty": "No chunks have been created yet.",
+        "chunk": "Chunk",
+        "tokenCount": "{count} tokens",
+        "noTokens": "Token count unavailable"
+      },
+      "jobsSection": {
+        "title": "Indexing history",
+        "description": "Every processing run for this source.",
+        "empty": "No indexing jobs have been created yet.",
+        "attempts": "Attempts",
+        "started": "Started",
+        "finished": "Finished",
+        "duration": "Duration",
+        "error": "Error"
+      },
+      "types": {
+        "WEBSITE": "Website",
+        "PDF": "PDF",
+        "FAQ": "FAQ",
+        "NOTE": "Note"
+      }
+    },
+    "statuses": {
+      "pending": "Pending",
+      "indexing": "Indexing",
+      "indexed": "Indexed",
+      "failed": "Failed"
+    },
+    "jobs": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "actions": {
+      "common": {
+        "validation": "Please correct the highlighted fields.",
+        "employeeNotFound": "AI Employee was not found in this workspace.",
+        "invalidRequest": "Invalid request.",
+        "invalidSource": "Invalid knowledge source data.",
+        "sourceNotFound": "Knowledge source was not found."
+      },
+      "note": {
+        "created": "Note added successfully. Indexing will start shortly.",
+        "queueFailed": "Note was created, but it could not be added to the indexing queue.",
+        "createFailed": "Unable to create note knowledge source."
+      },
+      "website": {
+        "created": "Website added successfully. Indexing will start shortly.",
+        "queueFailed": "Website was created, but it could not be added to the indexing queue.",
+        "createFailed": "Unable to create knowledge source."
+      },
+      "pdf": {
+        "created": "PDF added successfully. Indexing will start shortly.",
+        "queueFailed": "PDF was uploaded, but it could not be added to the indexing queue.",
+        "createFailed": "Unable to upload PDF knowledge source."
+      },
+      "delete": {
+        "notDeleted": "Knowledge source was not deleted.",
+        "failed": "Failed to delete knowledge source."
+      },
+      "rename": {
+        "notRenamed": "Knowledge source was not renamed.",
+        "failed": "Failed to rename knowledge source."
+      },
+      "reindex": {
+        "alreadyRunning": "This knowledge source is already being indexed.",
+        "queued": "Knowledge source was queued for re-indexing."
+      },
+      "search": {
+        "employeeIdRequired": "AI Employee ID is required.",
+        "minimumLength": "Enter at least 2 characters.",
+        "maximumLength": "Search query is too long.",
+        "invalidQuery": "Invalid search query.",
+        "failed": "Knowledge search could not be completed."
+      }
+    },
+    "empty": {
+      "title": "No knowledge sources yet",
+      "description": "Add websites, PDFs, FAQs or notes that this AI Employee can use when answering customers."
+    },
+    "addSource": {
+      "button": "Add knowledge source",
+      "dialogTitle": "Add Knowledge Source",
+      "dialogDescription": "Choose how you want to add knowledge to this AI Employee.",
+      "back": "Back",
+      "options": {
+        "website": {
+          "title": "Website",
+          "description": "Import content from a public web page."
+        },
+        "pdf": {
+          "title": "PDF",
+          "description": "Upload manuals, presentations or other PDF documents."
+        },
+        "faq": {
+          "title": "FAQ",
+          "description": "Create structured questions and answers."
+        },
+        "note": {
+          "title": "Note",
+          "description": "Add internal knowledge manually."
+        }
+      },
+      "selected": {
+        "website": {
+          "title": "Add Website",
+          "description": "Add a public web page this AI Employee can use as a knowledge source."
+        },
+        "pdf": {
+          "title": "Upload PDF",
+          "description": "Upload a PDF document for indexing."
+        },
+        "faq": {
+          "title": "Create FAQ",
+          "description": "Add questions and exact answers for the AI Employee."
+        },
+        "note": {
+          "title": "Add Note",
+          "description": "Write custom information the AI Employee should know."
+        }
+      }
+    },
+    "forms": {
+      "website": {
+        "name": "Website name",
+        "namePlaceholder": "Company website",
+        "url": "Website URL",
+        "urlPlaceholder": "https://example.com",
+        "submit": "Add Website",
+        "submitting": "Adding..."
+      },
+      "note": {
+        "title": "Note title",
+        "titlePlaceholder": "Internal documentation",
+        "content": "Content",
+        "contentPlaceholder": "Write everything the AI Employee should know...",
+        "submit": "Add Note",
+        "submitting": "Saving..."
+      },
+      "faq": {
+        "title": "FAQ title",
+        "titlePlaceholder": "Frequently asked questions",
+        "question": "Question",
+        "questionPlaceholder": "For example: Which payment methods do you accept?",
+        "answer": "Answer",
+        "answerPlaceholder": "Write the exact answer the AI Employee can use.",
+        "addItem": "Add question",
+        "removeItem": "Remove",
+        "submit": "Add FAQ",
+        "submitting": "Saving...",
+        "item": "FAQ item"
+      },
+      "pdf": {
+        "title": "Title",
+        "titlePlaceholder": "Product manual",
+        "document": "PDF document",
+        "chooseFile": "Choose a PDF document",
+        "maximumFileSize": "Maximum file size: {size}",
+        "removeFile": "Remove selected PDF",
+        "uploadComplete": "Upload complete",
+        "uploadingDocument": "Uploading document",
+        "uploadingProgress": "Uploading {progress}%",
+        "submit": "Upload PDF",
+        "validation": "Please correct the highlighted fields.",
+        "success": "PDF uploaded successfully. Indexing will start shortly.",
+        "uploadFailed": "Unable to upload the PDF document."
+      }
+    },
+    "reindex": {
+      "idle": "Re-index",
+      "pending": "Starting indexing..."
+    },
+    "sourceActions": {
+      "rename": "Rename",
+      "renameTitle": "Rename knowledge source",
+      "renameDescription": "Change the source name. This does not trigger re-indexing.",
+      "titleLabel": "Title",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving...",
+      "delete": "Delete",
+      "deleteTitle": "Delete this source?",
+      "deleteDescription": "The source, its chunks and indexing history will be permanently deleted.",
+      "confirmDelete": "Delete source",
+      "deleting": "Deleting...",
+      "genericError": "The action could not be completed."
+    },
+    "searchPreview": {
+      "title": "Search preview",
+      "description": "Test which knowledge chunks the AI Employee will retrieve for a customer question.",
+      "placeholder": "For example: What is included in the Pro plan?",
+      "search": "Search",
+      "searching": "Searching...",
+      "clear": "Clear search",
+      "results": "Retrieved chunks",
+      "resultCount": "{count} results",
+      "duration": "Search time",
+      "milliseconds": "ms",
+      "similarity": "Similarity",
+      "chunk": "Chunk",
+      "openSource": "Open source",
+      "emptyTitle": "Enter a test query",
+      "emptyDescription": "Sellora will embed the query and retrieve the most relevant knowledge chunks.",
+      "noResultsTitle": "No relevant chunks found",
+      "noResultsDescription": "Make sure the sources are indexed or try a different query."
+    }
+  },
+  "aiEmployeeAnalytics": {
+    "eyebrow": "Performance",
+    "title": "Analytics",
+    "description": "Review key AI Employee metrics and the latest conversation activity.",
+    "note": "Metrics are calculated only for this AI Employee.",
+    "metrics": {
+      "label": "Key metrics",
+      "conversations": "Conversations",
+      "messages": "Messages",
+      "contacts": "Contacts",
+      "knowledgeSources": "Knowledge sources"
+    },
+    "recentConversations": {
+      "title": "Recent conversations",
+      "empty": "No conversations yet.",
+      "anonymous": "Anonymous visitor",
+      "noMessage": "No messages yet",
+      "messageCount": "{count, plural, =0 {No messages} =1 {# message} other {# messages}}",
+      "conversation": "Conversation",
+      "open": "Open conversation"
+    }
+  },
+  "aiEmployeeConversations": {
+    "title": "Conversations",
+    "description": "Review saved conversations handled by this AI Employee.",
+    "newConversation": "New test conversation",
+    "emptyTitle": "No conversations yet",
+    "emptyDescription": "Open Test Chat and send the first message to create a conversation.",
+    "openTestChat": "Open Test Chat",
+    "untitled": "New conversation",
+    "noPreview": "This conversation does not contain messages yet.",
+    "openConversation": "Open conversation",
+    "messageCount": "{count, plural, =0 {No messages} =1 {# message} other {# messages}}"
+  },
+  "aiEmployeeConversationDetails": {
+    "sources": "Sources",
+    "similarity": "Similarity: {value}",
+    "copyMessage": "Copy message",
+    "copied": "Copied"
+  },
+  "aiEmployeeConversationComposer": {
+    "placeholder": "Write a message...",
+    "send": "Send",
+    "sending": "Sending...",
+    "hint": "Enter to send, Shift + Enter for a new line",
+    "fallbackError": "Failed to send message.",
+    "failed": "Message was not sent."
+  },
+  "aiEmployeeConversationAiReply": {
+    "generate": "Generate AI reply",
+    "generating": "AI is generating a reply...",
+    "thinking": "AI is thinking...",
+    "fallbackError": "Failed to generate AI reply."
   }
-}
 }

@@ -94,27 +94,31 @@ model User {
 }
 
 model Workspace {
-  id          String            @id @default(cuid())
-  name        String
-  slug        String            @unique
-  memberships WorkspaceMember[]
-  aiEmployees AIEmployee[]
-  contacts    Contact[]
-  tasks       Task[]
-  workflows   Workflow[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id           String            @id @default(cuid())
+  name         String
+  slug         String            @unique
+  memberships  WorkspaceMember[]
+  aiEmployees  AIEmployee[]
+  contacts     Contact[]
+  tasks        Task[]
+  workflows    Workflow[]
+  meetings     Meeting[]
+  widgetEvents WidgetEvent[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 }
 
 model WorkspaceMember {
-  id          String        @id @default(cuid())
-  role        WorkspaceRole @default(MEMBER)
-  userId      String
-  workspaceId String
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id                    String         @id @default(cuid())
+  role                  WorkspaceRole  @default(MEMBER)
+  userId                String
+  workspaceId           String
+  user                  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace             Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignedConversations Conversation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, workspaceId])
   @@index([workspaceId])
@@ -145,12 +149,45 @@ model AIEmployee {
   conversations    Conversation[]
   channels         Channel[]
   tasks            Task[]
+  meetings         Meeting[]
+  enabledTools     AIEmployeeTool[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([workspaceId])
   @@index([workspaceId, status])
+}
+
+enum AIEmployeeToolKey {
+  KNOWLEDGE_SEARCH
+  LEAD_COLLECTION
+  CONTACT_CREATION
+  HUMAN_HANDOFF
+  WEB_SEARCH
+  EMAIL
+  CALENDAR
+  CRM
+  CUSTOM_API
+}
+
+model AIEmployeeTool {
+  id String @id @default(cuid())
+
+  employeeId String
+  employee   AIEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  key       AIEmployeeToolKey
+  isEnabled Boolean           @default(false)
+
+  configuration Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([employeeId, key])
+  @@index([employeeId])
+  @@index([employeeId, isEnabled])
 }
 
 model Contact {
@@ -190,6 +227,7 @@ model Contact {
   conversations Conversation[]
   timeline      ContactTimelineEvent[]
   tasks         Task[]
+  meetings      Meeting[]
 
   @@index([workspaceId])
   @@index([email])
@@ -290,6 +328,11 @@ model KnowledgeIndexJob {
   @@index([knowledgeSourceId, status])
 }
 
+enum ConversationMode {
+  AI
+  HUMAN
+}
+
 model Conversation {
   id String @id @default(cuid())
 
@@ -301,10 +344,15 @@ model Conversation {
   contact  Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
   channel  Channel?   @relation(fields: [channelId], references: [id], onDelete: SetNull)
 
+  assignedMemberId String?
+  assignedMember   WorkspaceMember? @relation(fields: [assignedMemberId], references: [id], onDelete: SetNull)
+
   title String?
 
-  status      ConversationStatus @default(OPEN)
-  unreadCount Int                @default(0)
+  status ConversationStatus @default(OPEN)
+  mode   ConversationMode   @default(AI)
+
+  unreadCount Int @default(0)
 
   lastMessageAt DateTime?
   closedAt      DateTime?
@@ -317,7 +365,9 @@ model Conversation {
   @@index([employeeId])
   @@index([contactId])
   @@index([channelId])
+  @@index([assignedMemberId])
   @@index([status])
+  @@index([mode])
   @@index([employeeId, status])
   @@index([lastMessageAt])
 }
@@ -346,6 +396,7 @@ model Channel {
   employee   AIEmployee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   conversations Conversation[]
+  widgetEvents  WidgetEvent[]
 
   type ChannelType
 
@@ -361,6 +412,8 @@ model Channel {
 
   widgetPosition String? @default("bottom-right")
 
+  allowedDomains String[] @default([])
+
   isEnabled Boolean @default(true)
 
   createdAt DateTime @default(now())
@@ -368,6 +421,45 @@ model Channel {
 
   @@index([employeeId])
   @@index([employeeId, type])
+}
+
+model WidgetEvent {
+  id String @id @default(cuid())
+
+  workspaceId String
+  channelId   String?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  channel   Channel?  @relation(fields: [channelId], references: [id], onDelete: SetNull)
+
+  type WidgetEventType
+
+  visitorId String?
+  sessionId String?
+
+  pageUrl  String?
+  referrer String?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([workspaceId])
+  @@index([channelId])
+  @@index([type])
+  @@index([workspaceId, type, createdAt])
+  @@index([channelId, type, createdAt])
+  @@index([visitorId])
+  @@index([sessionId])
+}
+
+enum WidgetEventType {
+  VIEW
+  OPEN
+  CONVERSATION_STARTED
+  USER_MESSAGE
+  LEAD_CREATED
+  AI_RESPONSE
 }
 
 enum ConversationStatus {
@@ -431,6 +523,56 @@ model Task {
   @@index([workspaceId])
   @@index([workspaceId, status])
   @@index([workspaceId, dueAt])
+  @@index([contactId])
+  @@index([employeeId])
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
+enum MeetingLocationType {
+  ONLINE
+  PHONE
+  IN_PERSON
+}
+
+model Meeting {
+  id          String  @id @default(cuid())
+  workspaceId String
+  contactId   String?
+  employeeId  String?
+
+  title       String
+  description String?
+
+  status       MeetingStatus       @default(SCHEDULED)
+  locationType MeetingLocationType @default(ONLINE)
+
+  locationUrl     String?
+  locationAddress String?
+  phoneNumber     String?
+
+  startsAt DateTime
+  endsAt   DateTime
+
+  reminderAt  DateTime?
+  completedAt DateTime?
+  canceledAt  DateTime?
+
+  workspace Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  contact   Contact?    @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  employee  AIEmployee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId])
+  @@index([workspaceId, startsAt])
+  @@index([workspaceId, status])
   @@index([contactId])
   @@index([employeeId])
 }

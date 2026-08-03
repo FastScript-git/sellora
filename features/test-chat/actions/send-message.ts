@@ -2,7 +2,7 @@
 
 import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
 import { buildPrompt } from "@/features/ai/services/build-prompt";
-import { generateResponse } from "@/features/ai/services/generate-response";
+import { generateResponseDetailed } from "@/features/ai/services/generate-response";
 import {
   getConversationHistory,
   saveAssistantMessage,
@@ -18,6 +18,14 @@ type SendMessageInput = {
   message: string;
 };
 
+type AITraceStep = {
+  id: string;
+  title: string;
+  status: "success" | "warning" | "error";
+  durationMs?: number;
+  details?: string;
+};
+
 type SendMessageResult =
   | {
       success: true;
@@ -28,6 +36,18 @@ type SendMessageResult =
         sourceTitle: string;
         citationNumbers: number[];
       }>;
+      debug: {
+        model: string;
+        latencyMs: number;
+        usage: {
+          inputTokens: number;
+          outputTokens: number;
+          totalTokens: number;
+        };
+        knowledgeSources: number;
+        prompt: string;
+        trace: AITraceStep[];
+      };
     }
   | {
       success: false;
@@ -99,9 +119,14 @@ export async function sendMessageAction({
     };
   }
 
-  let activeConversationId = normalizedConversationId ?? undefined;
+  let activeConversationId =
+    normalizedConversationId ?? undefined;
+
+  const trace: AITraceStep[] = [];
 
   try {
+    const employeeLoadStartedAt = performance.now();
+
     const workspace = await getCurrentWorkspace();
 
     const employee = await getAIEmployee({
@@ -116,10 +141,23 @@ export async function sendMessageAction({
       };
     }
 
+    trace.push({
+      id: "employee",
+      title: "AI Employee loaded",
+      status: "success",
+      durationMs: Math.round(
+        performance.now() -
+          employeeLoadStartedAt,
+      ),
+      details: employee.name,
+    });
+
     let conversationHistory: Array<{
       role: "user" | "assistant";
       content: string;
     }> = [];
+
+    const historyStartedAt = performance.now();
 
     if (normalizedConversationId) {
       const conversation = await getConversationHistory(
@@ -156,12 +194,61 @@ export async function sendMessageAction({
       activeConversationId = conversation.id;
     }
 
-    const instructions = buildEmployeeInstructions(employee);
+    trace.push({
+      id: "conversation",
+      title: "Conversation context prepared",
+      status: "success",
+      durationMs: Math.round(
+        performance.now() - historyStartedAt,
+      ),
+      details:
+        conversationHistory.length > 0
+          ? `${conversationHistory.length} messages loaded`
+          : "New conversation created",
+    });
 
-    const knowledgeResults = await searchKnowledge({
-      employeeId: employee.id,
-      query: normalizedMessage,
-      limit: KNOWLEDGE_RESULT_LIMIT,
+    const personaStartedAt = performance.now();
+
+    const instructions =
+      buildEmployeeInstructions(employee);
+
+    trace.push({
+      id: "persona",
+      title: "Persona loaded",
+      status: instructions.trim()
+        ? "success"
+        : "warning",
+      durationMs: Math.round(
+        performance.now() - personaStartedAt,
+      ),
+      details: instructions.trim()
+        ? "Employee instructions added"
+        : "No Persona instructions configured",
+    });
+
+    const knowledgeStartedAt = performance.now();
+
+    const knowledgeResults =
+      await searchKnowledge({
+        employeeId: employee.id,
+        query: normalizedMessage,
+        limit: KNOWLEDGE_RESULT_LIMIT,
+      });
+
+    trace.push({
+      id: "knowledge",
+      title: "Knowledge search completed",
+      status:
+        knowledgeResults.length > 0
+          ? "success"
+          : "warning",
+      durationMs: Math.round(
+        performance.now() - knowledgeStartedAt,
+      ),
+      details:
+        knowledgeResults.length > 0
+          ? `${knowledgeResults.length} chunks found`
+          : "No relevant knowledge found",
     });
 
     const citations = knowledgeResults.map((result, index) => ({
@@ -180,6 +267,8 @@ export async function sendMessageAction({
       ].join("\n"),
     );
 
+    const promptStartedAt = performance.now();
+
     const prompt = buildPrompt({
       employeeName: employee.name,
       instructions,
@@ -188,11 +277,35 @@ export async function sendMessageAction({
       message: normalizedMessage,
     });
 
-    const response = await generateResponse({
-      prompt,
+    trace.push({
+      id: "prompt",
+      title: "Prompt built",
+      status: "success",
+      durationMs: Math.round(
+        performance.now() - promptStartedAt,
+      ),
+      details: `${prompt.length} characters`,
     });
 
-    const normalizedResponse = response.trim();
+    const response =
+      await generateResponseDetailed({
+        prompt,
+      });
+
+    const normalizedResponse =
+      response.text.trim();
+
+    trace.push({
+      id: "model",
+      title: "AI response generated",
+      status: normalizedResponse
+        ? "success"
+        : "error",
+      durationMs: response.latencyMs,
+      details:
+        `${response.model} · ` +
+        `${response.usage.totalTokens} tokens`,
+    });
 
     if (!normalizedResponse) {
       return {
@@ -206,6 +319,8 @@ export async function sendMessageAction({
       throw new Error("Conversation ID was not created.");
     }
 
+    const saveStartedAt = performance.now();
+
     await saveAssistantMessage({
       conversationId: activeConversationId,
       content: normalizedResponse,
@@ -215,6 +330,16 @@ export async function sendMessageAction({
               citations,
             }
           : undefined,
+    });
+
+    trace.push({
+      id: "save",
+      title: "Response saved",
+      status: "success",
+      durationMs: Math.round(
+        performance.now() - saveStartedAt,
+      ),
+      details: "Conversation updated",
     });
 
     const groupedCitations = citations.reduce<
@@ -250,6 +375,15 @@ export async function sendMessageAction({
       message: normalizedResponse,
       conversationId: activeConversationId,
       citations: groupedCitations,
+      debug: {
+        model: response.model,
+        latencyMs: response.latencyMs,
+        usage: response.usage,
+        knowledgeSources:
+          knowledgeResults.length,
+        prompt,
+        trace,
+      },
     };
   } catch (error) {
     console.error("Failed to generate Test Chat response:", error);

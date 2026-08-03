@@ -3,10 +3,12 @@ export type UpdateWidgetSettingsState = {
   message: string | null;
   fieldErrors: Partial<
     Record<
+      | "isEnabled"
       | "widgetTitle"
       | "widgetGreeting"
       | "widgetPrimaryColor"
-      | "widgetPosition",
+      | "widgetPosition"
+      | "allowedDomains",
       string
     >
   >;

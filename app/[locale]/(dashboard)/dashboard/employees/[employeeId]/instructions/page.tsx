@@ -15,10 +15,15 @@ type InstructionsPageProps = {
 export default async function InstructionsPage({
   params,
 }: InstructionsPageProps) {
-  const { locale, employeeId } = await params;
+  const { locale, employeeId } =
+    await params;
 
-  const t = await getTranslations("aiEmployeeInstructions");
-  const workspace = await getCurrentWorkspace();
+  const t = await getTranslations(
+    "aiEmployeeInstructions",
+  );
+
+  const workspace =
+    await getCurrentWorkspace();
 
   const employee = await getAIEmployee({
     employeeId,
@@ -30,16 +35,16 @@ export default async function InstructionsPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8">
-      <section>
-        <h2 className="text-2xl font-semibold tracking-tight">
+    <div className="space-y-4">
+      <header>
+        <h2 className="text-xl font-semibold tracking-tight">
           {t("title")}
         </h2>
 
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+        <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
           {t("description")}
         </p>
-      </section>
+      </header>
 
       <InstructionsForm
         employeeId={employee.id}
@@ -48,44 +53,78 @@ export default async function InstructionsPage({
           identity: employee.identity ?? "",
           goals: employee.goals ?? "",
           rules: employee.rules ?? "",
-          responseStyle: employee.responseStyle ?? "",
-          restrictions: employee.restrictions ?? "",
+          responseStyle:
+            employee.responseStyle ?? "",
+          restrictions:
+            employee.restrictions ?? "",
         }}
         translations={{
           identity: {
             title: t("identity.title"),
-            description: t("identity.description"),
+            description: t(
+              "identity.description",
+            ),
             label: t("identity.label"),
-            placeholder: t("identity.placeholder"),
+            placeholder: t(
+              "identity.placeholder",
+            ),
             hint: t("identity.hint"),
           },
           goals: {
             title: t("goals.title"),
-            description: t("goals.description"),
+            description: t(
+              "goals.description",
+            ),
             label: t("goals.label"),
-            placeholder: t("goals.placeholder"),
+            placeholder: t(
+              "goals.placeholder",
+            ),
             hint: t("goals.hint"),
           },
           rules: {
             title: t("rules.title"),
-            description: t("rules.description"),
+            description: t(
+              "rules.description",
+            ),
             label: t("rules.label"),
-            placeholder: t("rules.placeholder"),
+            placeholder: t(
+              "rules.placeholder",
+            ),
             hint: t("rules.hint"),
           },
           responseStyle: {
-            title: t("responseStyle.title"),
-            description: t("responseStyle.description"),
-            label: t("responseStyle.label"),
-            placeholder: t("responseStyle.placeholder"),
-            hint: t("responseStyle.hint"),
+            title: t(
+              "responseStyle.title",
+            ),
+            description: t(
+              "responseStyle.description",
+            ),
+            label: t(
+              "responseStyle.label",
+            ),
+            placeholder: t(
+              "responseStyle.placeholder",
+            ),
+            hint: t(
+              "responseStyle.hint",
+            ),
           },
           restrictions: {
-            title: t("restrictions.title"),
-            description: t("restrictions.description"),
-            label: t("restrictions.label"),
-            placeholder: t("restrictions.placeholder"),
-            hint: t("restrictions.hint"),
+            title: t(
+              "restrictions.title",
+            ),
+            description: t(
+              "restrictions.description",
+            ),
+            label: t(
+              "restrictions.label",
+            ),
+            placeholder: t(
+              "restrictions.placeholder",
+            ),
+            hint: t(
+              "restrictions.hint",
+            ),
           },
           save: t("save"),
           saving: t("saving"),

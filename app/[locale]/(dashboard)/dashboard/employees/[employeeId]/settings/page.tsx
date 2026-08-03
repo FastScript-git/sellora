@@ -1,25 +1,81 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Settings,
+  ShieldCheck,
+} from "lucide-react";
+import { getTranslations } from "next-intl/server";
+import { notFound } from "next/navigation";
 
-type Props = {
-  title: string;
+import {
+  PageHeader,
+  PageHeaderNote,
+} from "@/components/dashboard/shared/page-header";
+import { AIEmployeeSettingsForm } from "@/features/ai-employees/components/ai-employee-settings-form";
+import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
+import { getCurrentWorkspace } from "@/lib/current-workspace";
+
+type SettingsPageProps = {
+  params: Promise<{
+    locale: string;
+    employeeId: string;
+  }>;
 };
 
-function Placeholder({ title }: Props) {
+export default async function SettingsPage({
+  params,
+}: SettingsPageProps) {
+  const { locale, employeeId } =
+    await params;
+
+  const [workspace, t] =
+    await Promise.all([
+      getCurrentWorkspace(),
+      getTranslations({
+        locale,
+        namespace:
+          "aiEmployeeSettings",
+      }),
+    ]);
+
+  const employee = await getAIEmployee({
+    employeeId,
+    workspaceId: workspace.id,
+  });
+
+  if (!employee) {
+    notFound();
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
+    <div className="space-y-4">
+      <PageHeader
+        compact
+        icon={Settings}
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("description")}
+        aside={
+          <PageHeaderNote
+            icon={ShieldCheck}
+            tone="success"
+          >
+            {t("security")}
+          </PageHeaderNote>
+        }
+      />
 
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          This section will be implemented in a future sprint.
-        </p>
-      </CardContent>
-    </Card>
+      <AIEmployeeSettingsForm
+        employeeId={employee.id}
+        locale={locale}
+        initialValues={{
+          name: employee.name,
+          role: employee.role,
+          description:
+            employee.description ?? "",
+          status: employee.status,
+          language: employee.language,
+          tone: employee.tone ?? "",
+        }}
+      />
+    </div>
   );
-}
-
-export default function Page() {
-  return <Placeholder title="Settings" />;
 }
