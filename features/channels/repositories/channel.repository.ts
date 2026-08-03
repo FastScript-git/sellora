@@ -121,3 +121,89 @@ export async function getWebsiteChannelSecurityConfig({
     },
   });
 }
+
+export async function getWorkspaceChannels(
+  workspaceId: string,
+) {
+  return prisma.channel.findMany({
+    where: {
+      employee: {
+        workspaceId,
+        status: {
+          not: "ARCHIVED",
+        },
+      },
+    },
+
+    orderBy: [
+      {
+        isEnabled: "desc",
+      },
+      {
+        updatedAt: "desc",
+      },
+    ],
+
+    select: {
+      id: true,
+      employeeId: true,
+      type: true,
+      name: true,
+      widgetKey: true,
+      widgetTitle: true,
+      widgetGreeting: true,
+      widgetPrimaryColor: true,
+      widgetPosition: true,
+      allowedDomains: true,
+      isEnabled: true,
+      createdAt: true,
+      updatedAt: true,
+
+      employee: {
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          status: true,
+        },
+      },
+
+      _count: {
+        select: {
+          conversations: true,
+          widgetEvents: true,
+        },
+      },
+    },
+  });
+}
+
+export async function getWorkspaceChannelEmployees(
+  workspaceId: string,
+) {
+  return prisma.aIEmployee.findMany({
+    where: {
+      workspaceId,
+      status: {
+        not: "ARCHIVED",
+      },
+    },
+
+    orderBy: {
+      name: "asc",
+    },
+
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      status: true,
+
+      _count: {
+        select: {
+          channels: true,
+        },
+      },
+    },
+  });
+}

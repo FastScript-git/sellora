@@ -223,3 +223,142 @@ export async function deleteKnowledgeSourceForEmployee({
     },
   });
 }
+
+type GetWorkspaceKnowledgeSourcesParams = {
+  workspaceId: string;
+  search?: string;
+  employeeId?: string;
+  type?: KnowledgeSourceType;
+  status?: KnowledgeSourceStatus;
+};
+
+export async function getWorkspaceKnowledgeSources({
+  workspaceId,
+  search,
+  employeeId,
+  type,
+  status,
+}: GetWorkspaceKnowledgeSourcesParams) {
+  const normalizedSearch = search?.trim();
+
+  return prisma.knowledgeSource.findMany({
+    where: {
+      employee: {
+        workspaceId,
+      },
+
+      ...(employeeId
+        ? {
+            employeeId,
+          }
+        : {}),
+
+      ...(type
+        ? {
+            type,
+          }
+        : {}),
+
+      ...(status
+        ? {
+            status,
+          }
+        : {}),
+
+      ...(normalizedSearch
+        ? {
+            OR: [
+              {
+                title: {
+                  contains: normalizedSearch,
+                  mode: "insensitive",
+                },
+              },
+              {
+                fileName: {
+                  contains: normalizedSearch,
+                  mode: "insensitive",
+                },
+              },
+              {
+                sourceUrl: {
+                  contains: normalizedSearch,
+                  mode: "insensitive",
+                },
+              },
+              {
+                employee: {
+                  name: {
+                    contains: normalizedSearch,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+    },
+
+    orderBy: {
+      updatedAt: "desc",
+    },
+
+    select: {
+      id: true,
+      employeeId: true,
+      type: true,
+      title: true,
+      sourceUrl: true,
+      fileName: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+
+      employee: {
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          status: true,
+        },
+      },
+
+      _count: {
+        select: {
+          chunks: true,
+          indexJobs: true,
+        },
+      },
+    },
+  });
+}
+
+export async function getWorkspaceKnowledgeEmployees(
+  workspaceId: string,
+) {
+  return prisma.aIEmployee.findMany({
+    where: {
+      workspaceId,
+      status: {
+        not: "ARCHIVED",
+      },
+    },
+
+    orderBy: {
+      name: "asc",
+    },
+
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      status: true,
+
+      _count: {
+        select: {
+          knowledgeSources: true,
+        },
+      },
+    },
+  });
+}

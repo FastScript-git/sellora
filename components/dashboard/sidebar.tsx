@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import {
+  useLocale,
+  useTranslations,
+} from "next-intl";
 import {
   BarChart3,
-  CalendarDays,
-  Zap,
   BookOpen,
   Bot,
+  CalendarDays,
   ClipboardList,
   Columns3,
   CreditCard,
@@ -18,7 +20,7 @@ import {
   Settings,
   Sparkles,
   Users,
-  Workflow,
+  Zap,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -52,13 +54,8 @@ const navigationItems = [
     icon: Radio,
   },
   {
-    labelKey: "workflows",
-    path: "/dashboard/workflows",
-    icon: Workflow,
-  },
-  {
     labelKey: "automations",
-    path: "/dashboard/automations",
+    path: "/dashboard/workflows",
     icon: Zap,
   },
   {
@@ -112,23 +109,33 @@ export function Sidebar({
 }: SidebarProps) {
   const locale = useLocale();
   const pathname = usePathname();
-  const navigation = useTranslations("navigation");
-  const sidebar = useTranslations("sidebar");
+  const navigation =
+    useTranslations("navigation");
+  const sidebar =
+    useTranslations("sidebar");
 
-  const currentPath = activePath ?? pathname;
+  const currentPath =
+    activePath ?? pathname;
 
-  function createLocalizedHref(path: string) {
+  function createLocalizedHref(
+    path: string,
+  ) {
     return `/${locale}${path}`;
   }
 
-  function isItemActive(path: string) {
-    const localizedPath = createLocalizedHref(path);
+  function isItemActive(
+    path: string,
+  ) {
+    const localizedPath =
+      createLocalizedHref(path);
 
     if (path === "/dashboard") {
       return currentPath === localizedPath;
     }
 
-    return currentPath.startsWith(localizedPath);
+    return currentPath.startsWith(
+      localizedPath,
+    );
   }
 
   return (
@@ -140,7 +147,9 @@ export function Sidebar({
     >
       <div className="flex h-16 items-center px-5">
         <Link
-          href={createLocalizedHref("/dashboard")}
+          href={createLocalizedHref(
+            "/dashboard",
+          )}
           className="flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -159,30 +168,48 @@ export function Sidebar({
         aria-label="Main navigation"
         className="flex-1 space-y-1 overflow-y-auto px-3 py-4"
       >
-        {navigationItems.map((item) => {
-          const Icon = item.icon;
-          const href = createLocalizedHref(item.path);
-          const isActive = isItemActive(item.path);
+        {navigationItems.map(
+          (item) => {
+            const Icon = item.icon;
 
-          return (
-            <Link
-              key={item.path}
-              href={href}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors",
-                "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                isActive &&
-                  "bg-sidebar-accent text-sidebar-accent-foreground",
-              )}
-            >
-              <Icon className="size-4 shrink-0" />
+            const href =
+              createLocalizedHref(
+                item.path,
+              );
 
-              <span>{navigation(item.labelKey)}</span>
-            </Link>
-          );
-        })}
+            const isActive =
+              isItemActive(
+                item.path,
+              );
+
+            return (
+              <Link
+                key={item.path}
+                href={href}
+                aria-current={
+                  isActive
+                    ? "page"
+                    : undefined
+                }
+                className={cn(
+                  "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors",
+                  "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  isActive &&
+                    "bg-sidebar-accent text-sidebar-accent-foreground",
+                )}
+              >
+                <Icon className="size-4 shrink-0" />
+
+                <span>
+                  {navigation(
+                    item.labelKey,
+                  )}
+                </span>
+              </Link>
+            );
+          },
+        )}
       </nav>
 
       <div className="px-3">
@@ -193,30 +220,48 @@ export function Sidebar({
         aria-label="Workspace navigation"
         className="space-y-1 px-3 py-4"
       >
-        {secondaryNavigationItems.map((item) => {
-          const Icon = item.icon;
-          const href = createLocalizedHref(item.path);
-          const isActive = isItemActive(item.path);
+        {secondaryNavigationItems.map(
+          (item) => {
+            const Icon = item.icon;
 
-          return (
-            <Link
-              key={item.path}
-              href={href}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors",
-                "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                isActive &&
-                  "bg-sidebar-accent text-sidebar-accent-foreground",
-              )}
-            >
-              <Icon className="size-4 shrink-0" />
+            const href =
+              createLocalizedHref(
+                item.path,
+              );
 
-              <span>{navigation(item.labelKey)}</span>
-            </Link>
-          );
-        })}
+            const isActive =
+              isItemActive(
+                item.path,
+              );
+
+            return (
+              <Link
+                key={item.path}
+                href={href}
+                aria-current={
+                  isActive
+                    ? "page"
+                    : undefined
+                }
+                className={cn(
+                  "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors",
+                  "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  isActive &&
+                    "bg-sidebar-accent text-sidebar-accent-foreground",
+                )}
+              >
+                <Icon className="size-4 shrink-0" />
+
+                <span>
+                  {navigation(
+                    item.labelKey,
+                  )}
+                </span>
+              </Link>
+            );
+          },
+        )}
       </nav>
 
       <div className="p-3 pt-0">
@@ -226,15 +271,25 @@ export function Sidebar({
           </p>
 
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            {sidebar("upgradeDescription")}
+            {sidebar(
+              "upgradeDescription",
+            )}
           </p>
 
           <Button
-            className="mt-3 w-full"
-            size="sm"
-          >
-            {sidebar("upgradePlan")}
-          </Button>
+  className="mt-3 w-full cursor-pointer"
+  size="sm"
+  nativeButton={false}
+  render={
+    <Link
+      href={createLocalizedHref(
+        "/dashboard/billing",
+      )}
+    />
+  }
+>
+  {sidebar("upgradePlan")}
+</Button>
         </div>
       </div>
     </aside>
