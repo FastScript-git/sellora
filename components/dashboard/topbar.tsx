@@ -24,6 +24,10 @@ import {
   useState,
 } from "react";
 import {
+  useClerk,
+  useUser,
+} from "@clerk/nextjs";
+import {
   useLocale,
   useTranslations,
 } from "next-intl";
@@ -127,6 +131,29 @@ const navigationItems: NavigationItem[] = [
   },
 ];
 
+function getInitials(
+  firstName?: string | null,
+  lastName?: string | null,
+  email?: string | null,
+) {
+  const initials = [
+    firstName?.trim().charAt(0),
+    lastName?.trim().charAt(0),
+  ]
+    .filter(Boolean)
+    .join("")
+    .toUpperCase();
+
+  if (initials) {
+    return initials;
+  }
+
+  return email
+    ?.trim()
+    .charAt(0)
+    .toUpperCase() || "U";
+}
+
 export function Topbar({
   title,
   mobileNavigation,
@@ -137,6 +164,13 @@ export function Topbar({
   const pathname = usePathname();
   const router = useRouter();
 
+  const {
+    isLoaded,
+    user,
+  } = useUser();
+
+  const { signOut } = useClerk();
+
   const searchInputRef =
     useRef<HTMLInputElement>(null);
 
@@ -146,6 +180,11 @@ export function Topbar({
   const [
     searchFocused,
     setSearchFocused,
+  ] = useState(false);
+
+  const [
+    isSigningOut,
+    setIsSigningOut,
   ] = useState(false);
 
   const [isDark, setIsDark] =
@@ -306,8 +345,43 @@ export function Topbar({
     setIsDark(nextDark);
   }
 
+  async function handleSignOut() {
+    if (isSigningOut) {
+      return;
+    }
+
+    setIsSigningOut(true);
+
+    try {
+      await signOut({
+        redirectUrl: `/${locale}`,
+      });
+    } finally {
+      setIsSigningOut(false);
+    }
+  }
+
   const resolvedTitle =
     title ?? t("dashboardTitle");
+
+  const primaryEmail =
+    user?.primaryEmailAddress
+      ?.emailAddress ??
+    user?.emailAddresses[0]
+      ?.emailAddress ??
+    null;
+
+  const displayName =
+    user?.fullName?.trim() ||
+    user?.firstName?.trim() ||
+    primaryEmail ||
+    t("workspaceOwner");
+
+  const initials = getInitials(
+    user?.firstName,
+    user?.lastName,
+    primaryEmail,
+  );
 
   return (
     <header
@@ -535,19 +609,28 @@ export function Topbar({
                 aria-label={t(
                   "openUserMenu",
                 )}
+                disabled={!isLoaded}
               />
             }
           >
-            <span className="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-              ER
-            </span>
+            {user?.imageUrl ? (
+              <img
+                src={user.imageUrl}
+                alt=""
+                className="size-7 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                {initials}
+              </span>
+            )}
 
-            <span className="hidden text-left lg:block">
-              <span className="block max-w-28 truncate text-sm font-medium">
-                Evgenii
+            <span className="hidden min-w-0 text-left lg:block">
+              <span className="block max-w-32 truncate text-sm font-medium">
+                {displayName}
               </span>
 
-              <span className="block text-xs text-muted-foreground">
+              <span className="block max-w-32 truncate text-xs text-muted-foreground">
                 {t("workspaceOwner")}
               </span>
             </span>
@@ -557,8 +640,22 @@ export function Topbar({
 
           <DropdownMenuContent
             align="end"
-            className="min-w-56"
+            className="min-w-60"
           >
+            <div className="min-w-0 px-3 py-2">
+              <p className="truncate text-sm font-medium">
+                {displayName}
+              </p>
+
+              {primaryEmail ? (
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {primaryEmail}
+                </p>
+              ) : null}
+            </div>
+
+            <DropdownMenuSeparator />
+
             <DropdownMenuItem
               className="cursor-pointer"
               onClick={() =>
@@ -599,9 +696,15 @@ export function Topbar({
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem
+              className="cursor-pointer text-destructive focus:text-destructive"
+              disabled={isSigningOut}
+              onClick={handleSignOut}
+            >
               <LogOut className="size-4" />
-              {t("signOut")}
+              {isSigningOut
+                ? "..."
+                : t("signOut")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
