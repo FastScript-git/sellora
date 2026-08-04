@@ -78,7 +78,7 @@ const toolDefinitions: ToolDefinition[] = [
   {
     key: "CALENDAR",
     icon: CalendarDays,
-    available: false,
+    available: true,
   },
   {
     key: "CRM",

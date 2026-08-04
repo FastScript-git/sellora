@@ -3,6 +3,7 @@
 import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
 import { buildPrompt } from "@/features/ai/services/build-prompt";
 import { generateResponseDetailed } from "@/features/ai/services/generate-response";
+import { generateResponseWithTools } from "@/features/ai/services/generate-response-with-tools";
 import {
   getConversationHistory,
   saveAssistantMessage,
@@ -11,6 +12,7 @@ import {
 } from "@/features/conversations/services/conversation.service";
 import { searchKnowledge } from "@/features/knowledge/services/search-knowledge";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
+import { prisma } from "@/lib/prisma";
 
 type SendMessageInput = {
   employeeId: string;
@@ -287,10 +289,67 @@ export async function sendMessageAction({
       details: `${prompt.length} characters`,
     });
 
-    const response =
-      await generateResponseDetailed({
-        prompt,
+    const enabledTools =
+      await prisma.aIEmployeeTool.findMany({
+        where: {
+          employeeId: employee.id,
+          isEnabled: true,
+        },
+        select: {
+          key: true,
+        },
       });
+
+    const enabledToolKeys =
+      enabledTools.map(
+        (tool) => tool.key,
+      );
+
+    trace.push({
+      id: "tools",
+      title: "AI tools prepared",
+      status:
+        enabledToolKeys.length > 0
+          ? "success"
+          : "warning",
+      details:
+        enabledToolKeys.length > 0
+          ? `${enabledToolKeys.length} tool(s) enabled: ${enabledToolKeys.join(", ")}`
+          : "No executable tools enabled",
+    });
+
+    const response =
+      enabledToolKeys.length > 0
+        ? await generateResponseWithTools({
+            prompt,
+            enabledToolKeys,
+          })
+        : {
+            ...(await generateResponseDetailed({
+              prompt,
+            })),
+            toolExecutions: [],
+          };
+
+    for (
+      const execution of
+      response.toolExecutions
+    ) {
+      trace.push({
+        id:
+          `tool-${execution.name}-` +
+          `${trace.length}`,
+        title:
+          execution.success
+            ? "Calendar event created"
+            : "Calendar tool failed",
+        status:
+          execution.success
+            ? "success"
+            : "error",
+        details: execution.details,
+      });
+    }
 
     const normalizedResponse =
       response.text.trim();
