@@ -54,29 +54,29 @@ export async function LandingDashboardPreview({
   return (
     <section
       id="product-preview"
-      className="relative overflow-hidden border-y bg-card/20 px-4 py-24 sm:px-6 sm:py-32 lg:px-8"
+      className="landing-section landing-section-muted relative"
     >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-32 -z-10 size-[560px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"
       />
 
-      <div className="mx-auto max-w-7xl">
-        <div className="mx-auto max-w-3xl text-center">
+      <div className="landing-container">
+        <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-medium text-primary">
             {t("eyebrow")}
           </p>
 
-          <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+          <h2 className="landing-heading mt-2">
             {t("title")}
           </h2>
 
-          <p className="mx-auto mt-5 max-w-2xl text-balance text-sm leading-7 text-muted-foreground sm:text-base">
+          <p className="landing-description mx-auto mt-3 max-w-2xl text-balance">
             {t("description")}
           </p>
         </div>
 
-        <div className="relative mx-auto mt-14 max-w-7xl">
+        <div className="relative mx-auto mt-7 max-w-6xl">
           <div
             aria-hidden="true"
             className="absolute -inset-6 -z-10 rounded-[2rem] bg-primary/10 blur-3xl"
@@ -96,8 +96,8 @@ export async function LandingDashboardPreview({
                 </span>
               </div>
 
-              <div className="grid min-h-[620px] md:grid-cols-[210px_minmax(0,1fr)]">
-                <aside className="hidden border-r bg-muted/10 p-4 md:block">
+              <div className="grid min-h-[420px] md:grid-cols-[180px_minmax(0,1fr)]">
+                <aside className="hidden border-r bg-muted/10 p-3 md:block">
                   <div className="mb-7 flex items-center gap-2 px-2">
                     <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                       <Sparkles className="size-4" />
@@ -130,7 +130,7 @@ export async function LandingDashboardPreview({
                   </div>
                 </aside>
 
-                <div className="min-w-0 p-4 sm:p-6 lg:p-8">
+                <div className="min-w-0 p-3 sm:p-4 lg:p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <p className="text-xs font-medium uppercase tracking-[0.14em] text-primary">
@@ -147,7 +147,7 @@ export async function LandingDashboardPreview({
                     </span>
                   </div>
 
-                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
                     <PreviewMetric
                       label={t("metrics.conversations")}
                       value="1 248"
@@ -167,8 +167,8 @@ export async function LandingDashboardPreview({
                     />
                   </div>
 
-                  <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                    <div className="rounded-xl border bg-card p-5">
+                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                    <div className="rounded-xl border bg-card p-3 sm:p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="text-sm font-medium">
                           {t("activeEmployee")}
@@ -180,7 +180,7 @@ export async function LandingDashboardPreview({
                         </span>
                       </div>
 
-                      <div className="mt-6 flex items-center gap-3">
+                      <div className="mt-3 flex items-center gap-3">
                         <span className="flex size-12 shrink-0 items-center justify-center rounded-xl border bg-muted/50">
                           <Bot className="size-5 text-muted-foreground" />
                         </span>
@@ -196,7 +196,7 @@ export async function LandingDashboardPreview({
                         </div>
                       </div>
 
-                      <div className="mt-6 space-y-4">
+                      <div className="mt-3 space-y-2.5">
                         <ProgressItem
                           label={t("metrics.conversations")}
                           value="82%"
@@ -214,7 +214,7 @@ export async function LandingDashboardPreview({
                       </div>
                     </div>
 
-                    <div className="rounded-xl border bg-card p-5">
+                    <div className="rounded-xl border bg-card p-3 sm:p-4">
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-medium">
                           {t("latestConversation")}
@@ -223,7 +223,7 @@ export async function LandingDashboardPreview({
                         <MessageSquare className="size-4 text-muted-foreground" />
                       </div>
 
-                      <div className="mt-5 rounded-xl border bg-muted/20 p-4">
+                      <div className="mt-4 rounded-xl border bg-muted/20 p-3">
                         <div className="flex items-center gap-3">
                           <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-background">
                             <Users className="size-4 text-muted-foreground" />
@@ -240,12 +240,12 @@ export async function LandingDashboardPreview({
                           </div>
                         </div>
 
-                        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                        <p className="mt-3 text-sm leading-5 text-muted-foreground">
                           {t("customerMessage")}
                         </p>
                       </div>
 
-                      <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                      <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
                         <div className="flex items-center gap-3">
                           <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                             <Bot className="size-4" />
@@ -262,15 +262,15 @@ export async function LandingDashboardPreview({
                           </div>
                         </div>
 
-                        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                        <p className="mt-3 text-sm leading-5 text-muted-foreground">
                           {t("aiReply")}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-5 overflow-hidden rounded-xl border bg-card p-5">
-                    <div className="flex h-36 items-end gap-2">
+                  <div className="mt-3 overflow-hidden rounded-xl border bg-card p-3">
+                    <div className="flex h-20 items-end gap-1.5 sm:h-24 sm:gap-2">
                       {[42, 58, 47, 72, 64, 88, 76, 94, 84, 100, 91, 96].map(
                         (height, index) => (
                           <span
@@ -324,7 +324,7 @@ function PreviewMetric({
   change,
 }: PreviewMetricProps) {
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div className="rounded-xl border bg-card p-3 sm:p-4">
       <div className="flex items-center justify-between gap-2">
         <p className="truncate text-xs text-muted-foreground">
           {label}

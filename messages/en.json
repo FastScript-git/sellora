@@ -884,5 +884,56 @@
     "footer": {
       "copyright": "© 2026 Sellora. AI Employees for modern businesses."
     }
+  },
+  "landingPricing": {
+    "eyebrow": "Simple pricing",
+    "title": "Choose the right plan for your AI workforce",
+    "description": "Start free, then upgrade when your team needs more AI Employees, conversations and automation capacity.",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "yearlyBadge": "2 months free",
+    "recommended": "Recommended",
+    "current": "Start free",
+    "upgrade": "Choose plan",
+    "perMonth": "/ month",
+    "perYear": "/ year",
+    "monthlyEquivalent": "equivalent per month",
+    "save": "Save",
+    "noCard": "No credit card required",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "For testing Sellora and launching your first AI Employee.",
+        "features": [
+          "1 AI Employee",
+          "100 contacts",
+          "500 AI messages",
+          "1 Website Widget",
+          "Basic analytics"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "For small businesses running a growing AI team.",
+        "features": [
+          "5 AI Employees",
+          "5,000 contacts",
+          "10,000 AI messages",
+          "Unlimited knowledge sources",
+          "Automations and advanced analytics"
+        ]
+      },
+      "business": {
+        "name": "Business",
+        "description": "For teams managing a high volume of customer conversations.",
+        "features": [
+          "20 AI Employees",
+          "50,000 contacts",
+          "50,000 AI messages",
+          "Team access",
+          "Priority support"
+        ]
+      }
+    }
   }
 }
