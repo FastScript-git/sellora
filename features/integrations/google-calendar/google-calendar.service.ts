@@ -1,10 +1,8 @@
 import "server-only";
 
-import {
-  auth,
-  clerkClient,
-} from "@clerk/nextjs/server";
 import { google } from "googleapis";
+
+import { getGoogleOAuthClient } from "@/features/integrations/google/google-oauth-client";
 
 type CreateGoogleCalendarEventInput = {
   title: string;
@@ -15,33 +13,6 @@ type CreateGoogleCalendarEventInput = {
   attendeeEmails?: string[];
 };
 
-async function getGoogleOAuthAccessToken() {
-  const { userId } = await auth();
-
-  if (!userId) {
-    throw new Error("AUTHENTICATION_REQUIRED");
-  }
-
-  const client = await clerkClient();
-
-  const response =
-    await client.users.getUserOauthAccessToken(
-      userId,
-      "google",
-    );
-
-  const token =
-    response.data[0]?.token;
-
-  if (!token) {
-    throw new Error(
-      "GOOGLE_CALENDAR_NOT_CONNECTED",
-    );
-  }
-
-  return token;
-}
-
 export async function createGoogleCalendarEvent({
   title,
   description,
@@ -50,15 +21,8 @@ export async function createGoogleCalendarEvent({
   timeZone,
   attendeeEmails = [],
 }: CreateGoogleCalendarEventInput) {
-  const accessToken =
-    await getGoogleOAuthAccessToken();
-
   const oauth2Client =
-    new google.auth.OAuth2();
-
-  oauth2Client.setCredentials({
-    access_token: accessToken,
-  });
+    await getGoogleOAuthClient();
 
   const calendar = google.calendar({
     version: "v3",

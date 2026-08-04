@@ -1,10 +1,8 @@
 import "server-only";
 
-import {
-  auth,
-  clerkClient,
-} from "@clerk/nextjs/server";
 import { google } from "googleapis";
+
+import { getGoogleOAuthClient } from "@/features/integrations/google/google-oauth-client";
 
 type SendGmailMessageInput = {
   to: string;
@@ -59,50 +57,13 @@ function createRawEmail({
   ).toString("base64url");
 }
 
-async function getGoogleOAuthAccessToken() {
-  const { userId } = await auth();
-
-  if (!userId) {
-    throw new Error(
-      "AUTHENTICATION_REQUIRED",
-    );
-  }
-
-  const client =
-    await clerkClient();
-
-  const response =
-    await client.users.getUserOauthAccessToken(
-      userId,
-      "google",
-    );
-
-  const token =
-    response.data[0]?.token;
-
-  if (!token) {
-    throw new Error(
-      "GMAIL_NOT_CONNECTED",
-    );
-  }
-
-  return token;
-}
-
 export async function sendGmailMessage({
   to,
   subject,
   body,
 }: SendGmailMessageInput) {
-  const accessToken =
-    await getGoogleOAuthAccessToken();
-
   const oauth2Client =
-    new google.auth.OAuth2();
-
-  oauth2Client.setCredentials({
-    access_token: accessToken,
-  });
+    await getGoogleOAuthClient();
 
   const gmail = google.gmail({
     version: "v1",
