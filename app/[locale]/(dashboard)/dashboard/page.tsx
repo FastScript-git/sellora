@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
-import { WorkspaceHeader } from "@/components/dashboard/workspace-header";
+import { PageHeader } from "@/components/dashboard/shared/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -69,7 +69,9 @@ export default async function DashboardPage({
     },
     {
       key: "resolutionRate",
-      title: t("metrics.resolutionRate.title"),
+      title: t(
+        "metrics.resolutionRate.title",
+      ),
       value:
         dashboard.overview.conversations > 0
           ? `${dashboard.overview.conversationCloseRate}%`
@@ -94,30 +96,29 @@ export default async function DashboardPage({
   ];
 
   return (
-    <div className="space-y-5">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <WorkspaceHeader
-          title={t("welcome")}
-          description={t("description")}
-        />
-
-        <Button
-          className="shrink-0"
-          nativeButton={false}
-          render={
-            <Link href={createEmployeeHref} />
-          }
-        >
-          <Plus className="size-4" />
-          {t("createEmployee")}
-        </Button>
-      </header>
+    <div className="min-w-0 space-y-5">
+      <PageHeader
+        title={t("welcome")}
+        description={t("description")}
+        actions={
+          <Button
+            className="w-full sm:w-auto"
+            nativeButton={false}
+            render={
+              <Link href={createEmployeeHref} />
+            }
+          >
+            <Plus className="size-4" />
+            {t("createEmployee")}
+          </Button>
+        }
+      />
 
       <section
         aria-label={t("metricsLabel")}
-        className="overflow-hidden rounded-xl border bg-card"
+        className="min-w-0 overflow-hidden rounded-xl border bg-card"
       >
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid min-w-0 sm:grid-cols-2 xl:grid-cols-4">
           {metrics.map((metric, index) => {
             const Icon = metric.icon;
 
@@ -125,7 +126,7 @@ export default async function DashboardPage({
               <div
                 key={metric.key}
                 className={[
-                  "flex min-h-20 items-center gap-3 px-4 py-3",
+                  "flex min-h-20 min-w-0 items-center gap-3 px-4 py-3",
                   index > 0
                     ? "border-t sm:border-t-0 sm:border-l"
                     : "",
@@ -139,8 +140,8 @@ export default async function DashboardPage({
                 </span>
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="truncate text-xs font-medium text-muted-foreground">
+                  <div className="flex min-w-0 items-baseline justify-between gap-3">
+                    <p className="min-w-0 truncate text-xs font-medium text-muted-foreground">
                       {metric.title}
                     </p>
 
@@ -159,7 +160,7 @@ export default async function DashboardPage({
         </div>
       </section>
 
-      <section className="grid items-start gap-5 xl:grid-cols-2">
+      <section className="grid min-w-0 items-start gap-5 xl:grid-cols-2">
         <AIEmployeesWidget
           employees={
             dashboard.employeePerformance
@@ -167,14 +168,14 @@ export default async function DashboardPage({
           locale={locale}
         />
 
-        <Card className="h-full">
+        <Card className="min-w-0">
           <CardContent className="p-5">
             <div className="mb-4">
               <h2 className="font-semibold">
                 {t("activity.title")}
               </h2>
 
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 {t("activity.description")}
               </p>
             </div>
@@ -190,7 +191,7 @@ export default async function DashboardPage({
         </Card>
       </section>
 
-      <section className="grid items-start gap-5 xl:grid-cols-2">
+      <section className="grid min-w-0 items-start gap-5 xl:grid-cols-2">
         <RecentConversationsWidget
           conversations={
             dashboard.recentConversations.slice(
@@ -203,7 +204,10 @@ export default async function DashboardPage({
 
         <UpcomingMeetingsWidget
           meetings={
-            dashboard.upcomingMeetings.slice(0, 4)
+            dashboard.upcomingMeetings.slice(
+              0,
+              4,
+            )
           }
           locale={locale}
         />
