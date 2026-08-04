@@ -56,7 +56,7 @@ export function LandingContainer({
   return (
     <div
       className={cn(
-        "landing-container min-w-0",
+        "landing-container",
         className,
       )}
     >
@@ -164,7 +164,7 @@ export function LandingSurface<
   return (
     <Component
       className={cn(
-        "min-w-0 rounded-2xl border bg-card",
+        "landing-surface",
         className,
       )}
       {...props}
@@ -188,13 +188,13 @@ export function LandingGrid({
   return (
     <div
       className={cn(
-        "grid min-w-0 items-stretch gap-4",
+        "landing-grid",
         columns === 2 &&
-          "md:grid-cols-2",
+          "landing-grid-2",
         columns === 3 &&
-          "md:grid-cols-2 lg:grid-cols-3",
+          "landing-grid-3",
         columns === 4 &&
-          "sm:grid-cols-2 lg:grid-cols-4",
+          "landing-grid-4",
         className,
       )}
     >
