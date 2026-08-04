@@ -8,10 +8,25 @@ import {
   executeCalendarTool,
   type CalendarToolExecution,
 } from "@/features/ai/tools/calendar-tool";
+import {
+  GMAIL_TOOL_NAME,
+  executeGmailTool,
+  gmailToolDefinition,
+  type GmailToolExecution,
+} from "@/features/ai/tools/gmail-tool";
 import type { AIEmployeeToolKey } from "@/lib/generated/prisma/client";
 
+type UnavailableToolExecution = {
+  name: string;
+  success: false;
+  title: null;
+  details: string;
+};
+
 export type AIToolExecution =
-  CalendarToolExecution;
+  | CalendarToolExecution
+  | GmailToolExecution
+  | UnavailableToolExecution;
 
 type ToolResult = {
   output: string;
@@ -21,30 +36,41 @@ type ToolResult = {
 type RegisteredTool = {
   key: AIEmployeeToolKey;
   name: string;
-  definition: OpenAI.Responses.Tool;
+  definition:
+    OpenAI.Responses.Tool;
   execute: (
     rawArguments: string,
   ) => Promise<ToolResult>;
 };
 
-const registeredTools: RegisteredTool[] = [
-  {
-    key: "CALENDAR",
-    name: CALENDAR_TOOL_NAME,
-    definition: calendarToolDefinition,
-    execute: executeCalendarTool,
-  },
-];
+const registeredTools: RegisteredTool[] =
+  [
+    {
+      key: "CALENDAR",
+      name: CALENDAR_TOOL_NAME,
+      definition:
+        calendarToolDefinition,
+      execute:
+        executeCalendarTool,
+    },
+    {
+      key: "EMAIL",
+      name: GMAIL_TOOL_NAME,
+      definition:
+        gmailToolDefinition,
+      execute: executeGmailTool,
+    },
+  ];
 
 export function getEnabledAITools(
   enabledKeys: AIEmployeeToolKey[],
 ) {
-  const enabledKeySet = new Set(
-    enabledKeys,
-  );
+  const enabledKeySet =
+    new Set(enabledKeys);
 
-  return registeredTools.filter((tool) =>
-    enabledKeySet.has(tool.key),
+  return registeredTools.filter(
+    (tool) =>
+      enabledKeySet.has(tool.key),
   );
 }
 
@@ -53,7 +79,9 @@ export function getAIToolDefinitions(
 ) {
   return getEnabledAITools(
     enabledKeys,
-  ).map((tool) => tool.definition);
+  ).map(
+    (tool) => tool.definition,
+  );
 }
 
 export async function executeRegisteredAITool({
@@ -61,16 +89,19 @@ export async function executeRegisteredAITool({
   name,
   rawArguments,
 }: {
-  enabledKeys: AIEmployeeToolKey[];
+  enabledKeys:
+    AIEmployeeToolKey[];
   name: string;
   rawArguments: string;
 }): Promise<ToolResult> {
-  const tool = getEnabledAITools(
-    enabledKeys,
-  ).find(
-    (registeredTool) =>
-      registeredTool.name === name,
-  );
+  const tool =
+    getEnabledAITools(
+      enabledKeys,
+    ).find(
+      (registeredTool) =>
+        registeredTool.name ===
+        name,
+    );
 
   if (!tool) {
     return {
@@ -80,15 +111,16 @@ export async function executeRegisteredAITool({
           "TOOL_NOT_AVAILABLE_OR_DISABLED",
       }),
       execution: {
-        name: CALENDAR_TOOL_NAME,
+        name,
         success: false,
         title: null,
         details:
           `Tool "${name}" is unavailable or disabled.`,
-        eventUrl: null,
       },
     };
   }
 
-  return tool.execute(rawArguments);
+  return tool.execute(
+    rawArguments,
+  );
 }

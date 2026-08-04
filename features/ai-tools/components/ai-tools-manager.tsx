@@ -73,7 +73,7 @@ const toolDefinitions: ToolDefinition[] = [
   {
     key: "EMAIL",
     icon: Mail,
-    available: false,
+    available: true,
   },
   {
     key: "CALENDAR",
