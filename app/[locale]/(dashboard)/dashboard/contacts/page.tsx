@@ -242,7 +242,7 @@ export default async function ContactsPage({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-8 overflow-x-hidden">
       <section>
         <h1 className="text-3xl font-semibold tracking-tight">
           {copy.title}
@@ -257,7 +257,7 @@ export default async function ContactsPage({
         <form
           action={contactsHref}
           method="get"
-          className="flex flex-col gap-3 sm:flex-row"
+          className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_auto_auto]"
         >
           {selectedEmployeeId ? (
             <input
@@ -275,7 +275,7 @@ export default async function ContactsPage({
             />
           ) : null}
 
-          <div className="relative flex-1">
+          <div className="relative min-w-0">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
             <Input
@@ -283,13 +283,13 @@ export default async function ContactsPage({
               type="search"
               defaultValue={normalizedSearch}
               placeholder={copy.searchPlaceholder}
-              className="h-11 pl-10"
+              className="h-11 min-w-0 pl-10"
             />
           </div>
 
           <Button
             type="submit"
-            className="h-11 sm:px-6"
+            className="h-11 w-full xl:w-auto xl:px-6"
           >
             {copy.searchButton}
           </Button>
@@ -301,7 +301,7 @@ export default async function ContactsPage({
                 buttonVariants({
                   variant: "outline",
                 }),
-                "h-11",
+                "h-11 w-full xl:w-auto",
               )}
             >
               <X className="size-4" />
@@ -310,7 +310,7 @@ export default async function ContactsPage({
           ) : null}
         </form>
 
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <ContactsEmployeeFilter
             employees={employeeOptions}
             statuses={statusOptions}
@@ -337,7 +337,7 @@ export default async function ContactsPage({
                 buttonVariants({
                   variant: "outline",
                 }),
-                "h-11",
+                "h-11 w-full shrink-0 xl:w-auto",
               )}
             >
               <X className="size-4" />
@@ -347,7 +347,7 @@ export default async function ContactsPage({
         </div>
       </section>
 
-      <section className="flex items-center justify-between gap-4">
+      <section className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           {hasSearch ? (
             <>
@@ -409,7 +409,7 @@ export default async function ContactsPage({
           </CardContent>
         </Card>
       ) : (
-        <section className="grid gap-4">
+        <section className="grid min-w-0 gap-4">
           {contacts.map((contact) => {
             const latestConversation =
               contact.conversations[0];
@@ -437,11 +437,11 @@ export default async function ContactsPage({
                 key={contact.id}
                 href={contactHref}
                 aria-label={copy.openContact}
-                className="block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="block min-w-0 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <Card className="transition-colors hover:border-foreground/20 hover:bg-muted/10">
+                <Card className="min-w-0 overflow-hidden transition-colors hover:border-foreground/20 hover:bg-muted/10">
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex min-w-0 items-start gap-4">
                         <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
                           <UserRound className="size-5 text-muted-foreground" />
@@ -449,7 +449,7 @@ export default async function ContactsPage({
 
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <CardTitle className="truncate text-base">
+                            <CardTitle className="max-w-full break-words text-base sm:truncate">
                               {displayName}
                             </CardTitle>
 
@@ -477,7 +477,7 @@ export default async function ContactsPage({
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-3">
+                      <div className="flex min-w-0 items-center justify-between gap-3 sm:shrink-0 sm:justify-end">
                         <span className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
                           {contact._count.conversations}{" "}
                           {copy.conversations}
@@ -493,7 +493,7 @@ export default async function ContactsPage({
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Mail className="size-4 shrink-0" />
 
-                        <span className="truncate">
+                        <span className="min-w-0 break-all sm:truncate">
                           {contact.email || "—"}
                         </span>
                       </div>
@@ -501,7 +501,7 @@ export default async function ContactsPage({
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Phone className="size-4 shrink-0" />
 
-                        <span className="truncate">
+                        <span className="min-w-0 break-words sm:truncate">
                           {contact.phone || "—"}
                         </span>
                       </div>
@@ -509,7 +509,7 @@ export default async function ContactsPage({
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Building2 className="size-4 shrink-0" />
 
-                        <span className="truncate">
+                        <span className="min-w-0 break-words sm:truncate">
                           {contact.company || "—"}
                         </span>
                       </div>
@@ -535,7 +535,7 @@ export default async function ContactsPage({
                         ) : null}
                       </div>
 
-                      <p className="mt-2 truncate text-sm text-muted-foreground">
+                      <p className="mt-2 line-clamp-2 break-words text-sm text-muted-foreground">
                         {latestMessage?.content ||
                           copy.noMessage}
                       </p>

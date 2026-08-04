@@ -4,11 +4,16 @@ import {
   Bot,
   MessageSquare,
   MessagesSquare,
+  Plus,
   Sparkles,
+  TrendingUp,
   UserCheck,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import {
+  buttonVariants,
+} from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -50,66 +55,141 @@ const statusClassNames: Record<
     "border-slate-500/20 bg-slate-500/10 text-slate-700 dark:text-slate-300",
 };
 
+const statusIndicatorClassNames: Record<
+  AIEmployeeStatus,
+  string
+> = {
+  DRAFT: "bg-zinc-500",
+  ACTIVE: "bg-emerald-500",
+  PAUSED: "bg-amber-500",
+  ARCHIVED: "bg-slate-500",
+};
+
 export function AIEmployeesWidget({
   employees,
   locale,
 }: AIEmployeesWidgetProps) {
-  const isUkrainian = locale === "uk";
+  const isUkrainian =
+    locale === "uk";
 
   const copy = isUkrainian
     ? {
-        title: "AI-співробітники",
+        title:
+          "ШІ-співробітники",
         description:
-          "Активність і результати AI-команди.",
-        viewAll: "Усі",
+          "Активність і результати вашої ШІ-команди.",
+        viewAll:
+          "Переглянути всіх",
         emptyTitle:
-          "AI-співробітників поки немає",
+          "ШІ-співробітників поки немає",
         emptyDescription:
-          "Створіть першого AI-співробітника.",
-        createEmployee: "Створити",
-        conversations: "розмов",
-        messages: "повідомлень",
-        qualified: "кваліфікованих",
-        leadScore: "Lead Score",
+          "Створіть першого ШІ-співробітника й налаштуйте його для роботи з клієнтами.",
+        createEmployee:
+          "Створити співробітника",
+        conversations:
+          "Розмови",
+        messages:
+          "Повідомлення",
+        qualified:
+          "Кваліфіковані ліди",
+        leadScore:
+          "Lead Score",
+        resolution:
+          "Закрито",
+        performance:
+          "Ефективність",
+        openEmployee:
+          "Відкрити ШІ-співробітника",
         statuses: {
-          DRAFT: "Чернетка",
-          ACTIVE: "Активний",
-          PAUSED: "Пауза",
-          ARCHIVED: "Архів",
-        },
+          DRAFT:
+            "Чернетка",
+          ACTIVE:
+            "Активний",
+          PAUSED:
+            "Пауза",
+          ARCHIVED:
+            "Архів",
+        } satisfies Record<
+          AIEmployeeStatus,
+          string
+        >,
       }
     : {
-        title: "AI Employees",
+        title:
+          "AI Employees",
         description:
           "Activity and results across your AI team.",
-        viewAll: "View all",
-        emptyTitle: "No AI employees yet",
+        viewAll:
+          "View all",
+        emptyTitle:
+          "No AI Employees yet",
         emptyDescription:
-          "Create your first AI employee.",
-        createEmployee: "Create",
-        conversations: "conversations",
-        messages: "messages",
-        qualified: "qualified",
-        leadScore: "Lead score",
+          "Create your first AI Employee and configure it to work with customers.",
+        createEmployee:
+          "Create AI Employee",
+        conversations:
+          "Conversations",
+        messages:
+          "Messages",
+        qualified:
+          "Qualified leads",
+        leadScore:
+          "Lead score",
+        resolution:
+          "Resolved",
+        performance:
+          "Performance",
+        openEmployee:
+          "Open AI Employee",
         statuses: {
-          DRAFT: "Draft",
-          ACTIVE: "Active",
-          PAUSED: "Paused",
-          ARCHIVED: "Archived",
-        },
+          DRAFT:
+            "Draft",
+          ACTIVE:
+            "Active",
+          PAUSED:
+            "Paused",
+          ARCHIVED:
+            "Archived",
+        } satisfies Record<
+          AIEmployeeStatus,
+          string
+        >,
       };
 
   const employeesPath =
     `/${locale}/dashboard/employees`;
 
-  const visibleEmployees = employees.slice(0, 4);
+  const visibleEmployees =
+    employees.slice(0, 4);
+
+  const activeEmployees =
+    employees.filter(
+      (employee) =>
+        employee.status === "ACTIVE",
+    ).length;
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <CardTitle>{copy.title}</CardTitle>
+    <Card className="min-w-0 overflow-hidden">
+      <CardHeader className="border-b px-4 py-4 sm:px-5">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-base">
+                {copy.title}
+              </CardTitle>
+
+              {employees.length > 0 ? (
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 text-[10px]"
+                >
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+
+                  {activeEmployees}/
+                  {employees.length}
+                </Badge>
+              ) : null}
+            </div>
 
             <CardDescription className="mt-1">
               {copy.description}
@@ -118,107 +198,227 @@ export function AIEmployeesWidget({
 
           <Link
             href={employeesPath}
-            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className={cn(
+              buttonVariants({
+                variant: "ghost",
+                size: "sm",
+              }),
+              "h-8 w-full shrink-0 justify-center gap-1.5 px-2 text-xs sm:w-auto",
+            )}
           >
             {copy.viewAll}
+
             <ArrowRight className="size-3.5" />
           </Link>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0">
+      <CardContent className="p-0">
         {visibleEmployees.length === 0 ? (
-          <div className="flex min-h-44 flex-col items-center justify-center rounded-xl border border-dashed px-5 py-7 text-center">
-            <span className="flex size-10 items-center justify-center rounded-xl border bg-muted/40">
-              <Bot className="size-4 text-muted-foreground" />
+          <div className="flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center">
+            <span className="flex size-12 items-center justify-center rounded-2xl border bg-muted/40">
+              <Bot className="size-5 text-muted-foreground" />
             </span>
 
-            <h3 className="mt-3 text-sm font-semibold">
+            <h3 className="mt-5 text-base font-semibold">
               {copy.emptyTitle}
             </h3>
 
-            <p className="mt-1 max-w-xs text-xs leading-5 text-muted-foreground">
+            <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
               {copy.emptyDescription}
             </p>
 
             <Link
               href={`${employeesPath}/new`}
-              className="mt-4 inline-flex h-8 items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              className={cn(
+                buttonVariants(),
+                "mt-6 gap-2",
+              )}
             >
-              <Sparkles className="size-3.5" />
+              <Plus className="size-4" />
+
               {copy.createEmployee}
             </Link>
           </div>
         ) : (
-          <div className="divide-y rounded-xl border">
-            {visibleEmployees.map((employee) => (
-              <Link
-                key={employee.id}
-                href={`${employeesPath}/${employee.id}`}
-                className="group flex items-start gap-3 px-3 py-3 transition-colors hover:bg-muted/30"
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/40">
-                  <Bot className="size-4 text-muted-foreground" />
-                </span>
+          <div className="divide-y">
+            {visibleEmployees.map(
+              (employee) => {
+                const resolutionRate =
+                  employee.conversations > 0
+                    ? Math.round(
+                        (employee.closedConversations /
+                          employee.conversations) *
+                          100,
+                      )
+                    : 0;
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium">
-                      {employee.name}
-                    </p>
+                const employeeHref =
+                  `${employeesPath}/${employee.id}`;
 
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "h-5 shrink-0 px-1.5 text-[10px] font-medium",
-                        statusClassNames[
-                          employee.status
-                        ],
-                      )}
-                    >
-                      {copy.statuses[employee.status]}
-                    </Badge>
-                  </div>
+                return (
+                  <Link
+                    key={employee.id}
+                    href={employeeHref}
+                    aria-label={
+                      copy.openEmployee
+                    }
+                    className="group block min-w-0 px-4 py-4 outline-none transition-colors hover:bg-muted/25 focus-visible:bg-muted/25 sm:px-5"
+                  >
+                    <div className="flex min-w-0 items-start gap-3">
+                      <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
+                        <Bot className="size-4 text-muted-foreground" />
 
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {employee.role}
-                  </p>
+                        <span
+                          className={cn(
+                            "absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-card",
+                            statusIndicatorClassNames[
+                              employee.status
+                            ],
+                          )}
+                        />
+                      </span>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <MessagesSquare className="size-3" />
-                      {employee.conversations}{" "}
-                      {copy.conversations}
-                    </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex min-w-0 flex-wrap items-center gap-2">
+                              <p className="max-w-full truncate text-sm font-semibold">
+                                {employee.name}
+                              </p>
 
-                    <span className="inline-flex items-center gap-1">
-                      <MessageSquare className="size-3" />
-                      {employee.messages}{" "}
-                      {copy.messages}
-                    </span>
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "h-5 shrink-0 px-1.5 text-[10px] font-medium",
+                                  statusClassNames[
+                                    employee.status
+                                  ],
+                                )}
+                              >
+                                {
+                                  copy.statuses[
+                                    employee
+                                      .status
+                                  ]
+                                }
+                              </Badge>
+                            </div>
 
-                    <span className="inline-flex items-center gap-1">
-                      <UserCheck className="size-3" />
-                      {employee.qualifiedLeads}{" "}
-                      {copy.qualified}
-                    </span>
+                            <p className="mt-1 truncate text-xs text-muted-foreground">
+                              {employee.role}
+                            </p>
+                          </div>
 
-                    <span className="inline-flex items-center gap-1">
-                      <Sparkles className="size-3" />
-                      {copy.leadScore}:{" "}
-                      {employee.averageLeadScore !== null
-                        ? `${employee.averageLeadScore}/100`
-                        : "—"}
-                    </span>
-                  </div>
-                </div>
+                          <ArrowRight className="mt-0.5 hidden size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground sm:block" />
+                        </div>
 
-                <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            ))}
+                        <div className="mt-4 grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                          <EmployeeMetric
+                            icon={
+                              MessagesSquare
+                            }
+                            label={
+                              copy.conversations
+                            }
+                            value={
+                              employee.conversations
+                            }
+                          />
+
+                          <EmployeeMetric
+                            icon={
+                              MessageSquare
+                            }
+                            label={
+                              copy.messages
+                            }
+                            value={
+                              employee.messages
+                            }
+                          />
+
+                          <EmployeeMetric
+                            icon={
+                              UserCheck
+                            }
+                            label={
+                              copy.qualified
+                            }
+                            value={
+                              employee.qualifiedLeads
+                            }
+                          />
+
+                          <EmployeeMetric
+                            icon={
+                              TrendingUp
+                            }
+                            label={
+                              copy.resolution
+                            }
+                            value={
+                              employee.conversations >
+                              0
+                                ? `${resolutionRate}%`
+                                : "—"
+                            }
+                          />
+                        </div>
+
+                        <div className="mt-3 flex min-w-0 flex-col gap-2 rounded-lg border bg-muted/10 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <Sparkles className="size-3.5 shrink-0 text-muted-foreground" />
+
+                            <span className="truncate text-xs text-muted-foreground">
+                              {copy.leadScore}
+                            </span>
+                          </div>
+
+                          <span className="shrink-0 text-xs font-semibold tabular-nums">
+                            {employee.averageLeadScore !==
+                            null
+                              ? `${employee.averageLeadScore}/100`
+                              : "—"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              },
+            )}
           </div>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+type EmployeeMetricProps = {
+  icon: typeof Bot;
+  label: string;
+  value: string | number;
+};
+
+function EmployeeMetric({
+  icon: Icon,
+  label,
+  value,
+}: EmployeeMetricProps) {
+  return (
+    <div className="min-w-0 rounded-lg border bg-background/50 px-3 py-2">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+
+        <span className="truncate text-[10px] text-muted-foreground">
+          {label}
+        </span>
+      </div>
+
+      <p className="mt-1 text-sm font-semibold tabular-nums">
+        {value}
+      </p>
+    </div>
   );
 }

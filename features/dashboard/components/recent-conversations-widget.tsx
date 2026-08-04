@@ -2,11 +2,17 @@ import Link from "next/link";
 import {
   ArrowRight,
   Bot,
+  Building2,
+  Globe2,
   MessageSquare,
+  MessagesSquare,
   UserRound,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import {
+  buttonVariants,
+} from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -20,6 +26,7 @@ import type {
   ConversationRole,
   ConversationStatus,
 } from "@/lib/generated/prisma/client";
+import { cn } from "@/lib/utils";
 
 type RecentConversation = {
   id: string;
@@ -71,51 +78,90 @@ export function RecentConversationsWidget({
   conversations,
   locale,
 }: RecentConversationsWidgetProps) {
-  const isUkrainian = locale === "uk";
+  const isUkrainian =
+    locale === "uk";
 
   const copy = isUkrainian
     ? {
-        title: "Останні розмови",
+        title:
+          "Останні розмови",
         description:
           "Найновіші діалоги з клієнтами.",
-        viewAll: "Inbox",
-        emptyTitle: "Розмов поки немає",
+        viewAll:
+          "Відкрити Inbox",
+        emptyTitle:
+          "Розмов поки немає",
         emptyDescription:
-          "Нові діалоги з’являтимуться тут.",
-        anonymous: "Анонімний відвідувач",
-        noMessage: "Повідомлень поки немає",
+          "Нові діалоги з клієнтами з’являтимуться тут.",
+        anonymous:
+          "Анонімний відвідувач",
+        noMessage:
+          "Повідомлень поки немає",
+        openConversation:
+          "Відкрити розмову",
+        messages:
+          "повідомлень",
+        leadScore:
+          "Lead Score",
+        company:
+          "Компанія",
+        channel:
+          "Канал",
       }
     : {
-        title: "Recent conversations",
+        title:
+          "Recent conversations",
         description:
           "The latest customer conversations.",
-        viewAll: "Inbox",
-        emptyTitle: "No conversations yet",
+        viewAll:
+          "Open Inbox",
+        emptyTitle:
+          "No conversations yet",
         emptyDescription:
-          "New conversations will appear here.",
-        anonymous: "Anonymous visitor",
-        noMessage: "No messages yet",
+          "New customer conversations will appear here.",
+        anonymous:
+          "Anonymous visitor",
+        noMessage:
+          "No messages yet",
+        openConversation:
+          "Open conversation",
+        messages:
+          "messages",
+        leadScore:
+          "Lead score",
+        company:
+          "Company",
+        channel:
+          "Channel",
       };
 
-  const dateFormatter = new Intl.DateTimeFormat(
-    isUkrainian ? "uk-UA" : "en-US",
-    {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    },
-  );
+  const dateFormatter =
+    new Intl.DateTimeFormat(
+      isUkrainian
+        ? "uk-UA"
+        : "en-US",
+      {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      },
+    );
 
   const visibleConversations =
     conversations.slice(0, 4);
 
+  const inboxHref =
+    `/${locale}/dashboard/conversations`;
+
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <CardTitle>{copy.title}</CardTitle>
+    <Card className="min-w-0 overflow-hidden">
+      <CardHeader className="border-b px-4 py-4 sm:px-5">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <CardTitle className="text-base">
+              {copy.title}
+            </CardTitle>
 
             <CardDescription className="mt-1">
               {copy.description}
@@ -123,30 +169,39 @@ export function RecentConversationsWidget({
           </div>
 
           <Link
-            href={`/${locale}/dashboard/conversations`}
-            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            href={inboxHref}
+            className={cn(
+              buttonVariants({
+                variant: "ghost",
+                size: "sm",
+              }),
+              "h-8 w-full shrink-0 justify-center gap-1.5 px-2 text-xs sm:w-auto",
+            )}
           >
             {copy.viewAll}
+
             <ArrowRight className="size-3.5" />
           </Link>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0">
+      <CardContent className="p-0">
         {visibleConversations.length === 0 ? (
-          <div className="flex min-h-44 flex-col items-center justify-center rounded-xl border border-dashed px-5 py-7 text-center">
-            <MessageSquare className="size-4 text-muted-foreground" />
+          <div className="flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center">
+            <span className="flex size-12 items-center justify-center rounded-2xl border bg-muted/40">
+              <MessageSquare className="size-5 text-muted-foreground" />
+            </span>
 
-            <p className="mt-3 text-sm font-medium">
+            <p className="mt-5 text-base font-semibold">
               {copy.emptyTitle}
             </p>
 
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
               {copy.emptyDescription}
             </p>
           </div>
         ) : (
-          <div className="divide-y rounded-xl border">
+          <div className="divide-y">
             {visibleConversations.map(
               (conversation) => {
                 const latestMessage =
@@ -169,64 +224,126 @@ export function RecentConversationsWidget({
                   latestMessage?.createdAt ??
                   conversation.updatedAt;
 
+                const conversationHref =
+                  `${inboxHref}?conversationId=${conversation.id}`;
+
                 return (
                   <Link
                     key={conversation.id}
-                    href={
-                      `/${locale}/dashboard/conversations` +
-                      `?conversationId=${conversation.id}`
+                    href={conversationHref}
+                    aria-label={
+                      copy.openConversation
                     }
-                    className="group flex items-center gap-3 px-3 py-3 transition-colors hover:bg-muted/30"
+                    className="group block min-w-0 px-4 py-4 outline-none transition-colors hover:bg-muted/25 focus-visible:bg-muted/25 sm:px-5"
                   >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/40">
-                      <UserRound className="size-4 text-muted-foreground" />
-                    </span>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-sm font-medium">
-                          {contactName}
-                        </p>
+                    <div className="flex min-w-0 items-start gap-3">
+                      <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
+                        <UserRound className="size-4 text-muted-foreground" />
 
                         {conversation.unreadCount > 0 ? (
-                          <span className="inline-flex min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                            {conversation.unreadCount}
+                          <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full border-2 border-card bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                            {
+                              conversation.unreadCount
+                            }
                           </span>
                         ) : null}
-                      </div>
+                      </span>
 
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {latestMessage?.content ||
-                          copy.noMessage}
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex min-w-0 flex-wrap items-center gap-2">
+                              <p className="max-w-full truncate text-sm font-semibold">
+                                {contactName}
+                              </p>
 
-                      <div className="mt-1.5 flex min-w-0 items-center gap-2 text-[11px] text-muted-foreground">
-                        <span className="inline-flex min-w-0 items-center gap-1">
-                          <Bot className="size-3 shrink-0" />
+                              {conversation.channel ? (
+                                <Badge
+                                  variant="outline"
+                                  className="h-5 shrink-0 px-1.5 text-[10px]"
+                                >
+                                  {
+                                    conversation.channel
+                                      .type
+                                  }
+                                </Badge>
+                              ) : null}
+                            </div>
 
-                          <span className="truncate">
-                            {conversation.employee.name}
-                          </span>
-                        </span>
+                            <p className="mt-1 line-clamp-2 break-words text-sm leading-5 text-muted-foreground">
+                              {latestMessage?.content ||
+                                copy.noMessage}
+                            </p>
+                          </div>
 
-                        {conversation.channel ? (
-                          <Badge
-                            variant="secondary"
-                            className="h-5 px-1.5 text-[10px]"
+                          <time
+                            dateTime={activityDate.toISOString()}
+                            className="shrink-0 text-[11px] text-muted-foreground"
                           >
-                            {conversation.channel.type}
-                          </Badge>
+                            {dateFormatter.format(
+                              activityDate,
+                            )}
+                          </time>
+                        </div>
+
+                        <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                          <ConversationMeta
+                            icon={Bot}
+                            label={
+                              conversation.employee.name
+                            }
+                          />
+
+                          <ConversationMeta
+                            icon={
+                              MessagesSquare
+                            }
+                            label={`${conversation._count.messages} ${copy.messages}`}
+                          />
+
+                          <ConversationMeta
+                            icon={Building2}
+                            label={
+                              conversation.contact
+                                ?.company ||
+                              copy.company
+                            }
+                          />
+
+                          <ConversationMeta
+                            icon={Globe2}
+                            label={
+                              conversation.channel
+                                ?.name ||
+                              copy.channel
+                            }
+                          />
+                        </div>
+
+                        {conversation.contact
+                          ?.leadScore !==
+                        null &&
+                        conversation.contact
+                          ?.leadScore !==
+                          undefined ? (
+                          <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border bg-muted/10 px-3 py-2">
+                            <span className="text-xs text-muted-foreground">
+                              {copy.leadScore}
+                            </span>
+
+                            <span className="text-xs font-semibold tabular-nums">
+                              {
+                                conversation.contact
+                                  .leadScore
+                              }
+                              /100
+                            </span>
+                          </div>
                         ) : null}
-
-                        <span className="ml-auto shrink-0">
-                          {dateFormatter.format(
-                            activityDate,
-                          )}
-                        </span>
                       </div>
-                    </div>
 
-                    <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                      <ArrowRight className="mt-1 hidden size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground sm:block" />
+                    </div>
                   </Link>
                 );
               },
@@ -235,5 +352,25 @@ export function RecentConversationsWidget({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+type ConversationMetaProps = {
+  icon: typeof Bot;
+  label: string;
+};
+
+function ConversationMeta({
+  icon: Icon,
+  label,
+}: ConversationMetaProps) {
+  return (
+    <div className="flex min-w-0 items-center gap-2 rounded-lg border bg-background/50 px-3 py-2">
+      <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+
+      <span className="truncate text-[11px] text-muted-foreground">
+        {label}
+      </span>
+    </div>
   );
 }

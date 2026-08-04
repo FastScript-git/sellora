@@ -1,6 +1,10 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 
 import {
   Select,
@@ -66,19 +70,24 @@ export function ContactsEmployeeFilter({
 
     const query = params.toString();
 
-    router.push(query ? `${pathname}?${query}` : pathname);
+    router.push(
+      query
+        ? `${pathname}?${query}`
+        : pathname,
+    );
   }
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row">
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-medium text-muted-foreground">
+    <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:flex xl:items-end">
+      <div className="min-w-0 space-y-2">
+        <span className="block text-xs font-medium text-muted-foreground">
           {employeeFilterLabel}
         </span>
 
         <Select
           value={
-            selectedEmployeeId || ALL_EMPLOYEES_VALUE
+            selectedEmployeeId ||
+            ALL_EMPLOYEES_VALUE
           }
           onValueChange={(value) =>
             updateSearchParam(
@@ -89,44 +98,58 @@ export function ContactsEmployeeFilter({
           }
         >
           <SelectTrigger
-            className="h-11 w-full min-w-56 sm:w-64"
-            aria-label={employeeFilterLabel}
+            className="h-11 w-full min-w-0 xl:w-64"
+            aria-label={
+              employeeFilterLabel
+            }
           >
             <SelectValue />
           </SelectTrigger>
 
-          <SelectContent align="start">
-            <SelectItem value={ALL_EMPLOYEES_VALUE}>
+          <SelectContent
+            align="start"
+            className="max-w-[calc(100vw-2rem)]"
+          >
+            <SelectItem
+              value={
+                ALL_EMPLOYEES_VALUE
+              }
+            >
               {allEmployeesLabel}
             </SelectItem>
 
-            {employees.map((employee) => (
-              <SelectItem
-                key={employee.id}
-                value={employee.id}
-              >
-                <span className="flex min-w-0 flex-col">
-                  <span className="truncate">
-                    {employee.name}
-                  </span>
+            {employees.map(
+              (employee) => (
+                <SelectItem
+                  key={employee.id}
+                  value={employee.id}
+                >
+                  <span className="flex min-w-0 max-w-64 flex-col">
+                    <span className="truncate">
+                      {employee.name}
+                    </span>
 
-                  <span className="truncate text-xs text-muted-foreground">
-                    {employee.role}
+                    <span className="truncate text-xs text-muted-foreground">
+                      {employee.role}
+                    </span>
                   </span>
-                </span>
-              </SelectItem>
-            ))}
+                </SelectItem>
+              ),
+            )}
           </SelectContent>
         </Select>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-medium text-muted-foreground">
+      <div className="min-w-0 space-y-2">
+        <span className="block text-xs font-medium text-muted-foreground">
           {statusFilterLabel}
         </span>
 
         <Select
-          value={selectedStatus || ALL_STATUSES_VALUE}
+          value={
+            selectedStatus ||
+            ALL_STATUSES_VALUE
+          }
           onValueChange={(value) =>
             updateSearchParam(
               "status",
@@ -136,25 +159,36 @@ export function ContactsEmployeeFilter({
           }
         >
           <SelectTrigger
-            className="h-11 w-full min-w-48 sm:w-56"
-            aria-label={statusFilterLabel}
+            className="h-11 w-full min-w-0 xl:w-56"
+            aria-label={
+              statusFilterLabel
+            }
           >
             <SelectValue />
           </SelectTrigger>
 
-          <SelectContent align="start">
-            <SelectItem value={ALL_STATUSES_VALUE}>
+          <SelectContent
+            align="start"
+            className="max-w-[calc(100vw-2rem)]"
+          >
+            <SelectItem
+              value={
+                ALL_STATUSES_VALUE
+              }
+            >
               {allStatusesLabel}
             </SelectItem>
 
-            {statuses.map((status) => (
-              <SelectItem
-                key={status.value}
-                value={status.value}
-              >
-                {status.label}
-              </SelectItem>
-            ))}
+            {statuses.map(
+              (status) => (
+                <SelectItem
+                  key={status.value}
+                  value={status.value}
+                >
+                  {status.label}
+                </SelectItem>
+              ),
+            )}
           </SelectContent>
         </Select>
       </div>

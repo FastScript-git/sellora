@@ -731,5 +731,158 @@
     "generating": "AI is generating a reply...",
     "thinking": "AI is thinking...",
     "fallbackError": "Failed to generate AI reply."
+  },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "howItWorks": "How it works",
+      "pricing": "Pricing",
+      "security": "Security",
+      "signIn": "Sign in",
+      "getStarted": "Get started"
+    },
+    "preview": {
+      "dashboard": "Dashboard",
+      "employees": "AI Employees",
+      "conversations": "Conversations",
+      "automations": "Automations",
+      "contacts": "Contacts",
+      "overview": "Overview",
+      "title": "AI Team Performance",
+      "conversationsMetric": "Conversations",
+      "qualifiedMetric": "Qualified leads",
+      "resolutionMetric": "AI Resolution",
+      "activeEmployee": "Active AI Employee",
+      "recentConversation": "Recent Conversation",
+      "leadQualified": "Lead qualified",
+      "automated": "Automated by Sellora",
+      "newCustomer": "New customer",
+      "salesSpecialist": "Sales Specialist",
+      "minutesAgo": "2 min ago",
+      "message": "I'd like to learn more about your Business plan."
+    }
+  },
+  "landingHero": {
+    "navigation": {
+      "features": "Features",
+      "howItWorks": "How it works",
+      "pricing": "Pricing",
+      "security": "Security"
+    },
+    "login": "Log in",
+    "startFree": "Start free",
+    "badge": "AI Employees for modern businesses",
+    "title": "Build an AI workforce that works for your business",
+    "titleAccent": "every hour of every day.",
+    "description": "Deploy AI Employees that answer customers, qualify leads, use your verified business knowledge and automate repetitive work across connected channels.",
+    "primaryAction": "Create your AI Employee",
+    "secondaryAction": "Explore the product",
+    "noCard": "No credit card required",
+    "setup": "Set up in minutes",
+    "cancel": "Cancel anytime",
+    "secure": "Your data stays isolated inside your workspace"
+  },
+  "landingDashboardPreview": {
+    "eyebrow": "Everything in one workspace",
+    "title": "Manage your entire AI workforce from one dashboard",
+    "description": "Control AI Employees, conversations, leads, knowledge, automations and business performance from one focused workspace.",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "employees": "AI Employees",
+      "conversations": "Conversations",
+      "automations": "Automations",
+      "contacts": "Contacts"
+    },
+    "performance": "AI workforce performance",
+    "metrics": {
+      "conversations": "Conversations",
+      "qualifiedLeads": "Qualified leads",
+      "resolution": "AI resolution"
+    },
+    "activeEmployee": "Active AI Employee",
+    "employeeName": "Alex",
+    "employeeRole": "Sales Specialist",
+    "active": "Active",
+    "latestConversation": "Latest conversation",
+    "customer": "New customer",
+    "minutesAgo": "2 min ago",
+    "customerMessage": "I would like to learn more about the Business plan.",
+    "aiLabel": "AI Employee",
+    "aiReply": "Alex qualified the lead and created the next action.",
+    "leadQualified": "Lead qualified",
+    "automated": "Automated by Sellora"
+  },
+  "landingPage": {
+    "features": {
+      "eyebrow": "One platform",
+      "title": "Everything your AI workforce needs",
+      "description": "Manage identity, knowledge, conversations, tools, channels and performance from one focused workspace.",
+      "items": {
+        "employees": {
+          "title": "AI Employees",
+          "description": "Create digital employees with clear roles, instructions and measurable business goals."
+        },
+        "knowledge": {
+          "title": "Business knowledge",
+          "description": "Connect websites, documents, FAQs and notes to every AI Employee."
+        },
+        "conversations": {
+          "title": "Customer conversations",
+          "description": "Manage customer conversations across channels from one focused inbox."
+        },
+        "automations": {
+          "title": "Automations",
+          "description": "Build workflows that trigger actions, update contacts and move work forward."
+        },
+        "channels": {
+          "title": "Connected channels",
+          "description": "Deploy AI Employees to your website and connect more channels as you grow."
+        },
+        "analytics": {
+          "title": "Actionable analytics",
+          "description": "Track resolution rate, lead quality, performance and knowledge gaps."
+        }
+      }
+    },
+    "howItWorks": {
+      "eyebrow": "Simple by design",
+      "title": "From setup to real customer work in three steps",
+      "steps": {
+        "create": {
+          "number": "01",
+          "title": "Create an AI Employee",
+          "description": "Choose a name, role, communication style and clear business objective."
+        },
+        "knowledge": {
+          "number": "02",
+          "title": "Connect your knowledge",
+          "description": "Add verified information your employee needs to answer accurately."
+        },
+        "launch": {
+          "number": "03",
+          "title": "Launch on a channel",
+          "description": "Test the experience and connect it to your website or another channel."
+        }
+      },
+      "benefitsTitle": "Built for real operations",
+      "benefits": {
+        "availability": "Available to customers around the clock",
+        "verifiedKnowledge": "Works from your verified business knowledge",
+        "consistentStyle": "Maintains a consistent communication style",
+        "scaling": "Scales without adding repetitive manual work"
+      }
+    },
+    "security": {
+      "title": "Your business data stays separated and controlled",
+      "description": "Sellora is built around isolated workspaces, scoped data access and controlled knowledge sources for every AI Employee."
+    },
+    "cta": {
+      "title": "Create your first AI Employee today",
+      "description": "Start building a digital workforce that supports customers and helps your business grow around the clock.",
+      "button": "Start free"
+    },
+    "footer": {
+      "copyright": "© 2026 Sellora. AI Employees for modern businesses."
+    }
   }
 }
