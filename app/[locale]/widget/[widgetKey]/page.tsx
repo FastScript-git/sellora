@@ -10,41 +10,78 @@ type WidgetPageProps = {
     locale: string;
     widgetKey: string;
   }>;
+
+  searchParams: Promise<{
+    embed?: string;
+  }>;
 };
 
 export default async function WidgetPage({
   params,
+  searchParams,
 }: WidgetPageProps) {
   const { widgetKey } = await params;
+  const query = await searchParams;
 
-  const channel = await prisma.channel.findFirst({
-    where: {
-      widgetKey,
-      type: "WEBSITE",
-      isEnabled: true,
-    },
+  const isEmbedded = query.embed === "1";
 
-    select: {
-      widgetKey: true,
-      widgetTitle: true,
-      widgetGreeting: true,
-      widgetPrimaryColor: true,
+  const channel =
+    await prisma.channel.findFirst({
+      where: {
+        widgetKey,
+        type: "WEBSITE",
+        isEnabled: true,
+      },
 
-      employee: {
-        select: {
-          name: true,
-          status: true,
+      select: {
+        widgetKey: true,
+        widgetTitle: true,
+        widgetGreeting: true,
+        widgetPrimaryColor: true,
+
+        employee: {
+          select: {
+            name: true,
+          },
         },
       },
-    },
-  });
+    });
 
   if (
     !channel ||
-    !channel.widgetKey ||
-    channel.employee.status !== "ACTIVE"
+    !channel.widgetKey
   ) {
     notFound();
+  }
+
+  const widget = (
+    <WebsiteChatWidget
+      widgetKey={channel.widgetKey}
+      title={
+        channel.widgetTitle ||
+        channel.employee.name
+      }
+      greeting={
+        channel.widgetGreeting ||
+        "Hello! How can I help you today?"
+      }
+      primaryColor={
+        channel.widgetPrimaryColor ||
+        "#2563eb"
+      }
+      employeeName={
+        channel.employee.name
+      }
+      embedded={isEmbedded}
+    />
+  );
+
+  if (isEmbedded) {
+    return (
+      <div className="light min-h-screen bg-white text-zinc-950">
+        {widget}
+      </div>
+    );
   }
 
   return (
@@ -67,22 +104,7 @@ export default async function WidgetPage({
         </div>
       </div>
 
-      <WebsiteChatWidget
-        widgetKey={channel.widgetKey}
-        title={
-          channel.widgetTitle ||
-          channel.employee.name
-        }
-        greeting={
-          channel.widgetGreeting ||
-          "Hello! How can I help you today?"
-        }
-        primaryColor={
-          channel.widgetPrimaryColor ||
-          "#2563eb"
-        }
-        employeeName={channel.employee.name}
-      />
+      {widget}
     </main>
   );
 }

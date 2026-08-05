@@ -27,6 +27,7 @@ type WebsiteChatWidgetProps = {
   greeting: string;
   primaryColor: string;
   employeeName: string;
+  embedded?: boolean;
 };
 
 type SendMessageResponse = {
@@ -86,6 +87,7 @@ export function WebsiteChatWidget({
   greeting,
   primaryColor,
   employeeName,
+  embedded = false,
 }: WebsiteChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [content, setContent] = useState("");
@@ -295,7 +297,7 @@ export function WebsiteChatWidget({
     }
   }
 
-  if (!isOpen) {
+  if (!isOpen && !embedded) {
     return (
       <button
         type="button"
@@ -312,7 +314,13 @@ export function WebsiteChatWidget({
   }
 
   return (
-    <div className="fixed bottom-6 right-6 flex h-[620px] max-h-[calc(100vh-3rem)] w-[380px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-3xl border bg-background shadow-2xl">
+    <div
+      className={
+        embedded
+          ? "flex min-h-screen w-full flex-col overflow-hidden bg-white text-zinc-950"
+          : "fixed bottom-6 right-6 flex h-[620px] max-h-[calc(100vh-3rem)] w-[380px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-3xl border bg-background shadow-2xl"
+      }
+    >
       <header
         className="flex items-center justify-between px-5 py-4 text-white"
         style={{
@@ -329,15 +337,29 @@ export function WebsiteChatWidget({
               {title}
             </h1>
 
-            <p className="mt-0.5 truncate text-xs text-white/80">
-              {employeeName}
-            </p>
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-white/80">
+              <span className="size-1.5 rounded-full bg-emerald-300" />
+              <span>Онлайн</span>
+            </div>
           </div>
         </div>
 
         <button
           type="button"
-          onClick={() => setIsOpen(false)}
+          onClick={() => {
+            if (embedded) {
+              window.parent.postMessage(
+                {
+                  type: "SELLORA_WIDGET_CLOSE",
+                },
+                "*",
+              );
+
+              return;
+            }
+
+            setIsOpen(false);
+          }}
           className="flex size-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-white/15"
           aria-label="Close chat"
         >
@@ -345,7 +367,13 @@ export function WebsiteChatWidget({
         </button>
       </header>
 
-      <main className="flex-1 overflow-y-auto bg-muted/20 px-4 py-5">
+      <main
+        className={
+          embedded
+            ? "flex-1 overflow-y-auto bg-zinc-50 px-4 py-5"
+            : "flex-1 overflow-y-auto bg-muted/20 px-4 py-5"
+        }
+      >
         <div className="flex items-start gap-3">
           <span
             className="flex size-9 shrink-0 items-center justify-center rounded-full text-white"
@@ -356,8 +384,14 @@ export function WebsiteChatWidget({
             <MessageCircle className="size-4" />
           </span>
 
-          <div className="max-w-[82%] rounded-2xl rounded-tl-md border bg-background px-4 py-3 shadow-sm">
-            <p className="text-sm leading-6">
+          <div
+            className={
+              embedded
+                ? "max-w-[82%] rounded-2xl rounded-tl-md border border-zinc-200 bg-white px-4 py-3 text-zinc-950 shadow-sm"
+                : "max-w-[82%] rounded-2xl rounded-tl-md border bg-background px-4 py-3 shadow-sm"
+            }
+          >
+            <p className="whitespace-pre-wrap break-words text-sm leading-6">
               {greeting}
             </p>
           </div>
@@ -401,7 +435,9 @@ export function WebsiteChatWidget({
                     className={
                       isUser
                         ? "rounded-2xl rounded-br-md px-4 py-3 text-white shadow-sm"
-                        : "rounded-2xl rounded-bl-md border bg-background px-4 py-3 shadow-sm"
+                        : embedded
+                          ? "rounded-2xl rounded-bl-md border border-zinc-200 bg-white px-4 py-3 text-zinc-950 shadow-sm"
+                          : "rounded-2xl rounded-bl-md border bg-background px-4 py-3 shadow-sm"
                     }
                     style={
                       isUser
@@ -439,7 +475,13 @@ export function WebsiteChatWidget({
                   <MessageCircle className="size-3.5" />
                 </span>
 
-                <div className="rounded-2xl rounded-bl-md border bg-background px-4 py-3 shadow-sm">
+                <div
+                  className={
+                    embedded
+                      ? "rounded-2xl rounded-bl-md border border-zinc-200 bg-white px-4 py-3 shadow-sm"
+                      : "rounded-2xl rounded-bl-md border bg-background px-4 py-3 shadow-sm"
+                  }
+                >
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <LoaderCircle className="size-4 animate-spin" />
 
@@ -456,7 +498,13 @@ export function WebsiteChatWidget({
         <div ref={messagesEndRef} />
       </main>
 
-      <footer className="border-t bg-background p-4">
+      <footer
+        className={
+          embedded
+            ? "border-t border-zinc-200 bg-white p-4"
+            : "border-t bg-background p-4"
+        }
+      >
         {error ? (
           <div className="mb-3 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
             {error}
@@ -491,7 +539,11 @@ export function WebsiteChatWidget({
                 ? "Loading conversation..."
                 : "Write a message..."
             }
-            className="max-h-32 min-h-11 flex-1 resize-none rounded-2xl border bg-background px-4 py-3 text-sm outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className={
+              embedded
+                ? "max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-950 outline-none transition-shadow placeholder:text-zinc-400 focus:ring-2 focus:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-60"
+                : "max-h-32 min-h-11 flex-1 resize-none rounded-2xl border bg-background px-4 py-3 text-sm outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            }
           />
 
           <button
