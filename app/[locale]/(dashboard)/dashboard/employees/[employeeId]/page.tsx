@@ -3,8 +3,6 @@ import {
   ArrowRight,
   BookOpen,
   CalendarDays,
-  Check,
-  Circle,
   Languages,
   MessageSquareText,
   Radio,
@@ -23,9 +21,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { EmployeeReadinessCard } from "@/features/ai-employees/components/employee-readiness-card";
 import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
-import { cn } from "@/lib/utils";
 
 type AIEmployeeOverviewPageProps = {
   params: Promise<{
@@ -176,8 +174,6 @@ export default async function AIEmployeeOverviewPage({
     (completedItems / readinessItems.length) * 100,
   );
 
-  const isReady = readinessPercentage >= 70;
-
   const employeeBaseHref =
     `/${locale}/dashboard/employees/${employee.id}`;
 
@@ -254,98 +250,26 @@ export default async function AIEmployeeOverviewPage({
   return (
     <div className="min-w-0 space-y-4">
       <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.45fr)_360px]">
-        <Card className="min-w-0 overflow-hidden">
-          <CardHeader className="border-b">
-            <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <CardTitle>{copy.readinessTitle}</CardTitle>
-
-                <CardDescription className="mt-1 max-w-2xl leading-6">
-                  {copy.readinessDescription}
-                </CardDescription>
-              </div>
-
-              <div className="shrink-0">
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium",
-                    isReady
-                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                      : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-                  )}
-                >
-                  <span className="size-1.5 rounded-full bg-current" />
-
-                  {isReady ? copy.ready : copy.needsSetup}
-                </span>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-5 pt-6">
-            <div>
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-3xl font-semibold tracking-tight tabular-nums">
-                    {readinessPercentage}%
-                  </p>
-
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {completedItems}/{readinessItems.length}{" "}
-                    {copy.completed.toLowerCase()}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-muted">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all",
-                    isReady ? "bg-emerald-500" : "bg-primary",
-                  )}
-                  style={{
-                    width: `${readinessPercentage}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="grid min-w-0 gap-2 sm:grid-cols-2">
-              {readinessItems.map((item) => (
-                <div
-                  key={item.key}
-                  className="flex min-w-0 items-center gap-3 rounded-xl border bg-muted/10 px-3 py-3"
-                >
-                  <span
-                    className={cn(
-                      "flex size-8 shrink-0 items-center justify-center rounded-lg border",
-                      item.complete
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
-                        : "bg-background text-muted-foreground",
-                    )}
-                  >
-                    {item.complete ? (
-                      <Check className="size-4" />
-                    ) : (
-                      <Circle className="size-4" />
-                    )}
-                  </span>
-
-                  <span
-                    className={cn(
-                      "min-w-0 break-words text-sm",
-                      item.complete
-                        ? "text-foreground"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    {item.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <EmployeeReadinessCard
+          title={copy.readinessTitle}
+          description={
+            copy.readinessDescription
+          }
+          readyLabel={copy.ready}
+          needsSetupLabel={
+            copy.needsSetup
+          }
+          completedLabel={
+            copy.completed
+          }
+          readinessPercentage={
+            readinessPercentage
+          }
+          completedItems={
+            completedItems
+          }
+          items={readinessItems}
+        />
 
         <Card className="min-w-0">
           <CardHeader>
