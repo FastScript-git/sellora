@@ -2,11 +2,16 @@ import {
   ArrowRight,
   MessageSquare,
   Plus,
+  ShieldCheck,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import {
+  PageHeader,
+  PageHeaderNote,
+} from "@/components/dashboard/shared/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -66,29 +71,35 @@ export default async function ConversationsPage({
     });
 
   return (
-    <div className="min-w-0 space-y-6">
-      <section className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">
-            {t("title")}
-          </h1>
-
-          <p className="mt-2 max-w-3xl break-words text-sm leading-6 text-muted-foreground">
-            {t("description")}
-          </p>
-        </div>
-
-        <Button
-          className="w-full shrink-0 sm:w-auto"
-          nativeButton={false}
-          render={
-            <Link href={testChatHref} />
-          }
-        >
-          <Plus className="size-4" />
-          {t("newConversation")}
-        </Button>
-      </section>
+    <div className="min-w-0 space-y-4">
+      <PageHeader
+        compact
+        icon={MessageSquare}
+        title={t("title")}
+        description={t("description")}
+        aside={
+          <PageHeaderNote
+            icon={ShieldCheck}
+            tone="success"
+          >
+            {locale === "uk"
+              ? "Тут зберігаються розмови лише цього ШІ-співробітника."
+              : "Only conversations for this AI Employee are shown here."}
+          </PageHeaderNote>
+        }
+        actions={
+          <Button
+            className="w-full shrink-0 sm:w-auto"
+            nativeButton={false}
+            render={
+              <Link href={testChatHref} />
+            }
+          >
+            <Plus className="size-4" />
+            {t("newConversation")}
+          </Button>
+        }
+      />
 
       {conversations.length === 0 ? (
         <Card className="min-w-0 border-dashed">
@@ -135,7 +146,7 @@ export default async function ConversationsPage({
                   aria-label={t(
                     "openConversation",
                   )}
-                  className="block min-w-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="group block min-w-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Card className="min-w-0 transition-colors hover:border-foreground/20 hover:bg-muted/10">
                     <CardHeader className="pb-3">
