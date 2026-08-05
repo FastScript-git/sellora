@@ -86,8 +86,8 @@ export function WorkflowSummary({
         </p>
 
         <p className="mt-1 text-sm text-muted-foreground">
-          Workflow details, trigger, conditions and action ordering
-          are connected. Action settings will be added next.
+          Workflow details, trigger, conditions and actions
+          are connected and ready to be saved.
         </p>
       </div>
     </aside>
