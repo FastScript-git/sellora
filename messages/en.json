@@ -422,6 +422,10 @@
       "CUSTOM_API": {
         "title": "Custom API",
         "description": "Call custom APIs provided by your business."
+      },
+      "DOCUMENTS": {
+        "title": "Google Docs",
+        "description": "Create documents and drafts in Google Docs directly from conversations."
       }
     },
     "messages": {

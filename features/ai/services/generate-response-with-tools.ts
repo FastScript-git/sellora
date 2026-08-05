@@ -111,7 +111,13 @@ export async function generateResponseWithTools({
     "- Never claim that an action succeeded unless the tool result confirms success.",
     "- Ask a clarification question when required information is missing or ambiguous.",
     "- Never invent email addresses, dates, times, names, or external identifiers.",
+    "- All tool arguments must use literal UTF-8 text.",
+    "- Never encode Ukrainian or other non-ASCII characters as Unicode escape sequences.",
+    "- If a tool reports invalid Unicode or control characters, retry the tool call once using literal UTF-8 text.",
     "- After a successful action, clearly summarize what was completed.",
+    "- Tool results are rendered separately as interactive cards in the chat UI.",
+    "- Never include raw result URLs in your text response when a tool already returned that URL.",
+    "- Do not write phrases such as 'here is the link' when the result card already provides the link.",
     "- If an action fails, explain that it was not completed.",
   ].join("\n");
 

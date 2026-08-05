@@ -28,6 +28,19 @@ type AITraceStep = {
   details?: string;
 };
 
+export type ChatToolResult = {
+  id: string;
+  type:
+    | "google-calendar"
+    | "google-docs"
+    | "gmail"
+    | "generic";
+  title: string;
+  description: string;
+  url: string | null;
+  success: boolean;
+};
+
 type SendMessageResult =
   | {
       success: true;
@@ -38,6 +51,7 @@ type SendMessageResult =
         sourceTitle: string;
         citationNumbers: number[];
       }>;
+      toolResults: ChatToolResult[];
       debug: {
         model: string;
         latencyMs: number;
@@ -60,6 +74,62 @@ type SendMessageResult =
 const MAX_MESSAGE_LENGTH = 4000;
 const KNOWLEDGE_RESULT_LIMIT = 5;
 const CONVERSATION_HISTORY_LIMIT = 20;
+
+function escapeRegExp(value: string) {
+  return value.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&",
+  );
+}
+
+function removeToolResultUrls({
+  content,
+  toolExecutions,
+}: {
+  content: string;
+  toolExecutions: Array<
+    Record<string, unknown>
+  >;
+}) {
+  const resultUrls = toolExecutions
+    .flatMap((execution) => [
+      execution["eventUrl"],
+      execution["documentUrl"],
+    ])
+    .filter(
+      (url): url is string =>
+        typeof url === "string" &&
+        url.trim().length > 0,
+    );
+
+  let cleanedContent = content;
+
+  for (const url of resultUrls) {
+    cleanedContent =
+      cleanedContent.replace(
+        new RegExp(
+          escapeRegExp(url),
+          "g",
+        ),
+        "",
+      );
+  }
+
+  return cleanedContent
+    .replace(
+      /(?:ось|here(?:'s| is))?\s*(?:посилання|link)\s*(?:на|to)?\s*(?:документ|подію|document|event)?\s*:\s*(?=\n|$)/gim,
+      "",
+    )
+    .replace(
+      /\n[ \t]+\n/g,
+      "\n\n",
+    )
+    .replace(
+      /\n{3,}/g,
+      "\n\n",
+    )
+    .trim();
+}
 
 function buildEmployeeInstructions(employee: {
   role: string;
@@ -230,27 +300,49 @@ export async function sendMessageAction({
 
     const knowledgeStartedAt = performance.now();
 
-    const knowledgeResults =
-      await searchKnowledge({
-        employeeId: employee.id,
-        query: normalizedMessage,
-        limit: KNOWLEDGE_RESULT_LIMIT,
+    const knowledgeTool =
+      await prisma.aIEmployeeTool.findUnique({
+        where: {
+          employeeId_key: {
+            employeeId: employee.id,
+            key: "KNOWLEDGE_SEARCH",
+          },
+        },
+        select: {
+          isEnabled: true,
+        },
       });
+
+    const knowledgeEnabled =
+      knowledgeTool?.isEnabled ?? false;
+
+    const knowledgeResults =
+      knowledgeEnabled
+        ? await searchKnowledge({
+            employeeId: employee.id,
+            query: normalizedMessage,
+            limit: KNOWLEDGE_RESULT_LIMIT,
+          })
+        : [];
 
     trace.push({
       id: "knowledge",
       title: "Knowledge search completed",
       status:
-        knowledgeResults.length > 0
-          ? "success"
-          : "warning",
+        !knowledgeEnabled
+          ? "warning"
+          : knowledgeResults.length > 0
+            ? "success"
+            : "warning",
       durationMs: Math.round(
         performance.now() - knowledgeStartedAt,
       ),
       details:
-        knowledgeResults.length > 0
-          ? `${knowledgeResults.length} chunks found`
-          : "No relevant knowledge found",
+        !knowledgeEnabled
+          ? "Knowledge search tool is disabled"
+          : knowledgeResults.length > 0
+            ? `${knowledgeResults.length} chunks found`
+            : "No relevant knowledge found",
     });
 
     const citations = knowledgeResults.map((result, index) => ({
@@ -352,7 +444,11 @@ export async function sendMessageAction({
     }
 
     const normalizedResponse =
-      response.text.trim();
+      removeToolResultUrls({
+        content: response.text,
+        toolExecutions:
+          response.toolExecutions,
+      });
 
     trace.push({
       id: "model",
@@ -429,11 +525,101 @@ export async function sendMessageAction({
       return groups;
     }, []);
 
+    const toolResults: ChatToolResult[] =
+      response.toolExecutions.map(
+        (execution, index) => {
+          if (
+            execution.name ===
+            "create_google_calendar_event"
+          ) {
+            return {
+              id: `${execution.name}-${index}`,
+              type:
+                "google-calendar" as const,
+              title:
+                execution.title ??
+                "Google Calendar",
+              description:
+                execution.success
+                  ? "Calendar event created successfully."
+                  : execution.details,
+              url:
+                "eventUrl" in execution
+                  ? execution.eventUrl
+                  : null,
+              success:
+                execution.success,
+            };
+          }
+
+          if (
+            execution.name ===
+            "create_google_document"
+          ) {
+            return {
+              id: `${execution.name}-${index}`,
+              type:
+                "google-docs" as const,
+              title:
+                execution.title ??
+                "Google Docs",
+              description:
+                execution.success
+                  ? "Google Docs document created successfully."
+                  : execution.details,
+              url:
+                "documentUrl" in execution
+                  ? execution.documentUrl
+                  : null,
+              success:
+                execution.success,
+            };
+          }
+
+          if (
+            execution.name ===
+            "send_gmail_message"
+          ) {
+            return {
+              id: `${execution.name}-${index}`,
+              type: "gmail" as const,
+              title:
+                execution.title ??
+                "Gmail",
+              description:
+                execution.success
+                  ? execution.details
+                  : execution.details,
+              url:
+                execution.success
+                  ? "https://mail.google.com/mail/u/0/#sent"
+                  : null,
+              success:
+                execution.success,
+            };
+          }
+
+          return {
+            id: `${execution.name}-${index}`,
+            type: "generic" as const,
+            title:
+              execution.title ??
+              "AI Tool",
+            description:
+              execution.details,
+            url: null,
+            success:
+              execution.success,
+          };
+        },
+      );
+
     return {
       success: true,
       message: normalizedResponse,
       conversationId: activeConversationId,
       citations: groupedCitations,
+      toolResults,
       debug: {
         model: response.model,
         latencyMs: response.latencyMs,

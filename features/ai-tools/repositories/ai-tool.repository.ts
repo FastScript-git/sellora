@@ -11,6 +11,7 @@ export const AI_EMPLOYEE_TOOL_KEYS = [
   AIEmployeeToolKey.HUMAN_HANDOFF,
   AIEmployeeToolKey.WEB_SEARCH,
   AIEmployeeToolKey.EMAIL,
+  AIEmployeeToolKey.DOCUMENTS,
   AIEmployeeToolKey.CALENDAR,
   AIEmployeeToolKey.CRM,
   AIEmployeeToolKey.CUSTOM_API,

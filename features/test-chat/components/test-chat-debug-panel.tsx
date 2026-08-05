@@ -3,6 +3,7 @@
 import {
   BookOpen,
   Bot,
+  CalendarDays,
   CheckCircle2,
   CircleAlert,
   CircleX,
@@ -10,8 +11,10 @@ import {
   Coins,
   FileText,
   Gauge,
+  Mail,
   MessageSquare,
   Sparkles,
+  Wrench,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -232,6 +235,92 @@ type TraceItemProps = {
   millisecondsLabel: string;
 };
 
+type ToolBadgePresentation = {
+  label: string;
+  icon: typeof Wrench;
+};
+
+const TOOL_BADGE_PRESENTATIONS: Record<
+  string,
+  ToolBadgePresentation
+> = {
+  CALENDAR: {
+    label: "Calendar",
+    icon: CalendarDays,
+  },
+  EMAIL: {
+    label: "Email",
+    icon: Mail,
+  },
+  DOCUMENTS: {
+    label: "Google Docs",
+    icon: FileText,
+  },
+  KNOWLEDGE_SEARCH: {
+    label: "Knowledge",
+    icon: BookOpen,
+  },
+};
+
+function getEnabledToolKeys({
+  title,
+  details,
+}: {
+  title: string;
+  details?: string;
+}) {
+  if (
+    title !== "AI tools prepared" ||
+    !details
+  ) {
+    return [];
+  }
+
+  const match = details.match(
+    /enabled:\s*(.+)$/i,
+  );
+
+  if (!match?.[1]) {
+    return [];
+  }
+
+  return match[1]
+    .split(",")
+    .map((key) => key.trim())
+    .filter(Boolean);
+}
+
+function ToolBadge({
+  toolKey,
+}: {
+  toolKey: string;
+}) {
+  const presentation =
+    TOOL_BADGE_PRESENTATIONS[toolKey] ?? {
+      label: toolKey
+        .toLowerCase()
+        .replace(/_/g, " ")
+        .replace(
+          /\b\w/g,
+          (character) =>
+            character.toUpperCase(),
+        ),
+      icon: Wrench,
+    };
+
+  const Icon = presentation.icon;
+
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5 rounded-md border bg-muted/30 px-2 py-1 text-[10px] font-medium text-foreground">
+      <Icon className="size-3 shrink-0 text-muted-foreground" />
+
+      <span className="truncate">
+        {presentation.label}
+      </span>
+    </span>
+  );
+}
+
 function TraceItem({
   title,
   status,
@@ -245,6 +334,15 @@ function TraceItem({
       : status === "warning"
         ? CircleAlert
         : CircleX;
+
+  const enabledToolKeys =
+    getEnabledToolKeys({
+      title,
+      details,
+    });
+
+  const showToolBadges =
+    enabledToolKeys.length > 0;
 
   return (
     <div className="rounded-lg border p-3">
@@ -273,8 +371,19 @@ function TraceItem({
             </span>
           </div>
 
-          {details ? (
-            <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
+          {showToolBadges ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {enabledToolKeys.map(
+                (toolKey) => (
+                  <ToolBadge
+                    key={toolKey}
+                    toolKey={toolKey}
+                  />
+                ),
+              )}
+            </div>
+          ) : details ? (
+            <p className="mt-1 break-words text-[11px] leading-4 text-muted-foreground">
               {details}
             </p>
           ) : null}

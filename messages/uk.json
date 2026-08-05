@@ -422,6 +422,10 @@
       "CUSTOM_API": {
         "title": "Custom API",
         "description": "Викликає власні API вашого бізнесу."
+      },
+      "DOCUMENTS": {
+        "title": "Google Docs",
+        "description": "Створюйте документи та чернетки в Google Docs безпосередньо з розмов."
       }
     },
     "messages": {

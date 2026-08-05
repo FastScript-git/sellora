@@ -20,7 +20,10 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { sendMessageAction } from "@/features/test-chat/actions/send-message";
+import {
+  sendMessageAction,
+  type ChatToolResult,
+} from "@/features/test-chat/actions/send-message";
 import { ChatMessage } from "@/features/test-chat/components/chat-message";
 import {
   TestChatDebugPanel,
@@ -39,6 +42,7 @@ type ChatMessageItem = {
   role: "user" | "employee";
   content: string;
   citations?: ChatCitation[];
+  toolResults?: ChatToolResult[];
 };
 
 type EmployeeStatus =
@@ -183,6 +187,8 @@ export function TestChatPanel({
           content: result.message,
           citations:
             result.citations,
+          toolResults:
+            result.toolResults,
         },
       ]);
 
@@ -278,6 +284,9 @@ export function TestChatPanel({
                 }
                 citations={
                   chatMessage.citations
+                }
+                toolResults={
+                  chatMessage.toolResults
                 }
               />
             ),

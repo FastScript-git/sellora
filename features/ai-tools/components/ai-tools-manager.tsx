@@ -7,6 +7,7 @@ import {
   Code2,
   ContactRound,
   Database,
+  FileText,
   Globe2,
   HandHelping,
   Loader2,
@@ -73,6 +74,11 @@ const toolDefinitions: ToolDefinition[] = [
   {
     key: "EMAIL",
     icon: Mail,
+    available: true,
+  },
+  {
+    key: "DOCUMENTS",
+    icon: FileText,
     available: true,
   },
   {

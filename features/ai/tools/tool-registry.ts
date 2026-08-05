@@ -14,6 +14,12 @@ import {
   gmailToolDefinition,
   type GmailToolExecution,
 } from "@/features/ai/tools/gmail-tool";
+import {
+  GOOGLE_DOCS_TOOL_NAME,
+  executeGoogleDocsTool,
+  googleDocsToolDefinition,
+  type GoogleDocsToolExecution,
+} from "@/features/ai/tools/google-docs-tool";
 import type { AIEmployeeToolKey } from "@/lib/generated/prisma/client";
 
 type UnavailableToolExecution = {
@@ -26,6 +32,7 @@ type UnavailableToolExecution = {
 export type AIToolExecution =
   | CalendarToolExecution
   | GmailToolExecution
+  | GoogleDocsToolExecution
   | UnavailableToolExecution;
 
 type ToolResult = {
@@ -43,24 +50,32 @@ type RegisteredTool = {
   ) => Promise<ToolResult>;
 };
 
-const registeredTools: RegisteredTool[] =
-  [
-    {
-      key: "CALENDAR",
-      name: CALENDAR_TOOL_NAME,
-      definition:
-        calendarToolDefinition,
-      execute:
-        executeCalendarTool,
-    },
-    {
-      key: "EMAIL",
-      name: GMAIL_TOOL_NAME,
-      definition:
-        gmailToolDefinition,
-      execute: executeGmailTool,
-    },
-  ];
+const registeredTools: RegisteredTool[] = [
+  {
+    key: "CALENDAR",
+    name: CALENDAR_TOOL_NAME,
+    definition:
+      calendarToolDefinition,
+    execute:
+      executeCalendarTool,
+  },
+  {
+    key: "EMAIL",
+    name: GMAIL_TOOL_NAME,
+    definition:
+      gmailToolDefinition,
+    execute:
+      executeGmailTool,
+  },
+  {
+    key: "DOCUMENTS",
+    name: GOOGLE_DOCS_TOOL_NAME,
+    definition:
+      googleDocsToolDefinition,
+    execute:
+      executeGoogleDocsTool,
+  },
+];
 
 export function getEnabledAITools(
   enabledKeys: AIEmployeeToolKey[],
@@ -99,8 +114,7 @@ export async function executeRegisteredAITool({
       enabledKeys,
     ).find(
       (registeredTool) =>
-        registeredTool.name ===
-        name,
+        registeredTool.name === name,
     );
 
   if (!tool) {
