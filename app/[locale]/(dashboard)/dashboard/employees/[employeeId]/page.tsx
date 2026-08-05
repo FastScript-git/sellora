@@ -21,6 +21,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  EmployeeConfigurationCard,
+  type EmployeeConfigurationItem,
+} from "@/features/ai-employees/components/employee-configuration-card";
 import { EmployeeReadinessCard } from "@/features/ai-employees/components/employee-readiness-card";
 import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
@@ -214,7 +218,7 @@ export default async function AIEmployeeOverviewPage({
     dateStyle: "medium",
   });
 
-  const configurationItems = [
+  const configurationItems: EmployeeConfigurationItem[] = [
     {
       key: "status",
       label: copy.status,
@@ -271,44 +275,13 @@ export default async function AIEmployeeOverviewPage({
           items={readinessItems}
         />
 
-        <Card className="min-w-0">
-          <CardHeader>
-            <CardTitle className="text-base">
-              {copy.configuration}
-            </CardTitle>
-
-            <CardDescription>
-              {copy.configurationDescription}
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="space-y-2">
-            {configurationItems.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <div
-                  key={item.key}
-                  className="flex min-w-0 items-center justify-between gap-4 rounded-xl border bg-muted/10 px-3 py-3"
-                >
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-background">
-                      <Icon className="size-3.5 text-muted-foreground" />
-                    </span>
-
-                    <span className="truncate text-xs text-muted-foreground">
-                      {item.label}
-                    </span>
-                  </div>
-
-                  <span className="max-w-[52%] break-words text-right text-sm font-medium capitalize">
-                    {item.value}
-                  </span>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+        <EmployeeConfigurationCard
+          title={copy.configuration}
+          description={
+            copy.configurationDescription
+          }
+          items={configurationItems}
+        />
       </section>
 
       <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
