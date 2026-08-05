@@ -181,8 +181,9 @@ export function WidgetDesigner({
     "https://app.sellora.ai";
 
   const snippet = `<script
-  src="${widgetScriptOrigin}/widget/widget.js"
+  src="${widgetScriptOrigin}/widget.js"
   data-widget-key="${widgetKey}"
+  data-locale="${locale === "uk" ? "uk" : "en"}"
   async
 ></script>`;
 
