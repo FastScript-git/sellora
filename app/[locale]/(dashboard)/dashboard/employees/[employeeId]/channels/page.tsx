@@ -12,7 +12,10 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
+import {
+  PageHeader,
+  PageHeaderNote,
+} from "@/components/dashboard/shared/page-header";
 import {
   buttonVariants,
 } from "@/components/ui/button";
@@ -216,45 +219,27 @@ export default async function ChannelsPage({
 
   return (
     <div className="min-w-0 space-y-6">
-      <header className="flex min-w-0 flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <p className="break-words text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            {copy.eyebrow}
-          </p>
-
-          <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight sm:text-3xl">
-            {copy.title}
-          </h1>
-
-          <p className="mt-2 max-w-2xl break-words text-sm leading-6 text-muted-foreground">
-            {copy.description}
-          </p>
-        </div>
-
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-          <Badge
-            variant="outline"
-            className={cn(
-              "w-fit gap-2 px-3 py-1.5",
+      <PageHeader
+        compact
+        icon={Globe2}
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        description={copy.description}
+        aside={
+          <PageHeaderNote
+            icon={CheckCircle2}
+            tone={
               websiteChannel.isEnabled
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
-                : "text-muted-foreground",
-            )}
+                ? "success"
+                : "warning"
+            }
           >
-            <span
-              className={cn(
-                "size-1.5 shrink-0 rounded-full",
-                websiteChannel.isEnabled
-                  ? "bg-emerald-500"
-                  : "bg-muted-foreground",
-              )}
-            />
-
             {websiteChannel.isEnabled
               ? copy.active
               : copy.disabled}
-          </Badge>
-
+          </PageHeaderNote>
+        }
+        actions={
           <Link
             href={`/${locale}/dashboard/analytics/widget`}
             className={cn(
@@ -270,8 +255,8 @@ export default async function ChannelsPage({
               {copy.analytics}
             </span>
           </Link>
-        </div>
-      </header>
+        }
+      />
 
       <section className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <InfoCard
