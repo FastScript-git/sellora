@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   ArrowLeft,
   Check,
@@ -9,19 +8,30 @@ import {
   Sparkles,
   Workflow,
 } from "lucide-react";
+import Link from "next/link";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { PageHeader } from "@/components/dashboard/shared/page-header";
+import {
+  Button,
+  buttonVariants,
+} from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type WorkflowSubmitStatus = "DRAFT" | "ACTIVE";
+export type WorkflowSubmitStatus =
+  | "DRAFT"
+  | "ACTIVE";
 
 type WorkflowHeaderProps = {
   mode?: "create" | "edit";
   backPath: string;
   canSubmit: boolean;
   isSaving: boolean;
-  submitStatus: WorkflowSubmitStatus | null;
-  onSubmit: (status: WorkflowSubmitStatus) => void;
+  submitStatus:
+    | WorkflowSubmitStatus
+    | null;
+  onSubmit: (
+    status: WorkflowSubmitStatus,
+  ) => void;
 };
 
 export function WorkflowHeader({
@@ -32,7 +42,8 @@ export function WorkflowHeader({
   submitStatus,
   onSubmit,
 }: WorkflowHeaderProps) {
-  const isEditMode = mode === "edit";
+  const isEditMode =
+    mode === "edit";
 
   const title = isEditMode
     ? "Edit workflow"
@@ -42,84 +53,101 @@ export function WorkflowHeader({
     ? "Update the workflow details, trigger, conditions and actions."
     : "Configure the trigger, conditions and actions that control how this workflow runs.";
 
-  const draftButtonLabel = isEditMode
-    ? "Save as draft"
-    : "Save draft";
+  const backLabel = isEditMode
+    ? "Back to workflow"
+    : "Back to workflows";
 
-  const activeButtonLabel = isEditMode
-    ? "Save and activate"
-    : "Create active workflow";
+  const draftButtonLabel =
+    isEditMode
+      ? "Save as draft"
+      : "Save draft";
+
+  const activeButtonLabel =
+    isEditMode
+      ? "Save and activate"
+      : "Create active workflow";
+
+  const isDraftSaving =
+    isSaving &&
+    submitStatus === "DRAFT";
+
+  const isActiveSaving =
+    isSaving &&
+    submitStatus === "ACTIVE";
 
   return (
-    <header className="flex flex-col gap-4 border-b pb-6">
-      <div>
-        <Link
-          href={backPath}
-          className={cn(
-            buttonVariants({
-              variant: "ghost",
-              size: "sm",
-            }),
-            "-ml-2",
-          )}
-        >
-          <ArrowLeft />
-          {isEditMode
-            ? "Back to workflow"
-            : "Back to workflows"}
-        </Link>
-      </div>
+    <header className="min-w-0 space-y-3 border-b pb-5">
+      <Link
+        href={backPath}
+        className={cn(
+          buttonVariants({
+            variant: "ghost",
+            size: "sm",
+          }),
+          "-ml-2 w-fit gap-2",
+        )}
+      >
+        <ArrowLeft className="size-4" />
 
-      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="flex size-9 items-center justify-center rounded-lg border bg-muted">
-              <Workflow className="size-4" />
-            </div>
+        {backLabel}
+      </Link>
 
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {title}
-            </h1>
-          </div>
+      <PageHeader
+        compact
+        icon={Workflow}
+        eyebrow={
+          isEditMode
+            ? "Workflow editor"
+            : "Workflow builder"
+        }
+        title={title}
+        description={description}
+        actionsClassName="w-full lg:w-auto"
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={
+                !canSubmit || isSaving
+              }
+              onClick={() =>
+                onSubmit("DRAFT")
+              }
+              className="w-full sm:w-auto"
+            >
+              {isDraftSaving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
 
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            {description}
-          </p>
-        </div>
+              {draftButtonLabel}
+            </Button>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!canSubmit}
-            onClick={() => onSubmit("DRAFT")}
-          >
-            {isSaving && submitStatus === "DRAFT" ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <Save />
-            )}
+            <Button
+              type="button"
+              disabled={
+                !canSubmit || isSaving
+              }
+              onClick={() =>
+                onSubmit("ACTIVE")
+              }
+              className="w-full sm:w-auto"
+            >
+              {isActiveSaving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : isEditMode ? (
+                <Check className="size-4" />
+              ) : (
+                <Sparkles className="size-4" />
+              )}
 
-            {draftButtonLabel}
-          </Button>
-
-          <Button
-            type="button"
-            disabled={!canSubmit}
-            onClick={() => onSubmit("ACTIVE")}
-          >
-            {isSaving && submitStatus === "ACTIVE" ? (
-              <Loader2 className="animate-spin" />
-            ) : isEditMode ? (
-              <Check />
-            ) : (
-              <Sparkles />
-            )}
-
-            {activeButtonLabel}
-          </Button>
-        </div>
-      </div>
+              {activeButtonLabel}
+            </Button>
+          </>
+        }
+      />
     </header>
   );
 }
