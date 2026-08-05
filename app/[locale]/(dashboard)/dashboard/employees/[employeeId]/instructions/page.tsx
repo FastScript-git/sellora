@@ -1,6 +1,14 @@
+import {
+  ShieldCheck,
+  SlidersHorizontal,
+} from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import {
+  PageHeader,
+  PageHeaderNote,
+} from "@/components/dashboard/shared/page-header";
 import { InstructionsForm } from "@/features/ai-employees/components/instructions-form";
 import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
@@ -36,15 +44,22 @@ export default async function InstructionsPage({
 
   return (
     <div className="space-y-4">
-      <header>
-        <h2 className="text-xl font-semibold tracking-tight">
-          {t("title")}
-        </h2>
-
-        <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
-          {t("description")}
-        </p>
-      </header>
+      <PageHeader
+        compact
+        icon={SlidersHorizontal}
+        title={t("title")}
+        description={t("description")}
+        aside={
+          <PageHeaderNote
+            icon={ShieldCheck}
+            tone="success"
+          >
+            {locale === "uk"
+              ? "Інструкції застосовуються лише до цього ШІ-співробітника."
+              : "These instructions apply only to this AI Employee."}
+          </PageHeaderNote>
+        }
+      />
 
       <InstructionsForm
         employeeId={employee.id}
