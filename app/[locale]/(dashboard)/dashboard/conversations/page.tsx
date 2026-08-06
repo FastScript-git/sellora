@@ -173,9 +173,9 @@ export default async function ConversationsPage({
     : copy.anonymous;
 
   return (
-    <div className="min-w-0 space-y-4 sm:space-y-6">
+    <div className="min-w-0 space-y-4 sm:space-y-6 lg:flex lg:h-[calc(100dvh-7.5rem)] lg:min-h-0 lg:flex-col lg:overflow-hidden">
       <ConversationsLiveRefresh />
-      <section className="min-w-0">
+      <section className="min-w-0 lg:shrink-0">
         <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">
           {copy.title}
         </h1>
@@ -185,8 +185,8 @@ export default async function ConversationsPage({
         </p>
       </section>
 
-      <div className="grid min-w-0 overflow-hidden rounded-xl border bg-card sm:rounded-2xl lg:min-h-[720px] lg:grid-cols-[380px_minmax(0,1fr)]">
-        <aside className="min-w-0 border-b lg:border-b-0 lg:border-r">
+      <div className="grid min-w-0 overflow-hidden rounded-xl border bg-card sm:rounded-2xl lg:min-h-0 lg:flex-1 lg:grid-cols-[340px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]">
+        <aside className="min-w-0 border-b lg:flex lg:min-h-0 lg:flex-col lg:border-b-0 lg:border-r">
           <div className="min-w-0 border-b p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -330,7 +330,7 @@ export default async function ConversationsPage({
           ) : null}
           </div>
 
-          <div className="max-h-[420px] min-w-0 overflow-y-auto sm:max-h-[580px]">
+          <div className="max-h-[420px] min-w-0 overflow-y-auto overscroll-contain sm:max-h-[580px] lg:min-h-0 lg:max-h-none lg:flex-1">
             {conversations.length === 0 ? (
               <div className="flex min-h-72 flex-col items-center justify-center px-6 text-center">
                 <span className="flex size-11 items-center justify-center rounded-xl border bg-muted/40">
@@ -436,9 +436,9 @@ export default async function ConversationsPage({
           </div>
         </aside>
 
-        <main className="min-w-0">
+        <main className="min-w-0 lg:flex lg:min-h-0 lg:flex-col lg:overflow-hidden">
           {!selectedConversation ? (
-            <div className="flex min-h-[360px] flex-col items-center justify-center px-4 py-10 text-center sm:min-h-[520px] sm:px-6 lg:min-h-[720px]">
+            <div className="flex min-h-[360px] flex-col items-center justify-center px-4 py-10 text-center sm:min-h-[520px] sm:px-6 lg:min-h-0 lg:flex-1">
               <span className="flex size-12 items-center justify-center rounded-xl border bg-muted/40">
                 <MessageSquare className="size-5 text-muted-foreground" />
               </span>
@@ -452,7 +452,7 @@ export default async function ConversationsPage({
               </p>
             </div>
           ) : (
-            <div className="grid min-w-0 lg:min-h-[720px] xl:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="grid min-w-0 lg:h-full lg:min-h-0 lg:flex-1 lg:overflow-hidden xl:grid-cols-[minmax(0,1fr)_260px] 2xl:grid-cols-[minmax(0,1fr)_280px]">
               <section className="flex min-h-0 min-w-0 flex-col overflow-hidden">
                 <header className="flex min-w-0 flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-5">
                   <div className="min-w-0">
@@ -485,7 +485,7 @@ export default async function ConversationsPage({
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                   {selectedConversation.messages.length ===
                   0 ? (
-                    <div className="flex min-h-[320px] items-center justify-center px-4 py-10 text-center sm:min-h-[500px] sm:px-6">
+                    <div className="flex min-h-[320px] items-center justify-center px-4 py-10 text-center sm:min-h-[500px] sm:px-6 lg:min-h-0 lg:flex-1">
                       <p className="text-sm text-muted-foreground">
                         {copy.noMessages}
                       </p>

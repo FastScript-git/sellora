@@ -68,23 +68,23 @@ export function ConversationDetailsSidebar({
   copy,
 }: ConversationDetailsSidebarProps) {
   return (
-    <aside className="min-w-0 space-y-6 border-t bg-muted/10 p-4 sm:p-5 xl:border-l xl:border-t-0">
-      <section>
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <aside className="min-h-0 min-w-0 space-y-3 overflow-hidden border-t bg-muted/10 p-3 xl:border-l xl:border-t-0">
+      <section className="shrink-0">
+        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
           {copy.employee}
         </p>
 
-        <div className="mt-3 flex min-w-0 items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-background">
-            <Bot className="size-4 text-muted-foreground" />
+        <div className="mt-1.5 flex min-w-0 items-center gap-2">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-background">
+            <Bot className="size-3.5 text-muted-foreground" />
           </span>
 
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">
+            <p className="truncate text-xs font-medium">
               {employee.name}
             </p>
 
-            <p className="mt-1 truncate text-xs text-muted-foreground">
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
               {employee.role}
             </p>
           </div>
@@ -101,14 +101,14 @@ export function ConversationDetailsSidebar({
         locale={locale}
       />
 
-      <section className="border-t pt-5">
+      <section className="shrink-0 border-t pt-3">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {copy.contact}
         </p>
 
-        <div className="mt-3 flex min-w-0 items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-background">
-            <UserRound className="size-4 text-muted-foreground" />
+        <div className="mt-2 flex min-w-0 items-center gap-2.5">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-background">
+            <UserRound className="size-3.5 text-muted-foreground" />
           </span>
 
           <div className="min-w-0">
@@ -116,16 +116,16 @@ export function ConversationDetailsSidebar({
               {contactName}
             </p>
 
-            <p className="mt-1 truncate text-xs text-muted-foreground">
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
               {contact?.company || "—"}
             </p>
           </div>
         </div>
 
         {contact ? (
-          <div className="mt-4 space-y-2">
+          <div className="mt-2 space-y-1">
             {contact.email ? (
-              <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
                 <Mail className="size-3.5 shrink-0" />
 
                 <span className="min-w-0 truncate">
@@ -147,9 +147,9 @@ export function ConversationDetailsSidebar({
         ) : null}
       </section>
 
-      <section className="grid min-w-0 gap-3 border-t pt-5 sm:grid-cols-2 xl:grid-cols-1">
+      <section className="grid min-w-0 shrink-0 grid-cols-1 gap-2 border-t pt-3">
         <Card className="min-w-0">
-          <CardContent className="flex min-w-0 items-center justify-between gap-3 p-3">
+          <CardContent className="flex min-w-0 items-center justify-between gap-2 px-2.5 py-2">
             <span className="min-w-0 break-words text-xs text-muted-foreground">
               {copy.leadScore}
             </span>
@@ -164,7 +164,7 @@ export function ConversationDetailsSidebar({
         </Card>
 
         <Card className="min-w-0">
-          <CardContent className="flex min-w-0 items-center justify-between gap-3 p-3">
+          <CardContent className="flex min-w-0 items-center justify-between gap-2 px-2.5 py-2">
             <span className="min-w-0 break-words text-xs text-muted-foreground">
               {copy.sentiment}
             </span>
