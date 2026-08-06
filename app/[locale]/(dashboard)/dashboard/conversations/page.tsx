@@ -2,11 +2,8 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import {
-  Bot,
   Inbox,
-  Mail,
   MessageSquare,
-  Phone,
   Search,
   UserRound,
   X,
@@ -14,12 +11,8 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ConversationHandoffCard } from "@/features/conversations/components/conversation-handoff-card";
+import { ConversationDetailsSidebar } from "@/features/conversations/components/conversation-details-sidebar";
 import { ConversationThread } from "@/features/conversations/components/conversation-thread";
 import { ConversationsLiveRefresh } from "@/features/conversations/components/conversations-live-refresh";
 import {
@@ -589,128 +582,55 @@ export default async function ConversationsPage({
 
               </section>
 
-              <aside className="space-y-6 border-t bg-muted/10 p-5 xl:border-l xl:border-t-0">
-                <section>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {copy.employee}
-                  </p>
-
-                  <div className="mt-3 flex items-center gap-3">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-background">
-                      <Bot className="size-4 text-muted-foreground" />
-                    </span>
-
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {selectedConversation.employee.name}
-                      </p>
-
-                      <p className="mt-1 truncate text-xs text-muted-foreground">
-                        {selectedConversation.employee.role}
-                      </p>
-                    </div>
-                  </div>
-                </section>
-
-                <ConversationHandoffCard
-                  conversationId={
-                    selectedConversation.id
-                  }
-                  initialMode={
-                    selectedConversation.mode
-                  }
-                  initialAssignedMemberId={
-                    selectedConversation.assignedMemberId
-                  }
-                  members={workspaceMembers}
-                  locale={locale}
-                />
-
-                <section className="border-t pt-5">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {copy.contact}
-                  </p>
-
-                  <div className="mt-3 flex items-center gap-3">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-background">
-                      <UserRound className="size-4 text-muted-foreground" />
-                    </span>
-
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {selectedContactName}
-                      </p>
-
-                      <p className="mt-1 truncate text-xs text-muted-foreground">
-                        {selectedConversation.contact?.company ||
-                          "—"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {selectedConversation.contact ? (
-                    <div className="mt-4 space-y-2">
-                      {selectedConversation.contact.email ? (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Mail className="size-3.5 shrink-0" />
-
-                          <span className="truncate">
-                            {
-                              selectedConversation.contact
-                                .email
-                            }
-                          </span>
-                        </div>
-                      ) : null}
-
-                      {selectedConversation.contact.phone ? (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Phone className="size-3.5 shrink-0" />
-
-                          <span className="truncate">
-                            {
-                              selectedConversation.contact
-                                .phone
-                            }
-                          </span>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </section>
-
-                <section className="space-y-3 border-t pt-5">
-                  <Card>
-                    <CardContent className="flex items-center justify-between p-3">
-                      <span className="text-xs text-muted-foreground">
-                        {copy.leadScore}
-                      </span>
-
-                      <span className="text-sm font-semibold tabular-nums">
-                        {selectedConversation.contact
-                          ?.leadScore !== null &&
-                        selectedConversation.contact
-                          ?.leadScore !== undefined
-                          ? `${selectedConversation.contact.leadScore}/100`
-                          : "—"}
-                      </span>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="flex items-center justify-between p-3">
-                      <span className="text-xs text-muted-foreground">
-                        {copy.sentiment}
-                      </span>
-
-                      <span className="text-xs font-medium">
-                        {selectedConversation.contact
-                          ?.sentiment || "—"}
-                      </span>
-                    </CardContent>
-                  </Card>
-                </section>
-              </aside>
+              <ConversationDetailsSidebar
+                conversationId={
+                  selectedConversation.id
+                }
+                mode={
+                  selectedConversation.mode
+                }
+                assignedMemberId={
+                  selectedConversation.assignedMemberId
+                }
+                members={workspaceMembers}
+                locale={locale}
+                employee={{
+                  name:
+                    selectedConversation.employee.name,
+                  role:
+                    selectedConversation.employee.role,
+                }}
+                contact={
+                  selectedConversation.contact
+                    ? {
+                        company:
+                          selectedConversation.contact
+                            .company,
+                        email:
+                          selectedConversation.contact
+                            .email,
+                        phone:
+                          selectedConversation.contact
+                            .phone,
+                        leadScore:
+                          selectedConversation.contact
+                            .leadScore,
+                        sentiment:
+                          selectedConversation.contact
+                            .sentiment,
+                      }
+                    : null
+                }
+                contactName={
+                  selectedContactName
+                }
+                copy={{
+                  employee: copy.employee,
+                  contact: copy.contact,
+                  leadScore: copy.leadScore,
+                  sentiment: copy.sentiment,
+                }}
+              />
             </div>
           )}
         </main>
