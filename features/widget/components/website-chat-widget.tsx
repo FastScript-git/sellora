@@ -7,11 +7,14 @@ import {
   useState,
 } from "react";
 import {
+  Bot,
   LoaderCircle,
   MessageCircle,
   Send,
+  Sparkles,
   UserRound,
   X,
+  Zap,
 } from "lucide-react";
 
 type WidgetMessage = {
@@ -28,9 +31,9 @@ type WidgetMessage = {
 type WebsiteChatWidgetProps = {
   widgetKey: string;
   title: string;
-  greeting: string;
   primaryColor: string;
   employeeName: string;
+  locale: string;
   embedded?: boolean;
 };
 
@@ -103,9 +106,9 @@ function formatMessageTime(
 export function WebsiteChatWidget({
   widgetKey,
   title,
-  greeting,
   primaryColor,
   employeeName,
+  locale,
   embedded = false,
 }: WebsiteChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(true);
@@ -117,6 +120,71 @@ export function WebsiteChatWidget({
   const [isLoadingHistory, setIsLoadingHistory] =
     useState(true);
   const [error, setError] = useState<string>();
+
+  const isUkrainian =
+    locale === "uk";
+
+  const copy = isUkrainian
+    ? {
+        online: "Онлайн",
+        responseTime:
+          "Зазвичай відповідає миттєво",
+        loading:
+          "Завантаження розмови...",
+        placeholder:
+          "Напишіть повідомлення...",
+        openChat:
+          "Відкрити чат",
+        closeChat:
+          "Закрити чат",
+        sendMessage:
+          "Надіслати повідомлення",
+        sending:
+          "Надсилання...",
+        notSent:
+          "Не надіслано",
+        poweredBy:
+          "Працює на Sellora",
+        welcomeTitle:
+          "Вітаю! Чим можу допомогти?",
+        welcomeDescription:
+          "Поставте запитання, і я знайду потрібну інформацію.",
+        suggestions: [
+          "Розкажіть про ваші послуги",
+          "Які у вас ціни?",
+          "Як зв’язатися з менеджером?",
+        ],
+      }
+    : {
+        online: "Online",
+        responseTime:
+          "Usually replies instantly",
+        loading:
+          "Loading conversation...",
+        placeholder:
+          "Write a message...",
+        openChat:
+          "Open chat",
+        closeChat:
+          "Close chat",
+        sendMessage:
+          "Send message",
+        sending:
+          "Sending...",
+        notSent:
+          "Not sent",
+        poweredBy:
+          "Powered by Sellora",
+        welcomeTitle:
+          "Hi! How can I help?",
+        welcomeDescription:
+          "Ask a question and I’ll find the information you need.",
+        suggestions: [
+          "Tell me about your services",
+          "What are your prices?",
+          "How can I contact sales?",
+        ],
+      };
 
   const conversationIdRef = useRef<
     string | undefined
@@ -233,12 +301,11 @@ export function WebsiteChatWidget({
         : "hidden";
   }, [content]);
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
+  async function submitMessage(
+    rawContent: string,
   ) {
-    event.preventDefault();
-
-    const normalizedContent = content.trim();
+    const normalizedContent =
+      rawContent.trim();
 
     if (
       !normalizedContent ||
@@ -249,9 +316,7 @@ export function WebsiteChatWidget({
     }
 
     const optimisticMessageId =
-      `optimistic-${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2)}`;
+      `optimistic-${crypto.randomUUID()}`;
 
     const optimisticMessage: WidgetMessage = {
       id: optimisticMessageId,
@@ -378,6 +443,14 @@ export function WebsiteChatWidget({
     }
   }
 
+  function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+
+    void submitMessage(content);
+  }
+
   if (!isOpen && !embedded) {
     return (
       <button
@@ -387,7 +460,7 @@ export function WebsiteChatWidget({
         style={{
           backgroundColor: primaryColor,
         }}
-        aria-label="Open chat"
+        aria-label={copy.openChat}
       >
         <MessageCircle className="size-6" />
       </button>
@@ -409,8 +482,10 @@ export function WebsiteChatWidget({
         }}
       >
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/15 sm:size-10">
-            <MessageCircle className="size-5" />
+          <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/15 shadow-sm">
+            <Bot className="size-5" />
+
+            <span className="absolute -bottom-0.5 -right-0.5 flex size-3 items-center justify-center rounded-full border-2 border-white bg-emerald-400" />
           </span>
 
           <div className="min-w-0">
@@ -418,9 +493,21 @@ export function WebsiteChatWidget({
               {title}
             </h1>
 
-            <div className="mt-1 flex items-center gap-1.5 text-xs text-white/80">
-              <span className="size-1.5 rounded-full bg-emerald-300" />
-              <span>Онлайн</span>
+            <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-white/80">
+              <Zap className="size-3 shrink-0" />
+
+              <span className="truncate">
+                {copy.responseTime}
+              </span>
+
+              <span
+                aria-hidden="true"
+                className="size-1 rounded-full bg-white/45"
+              />
+
+              <span className="shrink-0">
+                {copy.online}
+              </span>
             </div>
           </div>
         </div>
@@ -442,7 +529,7 @@ export function WebsiteChatWidget({
             setIsOpen(false);
           }}
           className="flex size-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-white/15"
-          aria-label="Close chat"
+          aria-label={copy.closeChat}
         >
           <X className="size-5" />
         </button>
@@ -455,35 +542,62 @@ export function WebsiteChatWidget({
             : "flex-1 overflow-y-auto bg-muted/20 px-3 py-4 sm:px-4 sm:py-5"
         }
       >
-        <div className="flex items-start gap-3">
-          <span
-            className="flex size-9 shrink-0 items-center justify-center rounded-full text-white"
-            style={{
-              backgroundColor: primaryColor,
-            }}
-          >
-            <MessageCircle className="size-4" />
-          </span>
-
-          <div
-            className={
-              embedded
-                ? "max-w-[88%] rounded-2xl rounded-tl-md border border-zinc-200 bg-white px-4 py-3 text-zinc-950 shadow-sm sm:max-w-[82%]"
-                : "max-w-[88%] rounded-2xl rounded-tl-md border bg-background px-4 py-3 shadow-sm sm:max-w-[82%]"
-            }
-          >
-            <p className="whitespace-pre-wrap break-words text-sm leading-6">
-              {greeting}
-            </p>
-          </div>
-        </div>
-
         {isLoadingHistory ? (
           <div className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <LoaderCircle className="size-4 animate-spin" />
 
-            <span>Loading conversation...</span>
+            <span>{copy.loading}</span>
           </div>
+        ) : null}
+
+        {!isLoadingHistory &&
+        messages.length === 0 ? (
+          <section className="mt-4 rounded-2xl border border-zinc-200 bg-white p-3.5 shadow-sm">
+            <div className="flex items-start gap-2.5">
+              <span
+                className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white"
+                style={{
+                  backgroundColor:
+                    primaryColor,
+                }}
+              >
+                <Sparkles className="size-3.5" />
+              </span>
+
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-zinc-950">
+                  {copy.welcomeTitle}
+                </h2>
+
+                <p className="mt-0.5 text-[11px] leading-4.5 text-zinc-500">
+                  {copy.welcomeDescription}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {copy.suggestions.map(
+                (suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => {
+                      void submitMessage(
+                        suggestion,
+                      );
+                    }}
+                    disabled={
+                      isSending ||
+                      isLoadingHistory
+                    }
+                    className="min-h-8 cursor-pointer rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-left text-[10px] font-medium leading-4 text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {suggestion}
+                  </button>
+                ),
+              )}
+            </div>
+          </section>
         ) : null}
 
         <div className="mt-4 space-y-3 sm:mt-5 sm:space-y-4">
@@ -508,7 +622,7 @@ export function WebsiteChatWidget({
                           primaryColor,
                       }}
                     >
-                      <MessageCircle className="size-3.5" />
+                      <Bot className="size-3.5" />
                     </span>
                   ) : null}
 
@@ -551,14 +665,14 @@ export function WebsiteChatWidget({
                       {isUser &&
                       message.deliveryStatus ===
                         "sending" ? (
-                        <span>Sending...</span>
+                        <span>{copy.sending}</span>
                       ) : null}
 
                       {isUser &&
                       message.deliveryStatus ===
                         "failed" ? (
                         <span className="font-medium text-red-100">
-                          Not sent
+                          {copy.notSent}
                         </span>
                       ) : null}
                     </div>
@@ -583,7 +697,7 @@ export function WebsiteChatWidget({
                     backgroundColor: primaryColor,
                   }}
                 >
-                  <MessageCircle className="size-3.5" />
+                  <Bot className="size-3.5" />
                 </span>
 
                 <div
@@ -614,8 +728,8 @@ export function WebsiteChatWidget({
       <footer
         className={
           embedded
-            ? "border-t border-zinc-200 bg-white p-3 sm:p-4"
-            : "border-t bg-background p-3 sm:p-4"
+            ? "border-t border-zinc-200 bg-white px-3 pb-2.5 pt-3 sm:px-4 sm:pt-4"
+            : "border-t bg-background px-3 pb-2.5 pt-3 sm:px-4 sm:pt-4"
         }
       >
         {error ? (
@@ -626,7 +740,11 @@ export function WebsiteChatWidget({
 
         <form
           onSubmit={handleSubmit}
-          className="flex items-end gap-2"
+          className={
+            embedded
+              ? "flex min-w-0 items-end gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5 shadow-sm transition-shadow focus-within:border-zinc-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-zinc-200"
+              : "flex min-w-0 items-end gap-2 rounded-2xl border bg-muted/20 p-1.5 shadow-sm transition-shadow focus-within:border-ring focus-within:bg-background focus-within:ring-2 focus-within:ring-ring/30"
+          }
         >
           <textarea
             ref={textareaRef}
@@ -650,13 +768,13 @@ export function WebsiteChatWidget({
             }
             placeholder={
               isLoadingHistory
-                ? "Loading conversation..."
-                : "Write a message..."
+                ? copy.loading
+                : copy.placeholder
             }
             className={
               embedded
-                ? "max-h-32 min-h-11 flex-1 resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-950 outline-none transition-shadow placeholder:text-zinc-400 focus:ring-2 focus:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-60"
-                : "max-h-32 min-h-11 flex-1 resize-none rounded-2xl border bg-background px-4 py-3 text-sm outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                ? "max-h-32 min-h-12 min-w-0 flex-1 resize-none border-0 bg-transparent px-3 py-3 text-sm leading-5 text-zinc-950 outline-none placeholder:text-zinc-400 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+                : "max-h-32 min-h-12 min-w-0 flex-1 resize-none border-0 bg-transparent px-3 py-3 text-sm leading-5 outline-none placeholder:text-muted-foreground focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
             }
           />
 
@@ -667,24 +785,27 @@ export function WebsiteChatWidget({
               isLoadingHistory ||
               content.trim().length === 0
             }
-            className="flex size-11 shrink-0 items-center justify-center rounded-full text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+            className="mb-0.5 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-xl text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-45 disabled:shadow-none"
             style={{
               backgroundColor: primaryColor,
             }}
-            aria-label="Send message"
+            aria-label={copy.sendMessage}
           >
             {isSending ||
             isLoadingHistory ? (
               <LoaderCircle className="size-5 animate-spin" />
             ) : (
-              <Send className="size-5" />
+              <Send className="size-4.5" />
             )}
           </button>
         </form>
 
-        <p className="mt-2 text-center text-[10px] text-muted-foreground sm:mt-3 sm:text-[11px]">
-          Powered by Sellora
-        </p>
+        <div className="mt-1.5 flex justify-center sm:mt-2">
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium text-muted-foreground">
+            <Sparkles className="size-3" />
+            {copy.poweredBy}
+          </span>
+        </div>
       </footer>
     </div>
   );

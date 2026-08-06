@@ -20,7 +20,10 @@ export default async function WidgetPage({
   params,
   searchParams,
 }: WidgetPageProps) {
-  const { widgetKey } = await params;
+  const {
+    locale,
+    widgetKey,
+  } = await params;
   const query = await searchParams;
 
   const isEmbedded = query.embed === "1";
@@ -61,10 +64,6 @@ export default async function WidgetPage({
         channel.widgetTitle ||
         channel.employee.name
       }
-      greeting={
-        channel.widgetGreeting ||
-        "Hello! How can I help you today?"
-      }
       primaryColor={
         channel.widgetPrimaryColor ||
         "#2563eb"
@@ -72,6 +71,7 @@ export default async function WidgetPage({
       employeeName={
         channel.employee.name
       }
+      locale={locale}
       embedded={isEmbedded}
     />
   );
