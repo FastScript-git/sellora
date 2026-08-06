@@ -301,7 +301,7 @@ export function ConversationThread({
     const optimisticMessage: ConversationThreadMessage =
       {
         id: optimisticId,
-        role: "ASSISTANT",
+        role: "OPERATOR",
         content: submittedContent,
         metadata: {
           source: "DASHBOARD",

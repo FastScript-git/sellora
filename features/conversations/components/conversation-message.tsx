@@ -5,6 +5,7 @@ import {
   Bot,
   Check,
   Copy,
+  Headset,
   User,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -122,9 +123,16 @@ export function ConversationMessage({
   const isUser =
     role === "USER";
 
-  const knowledgeSources = isUser
-    ? []
-    : parseKnowledgeSources(metadata);
+  const isOperator =
+    role === "OPERATOR";
+
+  const isSystem =
+    role === "SYSTEM";
+
+  const knowledgeSources =
+    isUser || isOperator || isSystem
+      ? []
+      : parseKnowledgeSources(metadata);
 
   const uniqueSources =
     Array.from(
@@ -167,12 +175,12 @@ export function ConversationMessage({
     <article
       className={cn(
         "group flex min-w-0 gap-2.5 sm:gap-4",
-        isUser
+        isUser || isOperator
           ? "justify-end"
           : "justify-start",
       )}
     >
-      {!isUser ? (
+      {!isUser && !isOperator ? (
         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border bg-muted/40 sm:size-10">
           <Bot className="size-4 text-muted-foreground sm:size-5" />
         </span>
@@ -191,7 +199,11 @@ export function ConversationMessage({
             "relative min-w-0 rounded-2xl border px-3 py-3 sm:px-4",
             isUser
               ? "rounded-br-md border-primary bg-primary text-primary-foreground"
-              : "rounded-bl-md bg-card",
+              : isOperator
+                ? "rounded-br-md border-blue-500/30 bg-blue-500/10"
+                : isSystem
+                  ? "rounded-xl border-dashed bg-muted/30"
+                  : "rounded-bl-md bg-card",
           )}
         >
           <p className="whitespace-pre-wrap break-words text-sm leading-6">
@@ -288,9 +300,13 @@ export function ConversationMessage({
         ) : null}
       </div>
 
-      {isUser ? (
+      {isUser || isOperator ? (
         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border bg-muted/40 sm:size-10">
-          <User className="size-4 text-muted-foreground sm:size-5" />
+          {isOperator ? (
+            <Headset className="size-4 text-blue-500 sm:size-5" />
+          ) : (
+            <User className="size-4 text-muted-foreground sm:size-5" />
+          )}
         </span>
       ) : null}
     </article>

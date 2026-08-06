@@ -84,7 +84,7 @@ export async function POST(
       await createWorkspaceConversationMessage({
         workspaceId: workspace.id,
         conversationId,
-        role: ConversationRole.ASSISTANT,
+        role: ConversationRole.OPERATOR,
         content: parsedBody.data.content,
         metadata: {
           source: "DASHBOARD",
