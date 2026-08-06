@@ -302,7 +302,7 @@ export function WebsiteChatWidget({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 flex size-14 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-black/10"
+        className="fixed bottom-4 right-4 flex size-14 items-center justify-center rounded-full text-white shadow-xl transition-transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-black/10 sm:bottom-6 sm:right-6"
         style={{
           backgroundColor: primaryColor,
         }}
@@ -318,17 +318,17 @@ export function WebsiteChatWidget({
       className={
         embedded
           ? "flex min-h-screen w-full flex-col overflow-hidden bg-white text-zinc-950"
-          : "fixed bottom-6 right-6 flex h-[620px] max-h-[calc(100vh-3rem)] w-[380px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-3xl border bg-background shadow-2xl"
+          : "fixed inset-0 z-50 flex h-dvh w-full flex-col overflow-hidden bg-background sm:inset-auto sm:bottom-6 sm:right-6 sm:h-[560px] sm:max-h-[calc(100vh-3rem)] sm:w-[380px] sm:max-w-[calc(100vw-3rem)] sm:rounded-3xl sm:border sm:shadow-2xl"
       }
     >
       <header
-        className="flex items-center justify-between px-5 py-4 text-white"
+        className="flex items-center justify-between px-4 py-3.5 text-white sm:px-5 sm:py-4"
         style={{
           backgroundColor: primaryColor,
         }}
       >
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/15">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/15 sm:size-10">
             <MessageCircle className="size-5" />
           </span>
 
@@ -370,8 +370,8 @@ export function WebsiteChatWidget({
       <main
         className={
           embedded
-            ? "flex-1 overflow-y-auto bg-zinc-50 px-4 py-5"
-            : "flex-1 overflow-y-auto bg-muted/20 px-4 py-5"
+            ? "flex-1 overflow-y-auto bg-zinc-50 px-3 py-4 sm:px-4 sm:py-5"
+            : "flex-1 overflow-y-auto bg-muted/20 px-3 py-4 sm:px-4 sm:py-5"
         }
       >
         <div className="flex items-start gap-3">
@@ -387,8 +387,8 @@ export function WebsiteChatWidget({
           <div
             className={
               embedded
-                ? "max-w-[82%] rounded-2xl rounded-tl-md border border-zinc-200 bg-white px-4 py-3 text-zinc-950 shadow-sm"
-                : "max-w-[82%] rounded-2xl rounded-tl-md border bg-background px-4 py-3 shadow-sm"
+                ? "max-w-[88%] rounded-2xl rounded-tl-md border border-zinc-200 bg-white px-4 py-3 text-zinc-950 shadow-sm sm:max-w-[82%]"
+                : "max-w-[88%] rounded-2xl rounded-tl-md border bg-background px-4 py-3 shadow-sm sm:max-w-[82%]"
             }
           >
             <p className="whitespace-pre-wrap break-words text-sm leading-6">
@@ -405,7 +405,7 @@ export function WebsiteChatWidget({
           </div>
         ) : null}
 
-        <div className="mt-5 space-y-4">
+        <div className="mt-4 space-y-3 sm:mt-5 sm:space-y-4">
           {messages.map((message) => {
             const isUser = message.role === "USER";
 
@@ -418,7 +418,7 @@ export function WebsiteChatWidget({
                     : "flex justify-start"
                 }
               >
-                <div className="flex max-w-[82%] items-end gap-2">
+                <div className="flex max-w-[90%] items-end gap-2 sm:max-w-[82%]">
                   {!isUser ? (
                     <span
                       className="flex size-8 shrink-0 items-center justify-center rounded-full text-white"
@@ -482,12 +482,14 @@ export function WebsiteChatWidget({
                       : "rounded-2xl rounded-bl-md border bg-background px-4 py-3 shadow-sm"
                   }
                 >
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <LoaderCircle className="size-4 animate-spin" />
-
-                    <span>
-                      {employeeName} is typing...
-                    </span>
+                  <div
+                    className="flex items-center gap-2"
+                    aria-label={`${employeeName} is typing`}
+                    role="status"
+                  >
+                    <span className="size-2 animate-bounce rounded-full bg-muted-foreground/70 [animation-delay:-0.3s]" />
+                    <span className="size-2 animate-bounce rounded-full bg-muted-foreground/70 [animation-delay:-0.15s]" />
+                    <span className="size-2 animate-bounce rounded-full bg-muted-foreground/70" />
                   </div>
                 </div>
               </div>
@@ -501,8 +503,8 @@ export function WebsiteChatWidget({
       <footer
         className={
           embedded
-            ? "border-t border-zinc-200 bg-white p-4"
-            : "border-t bg-background p-4"
+            ? "border-t border-zinc-200 bg-white p-3 sm:p-4"
+            : "border-t bg-background p-3 sm:p-4"
         }
       >
         {error ? (
@@ -568,7 +570,7 @@ export function WebsiteChatWidget({
           </button>
         </form>
 
-        <p className="mt-3 text-center text-[11px] text-muted-foreground">
+        <p className="mt-2 text-center text-[10px] text-muted-foreground sm:mt-3 sm:text-[11px]">
           Powered by Sellora
         </p>
       </footer>
