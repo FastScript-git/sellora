@@ -22,6 +22,103 @@ type ConversationAIReplyButtonProps = {
   ) => void;
 };
 
+export async function readConversationAIStream({
+  url,
+  fallbackError,
+  onStreamEvent,
+}: {
+  url: string;
+  fallbackError: string;
+  onStreamEvent: (
+    event: AIStreamEvent,
+  ) => void;
+}) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Accept:
+        "application/x-ndjson",
+      "Content-Type":
+        "application/json",
+    },
+    body: JSON.stringify({
+      stream: true,
+    }),
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(
+      await getResponseError(
+        response,
+        fallbackError,
+      ),
+    );
+  }
+
+  const reader =
+    response.body.getReader();
+
+  const decoder =
+    new TextDecoder();
+
+  let buffer = "";
+
+  while (true) {
+    const { value, done } =
+      await reader.read();
+
+    if (done) {
+      break;
+    }
+
+    buffer += decoder.decode(value, {
+      stream: true,
+    });
+
+    const lines =
+      buffer.split("\n");
+
+    buffer =
+      lines.pop() ?? "";
+
+    for (const line of lines) {
+      if (!line.trim()) {
+        continue;
+      }
+
+      const event =
+        JSON.parse(
+          line,
+        ) as AIStreamEvent;
+
+      onStreamEvent(event);
+
+      if (event.type === "error") {
+        throw new Error(
+          event.error,
+        );
+      }
+    }
+  }
+
+  buffer += decoder.decode();
+
+  if (buffer.trim()) {
+    const event =
+      JSON.parse(
+        buffer,
+      ) as AIStreamEvent;
+
+    onStreamEvent(event);
+
+    if (event.type === "error") {
+      throw new Error(
+        event.error,
+      );
+    }
+  }
+}
+
 async function getResponseError(
   response: Response,
   fallback: string,
@@ -72,103 +169,13 @@ export function ConversationAIReplyButton({
     onGeneratingChange?.(true);
 
     try {
-      const response = await fetch(
-        `/api/conversations/${conversationId}/ai-reply`,
-        {
-          method: "POST",
-
-          headers: {
-            Accept:
-              "application/x-ndjson",
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify({
-            stream: true,
-          }),
-        },
-      );
-
-      if (
-        !response.ok ||
-        !response.body
-      ) {
-        throw new Error(
-          await getResponseError(
-            response,
-            t("fallbackError"),
-          ),
-        );
-      }
-
-      const reader =
-        response.body.getReader();
-
-      const decoder =
-        new TextDecoder();
-
-      let buffer = "";
-
-      while (true) {
-        const { value, done } =
-          await reader.read();
-
-        if (done) {
-          break;
-        }
-
-        buffer += decoder.decode(
-          value,
-          {
-            stream: true,
-          },
-        );
-
-        const lines =
-          buffer.split("\n");
-
-        buffer =
-          lines.pop() ?? "";
-
-        for (const line of lines) {
-          if (!line.trim()) {
-            continue;
-          }
-
-          const event =
-            JSON.parse(
-              line,
-            ) as AIStreamEvent;
-
-          onStreamEvent(event);
-
-          if (
-            event.type === "error"
-          ) {
-            throw new Error(
-              event.error,
-            );
-          }
-        }
-      }
-
-      buffer += decoder.decode();
-
-      if (buffer.trim()) {
-        const event =
-          JSON.parse(
-            buffer,
-          ) as AIStreamEvent;
-
-        onStreamEvent(event);
-
-        if (event.type === "error") {
-          throw new Error(
-            event.error,
-          );
-        }
-      }
+      await readConversationAIStream({
+        url:
+          `/api/conversations/${conversationId}/ai-reply`,
+        fallbackError:
+          t("fallbackError"),
+        onStreamEvent,
+      });
     } catch (caughtError) {
       setError(
         caughtError instanceof Error

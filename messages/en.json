@@ -720,7 +720,10 @@
     "sources": "Sources",
     "similarity": "Similarity: {value}",
     "copyMessage": "Copy message",
-    "copied": "Copied"
+    "copied": "Copied",
+    "regenerate": "Regenerate response",
+    "regenerating": "Regenerating...",
+    "regenerateFailed": "Failed to regenerate the response."
   },
   "aiEmployeeConversationComposer": {
     "placeholder": "Write a message...",

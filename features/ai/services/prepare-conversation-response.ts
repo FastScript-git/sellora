@@ -9,6 +9,7 @@ const KNOWLEDGE_RESULT_LIMIT = 5;
 type PrepareConversationResponseParams = {
   conversationId: string;
   userMessageId: string;
+  excludedMessageIds?: string[];
 };
 
 type EmployeeInstructionsInput = {
@@ -102,6 +103,7 @@ function joinEmployeeInstructions({
 export async function prepareConversationResponse({
   conversationId,
   userMessageId,
+  excludedMessageIds = [],
 }: PrepareConversationResponseParams): Promise<PreparedConversationResponse> {
   const conversation =
     await prisma.conversation.findUnique({
@@ -175,11 +177,19 @@ export async function prepareConversationResponse({
     );
   }
 
+  const excludedMessageIdSet =
+    new Set([
+      userMessageId,
+      ...excludedMessageIds,
+    ]);
+
   const conversationHistory =
     conversation.messages
       .filter(
         (message) =>
-          message.id !== userMessageId,
+          !excludedMessageIdSet.has(
+            message.id,
+          ),
       )
       .slice(
         0,

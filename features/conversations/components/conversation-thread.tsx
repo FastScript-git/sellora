@@ -15,7 +15,10 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ConversationAIReplyButton } from "@/features/conversations/components/conversation-ai-reply-button";
+import {
+  ConversationAIReplyButton,
+  readConversationAIStream,
+} from "@/features/conversations/components/conversation-ai-reply-button";
 import type { AIStreamEvent } from "@/features/ai/streaming/stream-events";
 import { ConversationMessage } from "@/features/conversations/components/conversation-message";
 import type {
@@ -113,6 +116,12 @@ export function ConversationThread({
       null,
     );
 
+  const activeStreamMessageIdRef =
+    useRef<string | null>(null);
+
+  const regeneratingMessageIdRef =
+    useRef<string | null>(null);
+
   const [messages, setMessages] =
     useState<ConversationThreadMessage[]>(
       initialMessages,
@@ -130,6 +139,11 @@ export function ConversationThread({
   const [
     streamingMessageId,
     setStreamingMessageId,
+  ] = useState<string | null>(null);
+
+  const [
+    regeneratingMessageId,
+    setRegeneratingMessageId,
   ] = useState<string | null>(null);
 
   const [error, setError] =
@@ -189,25 +203,57 @@ export function ConversationThread({
       event.type ===
       "assistant_message_started"
     ) {
+      activeStreamMessageIdRef.current =
+        event.messageId;
+
       setStreamingMessageId(
         event.messageId,
       );
 
-      setMessages((current) => [
-        ...current,
-        {
-          id: event.messageId,
-          role: "ASSISTANT",
-          content: "",
-          metadata: {
-            source:
-              "OPENAI_STREAM",
+      const messageBeingRegenerated =
+        regeneratingMessageIdRef.current;
+
+      setMessages((current) => {
+        if (messageBeingRegenerated) {
+          return current.map(
+            (message) =>
+              message.id ===
+              messageBeingRegenerated
+                ? {
+                    id:
+                      event.messageId,
+                    role:
+                      "ASSISTANT",
+                    content: "",
+                    metadata: {
+                      source:
+                        "OPENAI_STREAM",
+                    },
+                    createdAt:
+                      event.createdAt,
+                    status:
+                      "sending",
+                  }
+                : message,
+          );
+        }
+
+        return [
+          ...current,
+          {
+            id: event.messageId,
+            role: "ASSISTANT",
+            content: "",
+            metadata: {
+              source:
+                "OPENAI_STREAM",
+            },
+            createdAt:
+              event.createdAt,
+            status: "sending",
           },
-          createdAt:
-            event.createdAt,
-          status: "sending",
-        },
-      ]);
+        ];
+      });
 
       scrollToBottom();
       return;
@@ -239,7 +285,7 @@ export function ConversationThread({
       setMessages((current) =>
         current.map((message) =>
           message.id ===
-          streamingMessageId
+          activeStreamMessageIdRef.current
             ? {
                 id:
                   event.message.id,
@@ -271,7 +317,7 @@ export function ConversationThread({
       setMessages((current) =>
         current.map((message) =>
           message.id ===
-          streamingMessageId
+          activeStreamMessageIdRef.current
             ? {
                 ...message,
                 status: "failed",
@@ -281,6 +327,84 @@ export function ConversationThread({
       );
 
       setError(event.error);
+    }
+  }
+
+  async function regenerateAIMessage(
+    messageId: string,
+  ): Promise<void> {
+    if (
+      isGeneratingAI ||
+      regeneratingMessageId
+    ) {
+      return;
+    }
+
+    const originalMessage =
+      messages.find(
+        (message) =>
+          message.id === messageId,
+      );
+
+    if (!originalMessage) {
+      return;
+    }
+
+    setError(null);
+    setIsGeneratingAI(true);
+    setRegeneratingMessageId(
+      messageId,
+    );
+
+    regeneratingMessageIdRef.current =
+      messageId;
+
+    try {
+      await readConversationAIStream({
+        url:
+          `/api/conversations/${conversationId}/regenerate`,
+        fallbackError:
+          aiT("fallbackError"),
+        onStreamEvent:
+          handleAIStreamEvent,
+      });
+    } catch (caughtError) {
+      setMessages((current) => {
+        const containsOriginal =
+          current.some(
+            (message) =>
+              message.id ===
+              originalMessage.id,
+          );
+
+        if (containsOriginal) {
+          return current;
+        }
+
+        return current.map(
+          (message) =>
+            message.id ===
+            activeStreamMessageIdRef.current
+              ? originalMessage
+              : message,
+        );
+      });
+
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : aiT("fallbackError"),
+      );
+    } finally {
+      setIsGeneratingAI(false);
+      setStreamingMessageId(null);
+      setRegeneratingMessageId(null);
+
+      activeStreamMessageIdRef.current =
+        null;
+
+      regeneratingMessageIdRef.current =
+        null;
     }
   }
 
@@ -432,6 +556,17 @@ export function ConversationThread({
     }
   }
 
+  const latestAssistantMessageId =
+    [...messages]
+      .reverse()
+      .find(
+        (message) =>
+          message.role ===
+          "ASSISTANT" &&
+          message.status !==
+            "failed",
+      )?.id ?? null;
+
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div className="min-w-0 flex-1 space-y-5 overflow-y-auto px-3 py-5 sm:px-5 sm:py-6 lg:px-6">
@@ -455,6 +590,23 @@ export function ConversationThread({
                 message.metadata
               }
               locale={locale}
+              canRegenerate={
+                message.role ===
+                  "ASSISTANT" &&
+                message.id ===
+                  latestAssistantMessageId &&
+                message.status !==
+                  "sending"
+              }
+              isRegenerating={
+                regeneratingMessageId ===
+                message.id
+              }
+              onRegenerate={() => {
+                void regenerateAIMessage(
+                  message.id,
+                );
+              }}
             />
 
             {message.status ===

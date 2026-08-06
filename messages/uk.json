@@ -720,7 +720,10 @@
     "sources": "Джерела",
     "similarity": "Релевантність: {value}",
     "copyMessage": "Копіювати повідомлення",
-    "copied": "Скопійовано"
+    "copied": "Скопійовано",
+    "regenerate": "Згенерувати відповідь повторно",
+    "regenerating": "Повторна генерація...",
+    "regenerateFailed": "Не вдалося повторно згенерувати відповідь."
   },
   "aiEmployeeConversationComposer": {
     "placeholder": "Напишіть повідомлення...",

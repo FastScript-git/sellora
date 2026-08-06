@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 type StreamConversationResponseParams = {
   conversationId: string;
   userMessageId: string;
+  excludedMessageIds?: string[];
   signal?: AbortSignal;
   onEvent: (
     event: AIStreamEvent,
@@ -48,6 +49,7 @@ function isAbortError(error: unknown) {
 export async function streamConversationResponse({
   conversationId,
   userMessageId,
+  excludedMessageIds,
   signal,
   onEvent,
 }: StreamConversationResponseParams): Promise<StreamConversationResponseResult> {
@@ -55,6 +57,7 @@ export async function streamConversationResponse({
     await prepareConversationResponse({
       conversationId,
       userMessageId,
+      excludedMessageIds,
     });
 
   const streamingMessageId =

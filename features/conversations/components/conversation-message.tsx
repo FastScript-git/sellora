@@ -6,6 +6,7 @@ import {
   Check,
   Copy,
   Headset,
+  RotateCcw,
   User,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -30,6 +31,9 @@ type ConversationMessageProps = {
   createdAt: Date;
   metadata?: Prisma.JsonValue | null;
   locale: string;
+  canRegenerate?: boolean;
+  isRegenerating?: boolean;
+  onRegenerate?: () => void;
 };
 
 function isRecord(
@@ -112,6 +116,9 @@ export function ConversationMessage({
   createdAt,
   metadata,
   locale,
+  canRegenerate = false,
+  isRegenerating = false,
+  onRegenerate,
 }: ConversationMessageProps) {
   const t = useTranslations(
     "aiEmployeeConversationDetails",
@@ -225,32 +232,62 @@ export function ConversationMessage({
               )}
             </time>
 
-            <button
-              type="button"
-              onClick={handleCopy}
-              aria-label={
-                copied
-                  ? t("copied")
-                  : t("copyMessage")
-              }
-              title={
-                copied
-                  ? t("copied")
-                  : t("copyMessage")
-              }
-              className={cn(
-                "inline-flex size-7 cursor-pointer items-center justify-center rounded-md transition-colors",
-                isUser
-                  ? "text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {copied ? (
-                <Check className="size-3.5" />
-              ) : (
-                <Copy className="size-3.5" />
-              )}
-            </button>
+            <div className="flex items-center gap-1">
+              {canRegenerate &&
+              onRegenerate ? (
+                <button
+                  type="button"
+                  onClick={onRegenerate}
+                  disabled={isRegenerating}
+                  aria-label={
+                    isRegenerating
+                      ? t("regenerating")
+                      : t("regenerate")
+                  }
+                  title={
+                    isRegenerating
+                      ? t("regenerating")
+                      : t("regenerate")
+                  }
+                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <RotateCcw
+                    className={cn(
+                      "size-3.5",
+                      isRegenerating &&
+                        "animate-spin",
+                    )}
+                  />
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={handleCopy}
+                aria-label={
+                  copied
+                    ? t("copied")
+                    : t("copyMessage")
+                }
+                title={
+                  copied
+                    ? t("copied")
+                    : t("copyMessage")
+                }
+                className={cn(
+                  "inline-flex size-7 cursor-pointer items-center justify-center rounded-md transition-colors",
+                  isUser
+                    ? "text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                {copied ? (
+                  <Check className="size-3.5" />
+                ) : (
+                  <Copy className="size-3.5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
