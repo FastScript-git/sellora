@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConversationDetailsSidebar } from "@/features/conversations/components/conversation-details-sidebar";
+import { ConversationsFilters } from "@/features/conversations/components/conversations-filters";
 import { getConversationsCopy } from "@/features/conversations/copy";
 import { ConversationThread } from "@/features/conversations/components/conversation-thread";
 import { ConversationsLiveRefresh } from "@/features/conversations/components/conversations-live-refresh";
@@ -234,45 +235,38 @@ export default async function ConversationsPage({
                 />
               ) : null}
 
-              <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
-                <select
+              {employeeId ? (
+                <input
+                  type="hidden"
                   name="employeeId"
-                  defaultValue={employeeId ?? ""}
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/50"
-                >
-                  <option value="">
-                    {copy.allEmployees}
-                  </option>
+                  value={employeeId}
+                />
+              ) : null}
 
-                  {filterOptions.employees.map((employee) => (
-                    <option
-                      key={employee.id}
-                      value={employee.id}
-                    >
-                      {employee.name}
-                    </option>
-                  ))}
-                </select>
-
-                <select
+              {channelId ? (
+                <input
+                  type="hidden"
                   name="channelId"
-                  defaultValue={channelId ?? ""}
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/50"
-                >
-                  <option value="">
-                    {copy.allChannels}
-                  </option>
+                  value={channelId}
+                />
+              ) : null}
 
-                  {filterOptions.channels.map((channel) => (
-                    <option
-                      key={channel.id}
-                      value={channel.id}
-                    >
-                      {channel.name} · {channel.type}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <ConversationsFilters
+                employeeId={employeeId}
+                channelId={channelId}
+                employees={
+                  filterOptions.employees
+                }
+                channels={
+                  filterOptions.channels
+                }
+                allEmployeesLabel={
+                  copy.allEmployees
+                }
+                allChannelsLabel={
+                  copy.allChannels
+                }
+              />
             </form>
 
             <div className="mt-3 grid grid-cols-3 gap-2">
