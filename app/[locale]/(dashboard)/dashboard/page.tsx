@@ -96,7 +96,7 @@ export default async function DashboardPage({
   ];
 
   return (
-    <div className="min-w-0 space-y-5">
+    <div className="min-w-0 space-y-4 sm:space-y-5">
       <PageHeader
         title={t("welcome")}
         description={t("description")}
@@ -116,7 +116,7 @@ export default async function DashboardPage({
 
       <section
         aria-label={t("metricsLabel")}
-        className="min-w-0 overflow-hidden rounded-xl border bg-card"
+        className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-xs"
       >
         <div className="grid min-w-0 sm:grid-cols-2 xl:grid-cols-4">
           {metrics.map((metric, index) => {
@@ -126,7 +126,7 @@ export default async function DashboardPage({
               <div
                 key={metric.key}
                 className={[
-                  "flex min-h-20 min-w-0 items-center gap-3 px-4 py-3",
+                  "flex min-h-20 min-w-0 items-center gap-3 px-3 py-3 sm:px-4",
                   index > 0
                     ? "border-t sm:border-t-0 sm:border-l"
                     : "",
@@ -160,7 +160,7 @@ export default async function DashboardPage({
         </div>
       </section>
 
-      <section className="grid min-w-0 items-start gap-5 xl:grid-cols-2">
+      <section className="grid min-w-0 items-stretch gap-4 lg:grid-cols-2 lg:gap-5">
         <AIEmployeesWidget
           employees={
             dashboard.employeePerformance
@@ -169,7 +169,7 @@ export default async function DashboardPage({
         />
 
         <Card className="min-w-0">
-          <CardContent className="p-5">
+          <CardContent className="p-4 sm:p-5">
             <div className="mb-4">
               <h2 className="font-semibold">
                 {t("activity.title")}
@@ -191,7 +191,7 @@ export default async function DashboardPage({
         </Card>
       </section>
 
-      <section className="grid min-w-0 items-start gap-5 xl:grid-cols-2">
+      <section className="grid min-w-0 items-stretch gap-4 lg:grid-cols-2 lg:gap-5">
         <RecentConversationsWidget
           conversations={
             dashboard.recentConversations.slice(

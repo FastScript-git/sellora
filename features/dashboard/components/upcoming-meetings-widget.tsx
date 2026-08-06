@@ -12,16 +12,17 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  buttonVariants,
+} from "@/components/ui/button";
+import {
+  DashboardWidget,
+  DashboardWidgetEmptyState,
+} from "@/features/dashboard/components/dashboard-widget";
 import type {
   MeetingLocationType,
   MeetingStatus,
 } from "@/lib/generated/prisma/client";
+import { cn } from "@/lib/utils";
 
 type UpcomingMeeting = {
   id: string;
@@ -58,15 +59,19 @@ export function UpcomingMeetingsWidget({
   meetings,
   locale,
 }: UpcomingMeetingsWidgetProps) {
-  const isUkrainian = locale === "uk";
+  const isUkrainian =
+    locale === "uk";
 
   const copy = isUkrainian
     ? {
         title: "Майбутні зустрічі",
-        description: "Найближчі дзвінки та демонстрації.",
+        description:
+          "Найближчі дзвінки та демонстрації.",
         viewAll: "Календар",
-        emptyTitle: "Майбутніх зустрічей немає",
-        emptyDescription: "Заплануйте дзвінок або демонстрацію.",
+        emptyTitle:
+          "Майбутніх зустрічей немає",
+        emptyDescription:
+          "Заплануйте дзвінок або демонстрацію.",
         noContact: "Без контакту",
         noEmployee: "Не призначено",
         locationTypes: {
@@ -77,10 +82,13 @@ export function UpcomingMeetingsWidget({
       }
     : {
         title: "Upcoming meetings",
-        description: "Your next calls and product demos.",
+        description:
+          "Your next calls and product demos.",
         viewAll: "Calendar",
-        emptyTitle: "No upcoming meetings",
-        emptyDescription: "Schedule a call or product demo.",
+        emptyTitle:
+          "No upcoming meetings",
+        emptyDescription:
+          "Schedule a call or product demo.",
         noContact: "No contact",
         noEmployee: "Unassigned",
         locationTypes: {
@@ -90,158 +98,198 @@ export function UpcomingMeetingsWidget({
         },
       };
 
-  const dateFormatter = new Intl.DateTimeFormat(
-    isUkrainian ? "uk-UA" : "en-US",
-    {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    },
-  );
+  const dateFormatter =
+    new Intl.DateTimeFormat(
+      isUkrainian
+        ? "uk-UA"
+        : "en-US",
+      {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      },
+    );
 
-  const timeFormatter = new Intl.DateTimeFormat(
-    isUkrainian ? "uk-UA" : "en-US",
-    {
-      hour: "2-digit",
-      minute: "2-digit",
-    },
-  );
+  const timeFormatter =
+    new Intl.DateTimeFormat(
+      isUkrainian
+        ? "uk-UA"
+        : "en-US",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      },
+    );
 
-  const visibleMeetings = meetings.slice(0, 4);
+  const visibleMeetings =
+    meetings.slice(0, 4);
+
+  const calendarHref =
+    `/${locale}/dashboard/calendar`;
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <CardTitle>{copy.title}</CardTitle>
+    <DashboardWidget
+      title={copy.title}
+      description={copy.description}
+      icon={CalendarClock}
+      action={
+        <Link
+          href={calendarHref}
+          className={cn(
+            buttonVariants({
+              variant: "ghost",
+              size: "sm",
+            }),
+            "h-8 w-full justify-center gap-1.5 px-2 text-xs sm:w-auto",
+          )}
+        >
+          {copy.viewAll}
 
-            <CardDescription className="mt-1">
-              {copy.description}
-            </CardDescription>
-          </div>
-
-          <Link
-            href={`/${locale}/dashboard/calendar`}
-            className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {copy.viewAll}
-            <ArrowRight className="size-3.5" />
-          </Link>
-        </div>
-      </CardHeader>
-
-      <CardContent className="pt-0">
-        {visibleMeetings.length === 0 ? (
-          <div className="flex min-h-44 flex-col items-center justify-center rounded-xl border border-dashed px-5 py-7 text-center">
-            <CalendarClock className="size-4 text-muted-foreground" />
-
-            <p className="mt-3 text-sm font-medium">
-              {copy.emptyTitle}
-            </p>
-
-            <p className="mt-1 text-xs text-muted-foreground">
-              {copy.emptyDescription}
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y rounded-xl border">
-            {visibleMeetings.map((meeting) => {
-              const contactName = meeting.contact
-                ? [
-                    meeting.contact.firstName,
-                    meeting.contact.lastName,
-                  ]
-                    .filter(Boolean)
-                    .join(" ") ||
-                  meeting.contact.email ||
-                  copy.noContact
-                : copy.noContact;
+          <ArrowRight className="size-3.5" />
+        </Link>
+      }
+    >
+      {visibleMeetings.length === 0 ? (
+        <DashboardWidgetEmptyState
+          icon={CalendarClock}
+          title={copy.emptyTitle}
+          description={
+            copy.emptyDescription
+          }
+        />
+      ) : (
+        <div className="divide-y">
+          {visibleMeetings.map(
+            (meeting) => {
+              const contactName =
+                meeting.contact
+                  ? [
+                      meeting.contact
+                        .firstName,
+                      meeting.contact
+                        .lastName,
+                    ]
+                      .filter(Boolean)
+                      .join(" ") ||
+                    meeting.contact.email ||
+                    copy.noContact
+                  : copy.noContact;
 
               const LocationIcon =
-                meeting.locationType === "ONLINE"
+                meeting.locationType ===
+                "ONLINE"
                   ? Video
-                  : meeting.locationType === "PHONE"
+                  : meeting.locationType ===
+                      "PHONE"
                     ? Phone
                     : MapPin;
 
               return (
                 <Link
                   key={meeting.id}
-                  href={`/${locale}/dashboard/calendar`}
-                  className="group flex items-center gap-3 px-3 py-3 transition-colors hover:bg-muted/30"
+                  href={calendarHref}
+                  className="group flex min-w-0 items-start gap-3 px-4 py-4 outline-none transition-colors hover:bg-muted/25 focus-visible:bg-muted/25 sm:px-5"
                 >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/40">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
                     <CalendarClock className="size-4 text-muted-foreground" />
                   </span>
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-medium">
-                        {meeting.title}
-                      </p>
+                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <p className="min-w-0 truncate text-sm font-semibold">
+                            {meeting.title}
+                          </p>
 
-                      <Badge
-                        variant="outline"
-                        className="h-5 shrink-0 px-1.5 text-[10px]"
-                      >
-                        <LocationIcon className="mr-1 size-3" />
-                        {
-                          copy.locationTypes[
-                            meeting.locationType
-                          ]
-                        }
-                      </Badge>
+                          <Badge
+                            variant="outline"
+                            className="h-5 shrink-0 px-1.5 text-[10px]"
+                          >
+                            <LocationIcon className="mr-1 size-3" />
+
+                            {
+                              copy
+                                .locationTypes[
+                                meeting
+                                  .locationType
+                              ]
+                            }
+                          </Badge>
+                        </div>
+
+                        <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                          <span className="inline-flex shrink-0 items-center gap-1">
+                            <Clock3 className="size-3" />
+
+                            {dateFormatter.format(
+                              meeting.startsAt,
+                            )}
+
+                            {", "}
+
+                            {timeFormatter.format(
+                              meeting.startsAt,
+                            )}
+                          </span>
+
+                          <span
+                            aria-hidden="true"
+                            className="hidden sm:inline"
+                          >
+                            ·
+                          </span>
+
+                          <span className="inline-flex min-w-0 items-center gap-1">
+                            <UserRound className="size-3 shrink-0" />
+
+                            <span className="truncate">
+                              {contactName}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                      <span className="inline-flex shrink-0 items-center gap-1">
-                        <Clock3 className="size-3" />
-                        {dateFormatter.format(meeting.startsAt)}
-                        ,{" "}
-                        {timeFormatter.format(meeting.startsAt)}
-                      </span>
-
-                      <span aria-hidden="true">·</span>
-
-                      <span className="inline-flex min-w-0 items-center gap-1">
-                        <UserRound className="size-3 shrink-0" />
-
-                        <span className="truncate">
-                          {contactName}
-                        </span>
-                      </span>
-                    </div>
-
-                    <div className="mt-1 flex min-w-0 items-center gap-2 text-[11px] text-muted-foreground">
+                    <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
                       <span className="inline-flex min-w-0 items-center gap-1">
                         <Bot className="size-3 shrink-0" />
 
                         <span className="truncate">
-                          {meeting.employee?.name ||
+                          {meeting.employee
+                            ?.name ||
                             copy.noEmployee}
                         </span>
                       </span>
 
-                      {meeting.contact?.company ? (
+                      {meeting.contact
+                        ?.company ? (
                         <>
-                          <span aria-hidden="true">·</span>
+                          <span
+                            aria-hidden="true"
+                            className="hidden sm:inline"
+                          >
+                            ·
+                          </span>
 
                           <span className="truncate">
-                            {meeting.contact.company}
+                            {
+                              meeting.contact
+                                .company
+                            }
                           </span>
                         </>
                       ) : null}
                     </div>
                   </div>
 
-                  <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
                 </Link>
               );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            },
+          )}
+        </div>
+      )}
+    </DashboardWidget>
   );
 }
