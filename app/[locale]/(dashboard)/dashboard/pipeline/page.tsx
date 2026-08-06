@@ -120,10 +120,10 @@ export default async function PipelinePage({
   );
 
   return (
-    <div className="space-y-8">
-      <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
+    <div className="min-w-0 max-w-full space-y-4">
+      <section className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">
             {copy.title}
           </h1>
 
@@ -132,7 +132,7 @@ export default async function PipelinePage({
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card px-4 py-3">
+        <div className="w-full shrink-0 rounded-xl border bg-card px-4 py-3 sm:w-auto sm:min-w-36">
           <p className="text-xs text-muted-foreground">
             {copy.totalContacts}
           </p>

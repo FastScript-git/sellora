@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 
+import { PageHeader } from "@/components/dashboard/shared/page-header";
 import {
   Button,
   buttonVariants,
@@ -242,16 +243,13 @@ export default async function ContactsPage({
   };
 
   return (
-    <div className="min-w-0 space-y-8 overflow-x-hidden">
-      <section>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {copy.title}
-        </h1>
-
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          {copy.description}
-        </p>
-      </section>
+    <div className="min-w-0 space-y-4 overflow-x-hidden">
+      <PageHeader
+        compact
+        icon={UserRound}
+        title={copy.title}
+        description={copy.description}
+      />
 
       <section className="space-y-4">
         <form

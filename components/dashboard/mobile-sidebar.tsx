@@ -78,14 +78,14 @@ export function MobileSidebar() {
         onClick={() =>
           setIsOpen(true)
         }
-        className="cursor-pointer lg:hidden"
+        className="shrink-0 cursor-pointer xl:hidden"
       >
         <Menu className="size-5" />
       </Button>
 
       {isOpen ? (
         <div
-          className="fixed inset-0 z-50 lg:hidden"
+          className="fixed inset-0 z-50 xl:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Dashboard navigation"
@@ -100,7 +100,7 @@ export function MobileSidebar() {
           />
 
           <div
-            className="relative h-full w-72 max-w-[85vw] shadow-2xl"
+            className="relative h-full w-[min(18rem,88vw)] shadow-2xl"
             onClick={
               handleNavigationClick
             }

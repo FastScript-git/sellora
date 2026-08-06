@@ -174,8 +174,8 @@ export function ContactPipelineBoard({
       ) : null}
 
       <DragDropProvider onDragEnd={handleDragEnd}>
-        <section className="-mx-1 overflow-x-auto px-1 pb-4">
-          <div className="grid min-w-[1180px] grid-cols-4 items-start gap-4">
+        <section className="min-w-0">
+          <div className="grid min-w-0 items-start gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {CONTACT_STATUSES.map((status) => {
               const columnContacts = contacts.filter(
                 (contact) => contact.status === status,
@@ -256,7 +256,7 @@ function PipelineColumn({
     <section
       ref={droppableRef}
       className={cn(
-        "min-h-72 rounded-2xl border bg-muted/20 p-3 transition-colors",
+        "min-h-72 min-w-0 rounded-2xl border bg-muted/20 p-3 transition-colors",
         isDropTarget && columnStyles[status].active,
       )}
     >
