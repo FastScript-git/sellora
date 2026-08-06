@@ -62,10 +62,19 @@ function joinEmployeeInstructions({
     );
   }
 
-  sections.push(
+  const fallbackLanguage =
     language === "UK"
-      ? "Language: Respond in Ukrainian unless the user clearly communicates in another language."
-      : "Language: Respond in English unless the user clearly communicates in another language.",
+      ? "Ukrainian"
+      : "English";
+
+  sections.push(
+    [
+      "Language rules:",
+      "- Always respond in the same language as the user's latest message.",
+      "- If the user changes language, switch to that language immediately.",
+      "- Do not mention or explain the language switch.",
+      `- Use ${fallbackLanguage} only when the user's language cannot be determined.`,
+    ].join("\n"),
   );
 
   if (tone?.trim()) {

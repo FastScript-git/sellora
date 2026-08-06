@@ -19,6 +19,10 @@ type WidgetMessage = {
   role: "USER" | "ASSISTANT";
   content: string;
   createdAt: string;
+  deliveryStatus?:
+    | "sending"
+    | "sent"
+    | "failed";
 };
 
 type WebsiteChatWidgetProps = {
@@ -205,6 +209,25 @@ export function WebsiteChatWidget({
       return;
     }
 
+    const optimisticMessageId =
+      `optimistic-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}`;
+
+    const optimisticMessage: WidgetMessage = {
+      id: optimisticMessageId,
+      role: "USER",
+      content: normalizedContent,
+      createdAt: new Date().toISOString(),
+      deliveryStatus: "sending",
+    };
+
+    setMessages((currentMessages) => [
+      ...currentMessages,
+      optimisticMessage,
+    ]);
+
+    setContent("");
     setIsSending(true);
     setError(undefined);
 
@@ -254,20 +277,25 @@ export function WebsiteChatWidget({
       );
 
       setMessages((currentMessages) => {
-        const existingMessageIds = new Set(
+        const nextMessages =
           currentMessages.map(
-            (currentMessage) => currentMessage.id,
+            (currentMessage) =>
+              currentMessage.id ===
+              optimisticMessageId
+                ? {
+                    ...message,
+                    deliveryStatus:
+                      "sent" as const,
+                  }
+                : currentMessage,
+          );
+
+        const existingMessageIds = new Set(
+          nextMessages.map(
+            (currentMessage) =>
+              currentMessage.id,
           ),
         );
-
-        const nextMessages = [
-          ...currentMessages,
-        ];
-
-        if (!existingMessageIds.has(message.id)) {
-          nextMessages.push(message);
-          existingMessageIds.add(message.id);
-        }
 
         if (
           assistantMessage &&
@@ -275,18 +303,32 @@ export function WebsiteChatWidget({
             assistantMessage.id,
           )
         ) {
-          nextMessages.push(assistantMessage);
+          nextMessages.push({
+            ...assistantMessage,
+            deliveryStatus: "sent",
+          });
         }
 
         return nextMessages;
       });
 
-      setContent("");
-
       if (responseBody.warning) {
         setError(responseBody.warning);
       }
     } catch (sendError) {
+      setMessages((currentMessages) =>
+        currentMessages.map(
+          (currentMessage) =>
+            currentMessage.id ===
+            optimisticMessageId
+              ? {
+                  ...currentMessage,
+                  deliveryStatus: "failed",
+                }
+              : currentMessage,
+        ),
+      );
+
       setError(
         sendError instanceof Error
           ? sendError.message
@@ -451,6 +493,26 @@ export function WebsiteChatWidget({
                     <p className="whitespace-pre-wrap break-words text-sm leading-6">
                       {message.content}
                     </p>
+
+                    {isUser &&
+                    message.deliveryStatus ? (
+                      <p
+                        className={
+                          message.deliveryStatus ===
+                          "failed"
+                            ? "mt-1.5 text-right text-[10px] text-red-100"
+                            : "mt-1.5 text-right text-[10px] text-white/70"
+                        }
+                      >
+                        {message.deliveryStatus ===
+                        "sending"
+                          ? "Sending..."
+                          : message.deliveryStatus ===
+                              "failed"
+                            ? "Not sent"
+                            : null}
+                      </p>
+                    ) : null}
                   </div>
 
                   {isUser ? (
