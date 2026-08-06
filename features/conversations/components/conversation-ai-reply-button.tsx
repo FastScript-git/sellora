@@ -2,11 +2,14 @@
 
 import {
   Bot,
-  Loader2,
   Sparkles,
+  Square,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import {
+  useRef,
+  useState,
+} from "react";
 
 import { Button } from "@/components/ui/button";
 import type { AIStreamEvent } from "@/features/ai/streaming/stream-events";
@@ -20,18 +23,21 @@ type ConversationAIReplyButtonProps = {
   onGeneratingChange?: (
     isGenerating: boolean,
   ) => void;
+  onStopped?: () => void;
 };
 
 export async function readConversationAIStream({
   url,
   fallbackError,
   onStreamEvent,
+  signal,
 }: {
   url: string;
   fallbackError: string;
   onStreamEvent: (
     event: AIStreamEvent,
   ) => void;
+  signal?: AbortSignal;
 }) {
   const response = await fetch(url, {
     method: "POST",
@@ -44,6 +50,7 @@ export async function readConversationAIStream({
     body: JSON.stringify({
       stream: true,
     }),
+    signal,
   });
 
   if (!response.ok || !response.body) {
@@ -148,6 +155,7 @@ export function ConversationAIReplyButton({
   disabled = false,
   onStreamEvent,
   onGeneratingChange,
+  onStopped,
 }: ConversationAIReplyButtonProps) {
   const t = useTranslations(
     "aiEmployeeConversationAiReply",
@@ -159,10 +167,25 @@ export function ConversationAIReplyButton({
   const [error, setError] =
     useState<string | null>(null);
 
+  const abortControllerRef =
+    useRef<AbortController | null>(
+      null,
+    );
+
+  function stopGenerating() {
+    abortControllerRef.current?.abort();
+  }
+
   async function generateReply(): Promise<void> {
     if (isGenerating || disabled) {
       return;
     }
+
+    const abortController =
+      new AbortController();
+
+    abortControllerRef.current =
+      abortController;
 
     setIsGenerating(true);
     setError(null);
@@ -175,14 +198,34 @@ export function ConversationAIReplyButton({
         fallbackError:
           t("fallbackError"),
         onStreamEvent,
+        signal:
+          abortController.signal,
       });
     } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : t("fallbackError"),
-      );
+      const wasAborted =
+        abortController.signal.aborted ||
+        (caughtError instanceof Error &&
+          caughtError.name ===
+            "AbortError");
+
+      if (wasAborted) {
+        onStopped?.();
+      } else {
+        setError(
+          caughtError instanceof Error
+            ? caughtError.message
+            : t("fallbackError"),
+        );
+      }
     } finally {
+      if (
+        abortControllerRef.current ===
+        abortController
+      ) {
+        abortControllerRef.current =
+          null;
+      }
+
       setIsGenerating(false);
       onGeneratingChange?.(false);
     }
@@ -204,19 +247,25 @@ export function ConversationAIReplyButton({
         variant="outline"
         className="w-full cursor-pointer"
         disabled={
-          disabled ||
-          isGenerating
+          disabled && !isGenerating
         }
-        onClick={generateReply}
+        onClick={() => {
+          if (isGenerating) {
+            stopGenerating();
+            return;
+          }
+
+          void generateReply();
+        }}
       >
         {isGenerating ? (
-          <Loader2 className="size-4 animate-spin" />
+          <Square className="size-4 fill-current" />
         ) : (
           <Sparkles className="size-4" />
         )}
 
         {isGenerating
-          ? t("generating")
+          ? t("stop")
           : t("generate")}
 
         {!isGenerating ? (

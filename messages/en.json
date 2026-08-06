@@ -736,6 +736,7 @@
   "aiEmployeeConversationAiReply": {
     "generate": "Generate AI reply",
     "generating": "AI is generating a reply...",
+    "stop": "Stop generating",
     "thinking": "AI is thinking...",
     "fallbackError": "Failed to generate AI reply."
   },

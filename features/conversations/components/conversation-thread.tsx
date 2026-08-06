@@ -678,6 +678,33 @@ export function ConversationThread({
                 null,
               );
             }}
+            onStopped={() => {
+              const activeMessageId =
+                activeStreamMessageIdRef.current;
+
+              if (!activeMessageId) {
+                return;
+              }
+
+              setMessages((current) =>
+                current.map((message) =>
+                  message.id ===
+                  activeMessageId
+                    ? {
+                        ...message,
+                        status: "sent",
+                      }
+                    : message,
+                ),
+              );
+
+              setStreamingMessageId(
+                null,
+              );
+
+              activeStreamMessageIdRef.current =
+                null;
+            }}
           />
         </div>
       ) : null}
