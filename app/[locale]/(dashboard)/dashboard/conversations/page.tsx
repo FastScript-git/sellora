@@ -173,21 +173,21 @@ export default async function ConversationsPage({
     : copy.anonymous;
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-4 sm:space-y-6">
       <ConversationsLiveRefresh />
-      <section>
-        <h1 className="text-3xl font-semibold tracking-tight">
+      <section className="min-w-0">
+        <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">
           {copy.title}
         </h1>
 
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        <p className="mt-2 max-w-2xl break-words text-sm leading-6 text-muted-foreground">
           {copy.description}
         </p>
       </section>
 
-      <div className="grid min-h-[720px] overflow-hidden rounded-2xl border bg-card lg:grid-cols-[380px_minmax(0,1fr)]">
-        <aside className="border-b lg:border-b-0 lg:border-r">
-          <div className="border-b p-4">
+      <div className="grid min-w-0 overflow-hidden rounded-xl border bg-card sm:rounded-2xl lg:min-h-[720px] lg:grid-cols-[380px_minmax(0,1fr)]">
+        <aside className="min-w-0 border-b lg:border-b-0 lg:border-r">
+          <div className="min-w-0 border-b p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="font-semibold">
@@ -209,7 +209,7 @@ export default async function ConversationsPage({
               method="get"
               className="mt-4 space-y-3"
             >
-              <div className="flex gap-2">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
                 <div className="relative min-w-0 flex-1">
                   <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 
@@ -221,7 +221,7 @@ export default async function ConversationsPage({
                   />
                 </div>
 
-                <Button type="submit" size="sm">
+                <Button type="submit" size="sm" className="w-full sm:w-auto">
                   {copy.searchButton}
                 </Button>
               </div>
@@ -234,7 +234,7 @@ export default async function ConversationsPage({
                 />
               ) : null}
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
                 <select
                   name="employeeId"
                   defaultValue={employeeId ?? ""}
@@ -330,7 +330,7 @@ export default async function ConversationsPage({
           ) : null}
           </div>
 
-          <div className="max-h-[580px] overflow-y-auto">
+          <div className="max-h-[420px] min-w-0 overflow-y-auto sm:max-h-[580px]">
             {conversations.length === 0 ? (
               <div className="flex min-h-72 flex-col items-center justify-center px-6 text-center">
                 <span className="flex size-11 items-center justify-center rounded-xl border bg-muted/40">
@@ -384,7 +384,7 @@ export default async function ConversationsPage({
                       nextConversationId: conversation.id,
                     })}
                     className={cn(
-                      "block border-b px-5 py-4 transition-colors last:border-b-0 hover:bg-muted/40",
+                      "block min-w-0 border-b px-3 py-4 transition-colors last:border-b-0 hover:bg-muted/40 sm:px-5",
                       isSelected && "bg-muted/60",
                     )}
                   >
@@ -394,12 +394,12 @@ export default async function ConversationsPage({
                       </span>
 
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <p className="truncate text-sm font-medium">
+                        <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                          <p className="min-w-0 truncate text-sm font-medium">
                             {conversationTitle}
                           </p>
 
-                          <span className="shrink-0 text-[11px] text-muted-foreground">
+                          <span className="shrink-0 text-[11px] text-muted-foreground sm:text-right">
                             {dateFormatter.format(
                               lastActivityAt,
                             )}
@@ -438,7 +438,7 @@ export default async function ConversationsPage({
 
         <main className="min-w-0">
           {!selectedConversation ? (
-            <div className="flex min-h-[720px] flex-col items-center justify-center px-6 text-center">
+            <div className="flex min-h-[360px] flex-col items-center justify-center px-4 py-10 text-center sm:min-h-[520px] sm:px-6 lg:min-h-[720px]">
               <span className="flex size-12 items-center justify-center rounded-xl border bg-muted/40">
                 <MessageSquare className="size-5 text-muted-foreground" />
               </span>
@@ -452,11 +452,11 @@ export default async function ConversationsPage({
               </p>
             </div>
           ) : (
-            <div className="grid min-h-[720px] xl:grid-cols-[minmax(0,1fr)_300px]">
-              <section className="flex min-w-0 flex-col">
-                <header className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="grid min-w-0 lg:min-h-[720px] xl:grid-cols-[minmax(0,1fr)_300px]">
+              <section className="flex min-h-0 min-w-0 flex-col overflow-hidden">
+                <header className="flex min-w-0 flex-col gap-3 border-b px-3 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-5">
                   <div className="min-w-0">
-                    <h2 className="truncate text-lg font-semibold">
+                    <h2 className="break-words text-base font-semibold sm:text-lg">
                       {selectedConversation.title ||
                         selectedContactName ||
                         copy.fallbackTitle}
@@ -482,10 +482,10 @@ export default async function ConversationsPage({
                   </span>
                 </header>
 
-                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                   {selectedConversation.messages.length ===
                   0 ? (
-                    <div className="flex min-h-[500px] items-center justify-center px-6 text-center">
+                    <div className="flex min-h-[320px] items-center justify-center px-4 py-10 text-center sm:min-h-[500px] sm:px-6">
                       <p className="text-sm text-muted-foreground">
                         {copy.noMessages}
                       </p>
