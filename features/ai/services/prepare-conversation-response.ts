@@ -1,3 +1,4 @@
+import { buildLanguageInstructions } from "@/features/ai/services/build-language-instructions";
 import { buildPrompt } from "@/features/ai/services/build-prompt";
 import { searchKnowledge } from "@/features/knowledge/services/search-knowledge";
 import { prisma } from "@/lib/prisma";
@@ -83,19 +84,10 @@ function joinEmployeeInstructions({
     );
   }
 
-  const fallbackLanguage =
-    language === "UK"
-      ? "Ukrainian"
-      : "English";
-
   sections.push(
-    [
-      "Language rules:",
-      "- Always respond in the same language as the user's latest message.",
-      "- If the user changes language, switch to that language immediately.",
-      "- Do not mention or explain the language switch.",
-      `- Use ${fallbackLanguage} only when the user's language cannot be determined.`,
-    ].join("\n"),
+    buildLanguageInstructions({
+      language,
+    }),
   );
 
   if (tone?.trim()) {

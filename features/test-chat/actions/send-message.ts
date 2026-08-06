@@ -1,6 +1,7 @@
 "use server";
 
 import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
+import { buildLanguageInstructions } from "@/features/ai/services/build-language-instructions";
 import { buildPrompt } from "@/features/ai/services/build-prompt";
 import { generateResponseDetailed } from "@/features/ai/services/generate-response";
 import { generateResponseWithTools } from "@/features/ai/services/generate-response-with-tools";
@@ -143,7 +144,9 @@ function buildEmployeeInstructions(employee: {
 }) {
   const sections = [
     `Role:\n${employee.role}`,
-    `Language:\n${employee.language}`,
+    buildLanguageInstructions({
+      language: employee.language,
+    }),
     employee.tone ? `Tone:\n${employee.tone}` : null,
     employee.identity ? `Identity:\n${employee.identity}` : null,
     employee.goals ? `Goals:\n${employee.goals}` : null,
