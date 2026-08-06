@@ -472,6 +472,8 @@ enum ConversationStatus {
 enum ConversationRole {
   USER
   ASSISTANT
+  OPERATOR
+  SYSTEM
 }
 
 enum ChannelType {

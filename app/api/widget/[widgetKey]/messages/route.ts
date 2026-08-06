@@ -23,7 +23,11 @@ type CreateWidgetMessageBody = {
 
 type WidgetMessage = {
   id: string;
-  role: "USER" | "ASSISTANT";
+  role:
+    | "USER"
+    | "ASSISTANT"
+    | "OPERATOR"
+    | "SYSTEM";
   content: string;
   createdAt: Date;
 };

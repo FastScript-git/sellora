@@ -189,18 +189,17 @@ export async function POST(request: Request) {
 
       conversationHistory = conversation.messages
         .slice(-CONVERSATION_HISTORY_LIMIT)
-        .map(
-          (conversationMessage: {
-            role: "USER" | "ASSISTANT";
-            content: string;
-          }) => ({
-            role:
-              conversationMessage.role === "USER"
-                ? ("user" as const)
-                : ("assistant" as const),
-            content: conversationMessage.content,
-          }),
-        );
+        .filter(
+          (conversationMessage) =>
+            conversationMessage.role !== "SYSTEM",
+        )
+        .map((conversationMessage) => ({
+          role:
+            conversationMessage.role === "USER"
+              ? ("user" as const)
+              : ("assistant" as const),
+          content: conversationMessage.content,
+        }));
 
       await saveUserMessage({
         conversationId: activeConversationId,
