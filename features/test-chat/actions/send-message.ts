@@ -134,7 +134,7 @@ function removeToolResultUrls({
 
 function buildEmployeeInstructions(employee: {
   role: string;
-  language: string;
+  language: "EN" | "UK";
   tone: string | null;
   identity: string | null;
   goals: string | null;

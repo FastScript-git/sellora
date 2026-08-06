@@ -9,42 +9,47 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import type {
-  ConversationRole,
-  Prisma,
-} from "@/lib/generated/prisma/client";
-
-export type GeneratedConversationMessage = {
-  id: string;
-  conversationId: string;
-  role: ConversationRole;
-  content: string;
-  metadata: Prisma.JsonValue | null;
-  createdAt: string;
-};
+import type { AIStreamEvent } from "@/features/ai/streaming/stream-events";
 
 type ConversationAIReplyButtonProps = {
   conversationId: string;
   disabled?: boolean;
-  onGenerated: (
-    message: GeneratedConversationMessage,
+  onStreamEvent: (
+    event: AIStreamEvent,
   ) => void;
   onGeneratingChange?: (
     isGenerating: boolean,
   ) => void;
 };
 
-type AIReplyResponse = {
-  success: boolean;
-  error?: string;
-  warning?: string | null;
-  message?: GeneratedConversationMessage;
-};
+async function getResponseError(
+  response: Response,
+  fallback: string,
+) {
+  const rawBody =
+    await response.text();
+
+  if (!rawBody.trim()) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(
+      rawBody,
+    ) as {
+      error?: string;
+    };
+
+    return parsed.error ?? fallback;
+  } catch {
+    return rawBody;
+  }
+}
 
 export function ConversationAIReplyButton({
   conversationId,
   disabled = false,
-  onGenerated,
+  onStreamEvent,
   onGeneratingChange,
 }: ConversationAIReplyButtonProps) {
   const t = useTranslations(
@@ -57,9 +62,6 @@ export function ConversationAIReplyButton({
   const [error, setError] =
     useState<string | null>(null);
 
-  const [warning, setWarning] =
-    useState<string | null>(null);
-
   async function generateReply(): Promise<void> {
     if (isGenerating || disabled) {
       return;
@@ -67,7 +69,6 @@ export function ConversationAIReplyButton({
 
     setIsGenerating(true);
     setError(null);
-    setWarning(null);
     onGeneratingChange?.(true);
 
     try {
@@ -75,27 +76,98 @@ export function ConversationAIReplyButton({
         `/api/conversations/${conversationId}/ai-reply`,
         {
           method: "POST",
+
+          headers: {
+            Accept:
+              "application/x-ndjson",
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            stream: true,
+          }),
         },
       );
 
-      const data =
-        (await response.json()) as AIReplyResponse;
-
       if (
         !response.ok ||
-        !data.success ||
-        !data.message
+        !response.body
       ) {
         throw new Error(
-          data.error ??
+          await getResponseError(
+            response,
             t("fallbackError"),
+          ),
         );
       }
 
-      onGenerated(data.message);
+      const reader =
+        response.body.getReader();
 
-      if (data.warning) {
-        setWarning(data.warning);
+      const decoder =
+        new TextDecoder();
+
+      let buffer = "";
+
+      while (true) {
+        const { value, done } =
+          await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(
+          value,
+          {
+            stream: true,
+          },
+        );
+
+        const lines =
+          buffer.split("\n");
+
+        buffer =
+          lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.trim()) {
+            continue;
+          }
+
+          const event =
+            JSON.parse(
+              line,
+            ) as AIStreamEvent;
+
+          onStreamEvent(event);
+
+          if (
+            event.type === "error"
+          ) {
+            throw new Error(
+              event.error,
+            );
+          }
+        }
+      }
+
+      buffer += decoder.decode();
+
+      if (buffer.trim()) {
+        const event =
+          JSON.parse(
+            buffer,
+          ) as AIStreamEvent;
+
+        onStreamEvent(event);
+
+        if (event.type === "error") {
+          throw new Error(
+            event.error,
+          );
+        }
       }
     } catch (caughtError) {
       setError(
@@ -117,15 +189,6 @@ export function ConversationAIReplyButton({
           className="break-words rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm leading-5 text-destructive"
         >
           {error}
-        </div>
-      ) : null}
-
-      {warning ? (
-        <div
-          role="status"
-          className="break-words rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm leading-5 text-amber-500"
-        >
-          {warning}
         </div>
       ) : null}
 

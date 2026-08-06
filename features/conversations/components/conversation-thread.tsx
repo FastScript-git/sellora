@@ -15,10 +15,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  ConversationAIReplyButton,
-  type GeneratedConversationMessage,
-} from "@/features/conversations/components/conversation-ai-reply-button";
+import { ConversationAIReplyButton } from "@/features/conversations/components/conversation-ai-reply-button";
+import type { AIStreamEvent } from "@/features/ai/streaming/stream-events";
 import { ConversationMessage } from "@/features/conversations/components/conversation-message";
 import type {
   ConversationRole,
@@ -129,6 +127,11 @@ export function ConversationThread({
   const [isGeneratingAI, setIsGeneratingAI] =
     useState(false);
 
+  const [
+    streamingMessageId,
+    setStreamingMessageId,
+  ] = useState<string | null>(null);
+
   const [error, setError] =
     useState<string | null>(null);
 
@@ -179,30 +182,106 @@ export function ConversationThread({
       "hidden";
   }
 
-  function handleGeneratedAIMessage(
-    message: GeneratedConversationMessage,
+  function handleAIStreamEvent(
+    event: AIStreamEvent,
   ) {
-    setMessages((current) => {
-      const alreadyExists =
-        current.some(
-          (item) =>
-            item.id === message.id,
-        );
+    if (
+      event.type ===
+      "assistant_message_started"
+    ) {
+      setStreamingMessageId(
+        event.messageId,
+      );
 
-      if (alreadyExists) {
-        return current;
-      }
-
-      return [
+      setMessages((current) => [
         ...current,
         {
-          ...message,
-          status: "sent",
+          id: event.messageId,
+          role: "ASSISTANT",
+          content: "",
+          metadata: {
+            source:
+              "OPENAI_STREAM",
+          },
+          createdAt:
+            event.createdAt,
+          status: "sending",
         },
-      ];
-    });
+      ]);
 
-    scrollToBottom();
+      scrollToBottom();
+      return;
+    }
+
+    if (event.type === "delta") {
+      setMessages((current) =>
+        current.map((message) =>
+          message.id ===
+          event.messageId
+            ? {
+                ...message,
+                content:
+                  message.content +
+                  event.delta,
+              }
+            : message,
+        ),
+      );
+
+      scrollToBottom();
+      return;
+    }
+
+    if (
+      event.type ===
+      "assistant_message"
+    ) {
+      setMessages((current) =>
+        current.map((message) =>
+          message.id ===
+          streamingMessageId
+            ? {
+                id:
+                  event.message.id,
+                role:
+                  "ASSISTANT",
+                content:
+                  event.message.content,
+                metadata: {
+                  source:
+                    "OPENAI",
+                  citations:
+                    event.citations,
+                },
+                createdAt:
+                  event.message
+                    .createdAt,
+                status:
+                  "sent",
+              }
+            : message,
+        ),
+      );
+
+      scrollToBottom();
+      return;
+    }
+
+    if (event.type === "error") {
+      setMessages((current) =>
+        current.map((message) =>
+          message.id ===
+          streamingMessageId
+            ? {
+                ...message,
+                status: "failed",
+              }
+            : message,
+        ),
+      );
+
+      setError(event.error);
+    }
   }
 
   async function sendMessage(): Promise<void> {
@@ -394,7 +473,8 @@ export function ConversationThread({
           </div>
         ))}
 
-        {isGeneratingAI ? (
+        {isGeneratingAI &&
+        !streamingMessageId ? (
           <div className="flex items-start gap-3">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border bg-muted/40">
               <Bot className="size-4 text-muted-foreground" />
@@ -423,8 +503,8 @@ export function ConversationThread({
               aiReplyDisabled ||
               isSending
             }
-            onGenerated={
-              handleGeneratedAIMessage
+            onStreamEvent={
+              handleAIStreamEvent
             }
             onGeneratingChange={(
               generating,
@@ -434,8 +514,17 @@ export function ConversationThread({
               );
 
               if (generating) {
+                setError(null);
+                setStreamingMessageId(
+                  null,
+                );
                 scrollToBottom();
+                return;
               }
+
+              setStreamingMessageId(
+                null,
+              );
             }}
           />
         </div>
