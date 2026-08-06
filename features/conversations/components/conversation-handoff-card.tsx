@@ -12,9 +12,18 @@ import {
 } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { assignConversationMemberAction } from "@/features/conversations/actions/assign-conversation-member";
 import { updateConversationModeAction } from "@/features/conversations/actions/update-conversation-mode";
 import { cn } from "@/lib/utils";
+
+const UNASSIGNED_VALUE = "__unassigned__";
 
 type WorkspaceMemberOption = {
   id: string;
@@ -172,37 +181,41 @@ export function ConversationHandoffCard({
     });
   }
 
+  const selectValue =
+    assignedMemberId ||
+    UNASSIGNED_VALUE;
+
   return (
-    <section className="rounded-xl border bg-background p-4">
-      <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <section className="rounded-xl border bg-background p-3">
+      <h3 className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
         {copy.title}
       </h3>
 
-      <div className="mt-4 rounded-xl border bg-muted/20 p-3">
-        <div className="flex items-start gap-3">
+      <div className="mt-3 rounded-xl border bg-muted/20 p-3">
+        <div className="flex items-start gap-2.5">
           <span
             className={cn(
-              "flex size-9 shrink-0 items-center justify-center rounded-lg border",
+              "flex size-8 shrink-0 items-center justify-center rounded-lg border",
               mode === "AI"
                 ? "border-primary/30 bg-primary/10 text-primary"
                 : "border-amber-500/30 bg-amber-500/10 text-amber-500",
             )}
           >
             {mode === "AI" ? (
-              <Bot className="size-4" />
+              <Bot className="size-3.5" />
             ) : (
-              <UserRound className="size-4" />
+              <UserRound className="size-3.5" />
             )}
           </span>
 
           <div className="min-w-0">
-            <p className="text-sm font-medium">
+            <p className="text-xs font-medium">
               {mode === "AI"
                 ? copy.aiMode
                 : copy.humanMode}
             </p>
 
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
               {mode === "AI"
                 ? copy.aiDescription
                 : copy.humanDescription}
@@ -214,16 +227,16 @@ export function ConversationHandoffCard({
           type="button"
           variant="outline"
           size="sm"
-          className="mt-3 w-full"
+          className="mt-3 h-8 w-full text-xs"
           onClick={toggleMode}
           disabled={isPending}
         >
           {isPending ? (
-            <Loader2 className="size-4 animate-spin" />
+            <Loader2 className="size-3.5 animate-spin" />
           ) : mode === "AI" ? (
-            <UserRound className="size-4" />
+            <UserRound className="size-3.5" />
           ) : (
-            <Bot className="size-4" />
+            <Bot className="size-3.5" />
           )}
 
           {mode === "AI"
@@ -232,43 +245,67 @@ export function ConversationHandoffCard({
         </Button>
       </div>
 
-      <div className="mt-4 space-y-2">
+      <div className="mt-3 space-y-1.5">
         <label
-          htmlFor="assigned-conversation-member"
-          className="text-xs font-medium text-muted-foreground"
+          id="assigned-conversation-member-label"
+          className="text-[11px] font-medium text-muted-foreground"
         >
           {copy.assignedTo}
         </label>
 
-        <select
-          id="assigned-conversation-member"
-          value={assignedMemberId}
+        <Select
+          value={selectValue}
           disabled={isPending}
-          onChange={(event) =>
+          onValueChange={(nextValue) => {
             handleAssignment(
-              event.target.value,
-            )
-          }
-          className="h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              !nextValue ||
+              nextValue ===
+                UNASSIGNED_VALUE
+                ? ""
+                : nextValue,
+            );
+          }}
         >
-          <option value="">
-            {copy.nobody}
-          </option>
+          <SelectTrigger
+            aria-labelledby="assigned-conversation-member-label"
+            className="h-9 w-full bg-background px-3"
+          >
+            <SelectValue />
+          </SelectTrigger>
 
-          {members.map((member) => (
-            <option
-              key={member.id}
-              value={member.id}
+          <SelectContent
+            align="start"
+            sideOffset={6}
+            className="min-w-[var(--anchor-width)] p-1"
+          >
+            <SelectItem
+              value={UNASSIGNED_VALUE}
+              className="min-h-9 px-2.5"
             >
-              {getMemberName(member)} ·{" "}
-              {member.role}
-            </option>
-          ))}
-        </select>
+              {copy.nobody}
+            </SelectItem>
+
+            {members.map((member) => (
+              <SelectItem
+                key={member.id}
+                value={member.id}
+                className="min-h-9 px-2.5"
+              >
+                <span className="min-w-0 truncate">
+                  {getMemberName(member)}
+                </span>
+
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  · {member.role}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {isPending ? (
-          <p className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="size-3.5 animate-spin" />
+          <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Loader2 className="size-3 animate-spin" />
             {copy.saving}
           </p>
         ) : null}
@@ -277,7 +314,7 @@ export function ConversationHandoffCard({
       {error ? (
         <p
           role="alert"
-          className="mt-3 text-xs leading-5 text-destructive"
+          className="mt-2 text-[11px] leading-4 text-destructive"
         >
           {error}
         </p>
