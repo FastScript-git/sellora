@@ -85,6 +85,21 @@ type LoadConversationResponse = {
   error?: string;
 };
 
+function formatMessageTime(
+  createdAt: string,
+) {
+  const date = new Date(createdAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 export function WebsiteChatWidget({
   widgetKey,
   title,
@@ -518,25 +533,35 @@ export function WebsiteChatWidget({
                       {message.content}
                     </p>
 
-                    {isUser &&
-                    message.deliveryStatus ? (
-                      <p
-                        className={
-                          message.deliveryStatus ===
-                          "failed"
-                            ? "mt-1.5 text-right text-[10px] text-red-100"
-                            : "mt-1.5 text-right text-[10px] text-white/70"
-                        }
+                    <div
+                      className={
+                        isUser
+                          ? "mt-1.5 flex items-center justify-end gap-2 text-[10px] text-white/70"
+                          : "mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground"
+                      }
+                    >
+                      <time
+                        dateTime={message.createdAt}
                       >
-                        {message.deliveryStatus ===
-                        "sending"
-                          ? "Sending..."
-                          : message.deliveryStatus ===
-                              "failed"
-                            ? "Not sent"
-                            : null}
-                      </p>
-                    ) : null}
+                        {formatMessageTime(
+                          message.createdAt,
+                        )}
+                      </time>
+
+                      {isUser &&
+                      message.deliveryStatus ===
+                        "sending" ? (
+                        <span>Sending...</span>
+                      ) : null}
+
+                      {isUser &&
+                      message.deliveryStatus ===
+                        "failed" ? (
+                        <span className="font-medium text-red-100">
+                          Not sent
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
 
                   {isUser ? (
