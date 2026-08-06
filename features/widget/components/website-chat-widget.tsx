@@ -110,6 +110,9 @@ export function WebsiteChatWidget({
   const messagesEndRef =
     useRef<HTMLDivElement | null>(null);
 
+  const textareaRef =
+    useRef<HTMLTextAreaElement | null>(null);
+
   const storageKey = `sellora-widget-conversation:${widgetKey}`;
 
   useEffect(() => {
@@ -193,6 +196,27 @@ export function WebsiteChatWidget({
       behavior: "smooth",
     });
   }, [messages, isSending, isLoadingHistory]);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "auto";
+
+    const nextHeight = Math.min(
+      textarea.scrollHeight,
+      128,
+    );
+
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY =
+      textarea.scrollHeight > 128
+        ? "auto"
+        : "hidden";
+  }, [content]);
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
@@ -580,6 +604,7 @@ export function WebsiteChatWidget({
           className="flex items-end gap-2"
         >
           <textarea
+            ref={textareaRef}
             value={content}
             onChange={(event) =>
               setContent(event.target.value)
