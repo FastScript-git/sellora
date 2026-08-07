@@ -12,21 +12,14 @@ import {
   MessageCircle,
   Send,
   Sparkles,
-  UserRound,
   X,
   Zap,
 } from "lucide-react";
 
-type WidgetMessage = {
-  id: string;
-  role: "USER" | "ASSISTANT";
-  content: string;
-  createdAt: string;
-  deliveryStatus?:
-    | "sending"
-    | "sent"
-    | "failed";
-};
+import {
+  WidgetChatMessage,
+  type WidgetMessage,
+} from "@/features/widget/components/widget-chat-message";
 
 type WebsiteChatWidgetProps = {
   widgetKey: string;
@@ -87,21 +80,6 @@ type LoadConversationResponse = {
 
   error?: string;
 };
-
-function formatMessageTime(
-  createdAt: string,
-) {
-  const date = new Date(createdAt);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
 
 export function WebsiteChatWidget({
   widgetKey,
@@ -601,92 +579,17 @@ export function WebsiteChatWidget({
         ) : null}
 
         <div className="mt-4 space-y-3 sm:mt-5 sm:space-y-4">
-          {messages.map((message) => {
-            const isUser = message.role === "USER";
-
-            return (
-              <div
-                key={message.id}
-                className={
-                  isUser
-                    ? "flex justify-end"
-                    : "flex justify-start"
-                }
-              >
-                <div className="flex max-w-[90%] items-end gap-2 sm:max-w-[82%]">
-                  {!isUser ? (
-                    <span
-                      className="flex size-8 shrink-0 items-center justify-center rounded-full text-white"
-                      style={{
-                        backgroundColor:
-                          primaryColor,
-                      }}
-                    >
-                      <Bot className="size-3.5" />
-                    </span>
-                  ) : null}
-
-                  <div
-                    className={
-                      isUser
-                        ? "rounded-2xl rounded-br-md px-4 py-3 text-white shadow-sm"
-                        : embedded
-                          ? "rounded-2xl rounded-bl-md border border-zinc-200 bg-white px-4 py-3 text-zinc-950 shadow-sm"
-                          : "rounded-2xl rounded-bl-md border bg-background px-4 py-3 shadow-sm"
-                    }
-                    style={
-                      isUser
-                        ? {
-                            backgroundColor:
-                              primaryColor,
-                          }
-                        : undefined
-                    }
-                  >
-                    <p className="whitespace-pre-wrap break-words text-sm leading-6">
-                      {message.content}
-                    </p>
-
-                    <div
-                      className={
-                        isUser
-                          ? "mt-1.5 flex items-center justify-end gap-2 text-[10px] text-white/70"
-                          : "mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground"
-                      }
-                    >
-                      <time
-                        dateTime={message.createdAt}
-                      >
-                        {formatMessageTime(
-                          message.createdAt,
-                        )}
-                      </time>
-
-                      {isUser &&
-                      message.deliveryStatus ===
-                        "sending" ? (
-                        <span>{copy.sending}</span>
-                      ) : null}
-
-                      {isUser &&
-                      message.deliveryStatus ===
-                        "failed" ? (
-                        <span className="font-medium text-red-100">
-                          {copy.notSent}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {isUser ? (
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full border bg-background">
-                      <UserRound className="size-3.5 text-muted-foreground" />
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            );
-          })}
+          {messages.map((message) => (
+            <WidgetChatMessage
+              key={message.id}
+              message={message}
+              primaryColor={
+                primaryColor
+              }
+              embedded={embedded}
+              locale={locale}
+            />
+          ))}
 
           {isSending ? (
             <div className="flex justify-start">
