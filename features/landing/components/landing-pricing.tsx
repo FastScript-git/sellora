@@ -15,6 +15,13 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  billingPlans,
+  getPlanPrice,
+  getYearlyMonthlyEquivalent,
+  getYearlySaving,
+  type BillingPeriod,
+} from "@/features/billing/config/plans";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -22,31 +29,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
-type BillingPeriod =
-  | "monthly"
-  | "yearly";
-
-const plans = [
-  {
-    key: "free" as const,
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    highlighted: false,
-  },
-  {
-    key: "pro" as const,
-    monthlyPrice: 99,
-    yearlyPrice: 990,
-    highlighted: true,
-  },
-  {
-    key: "business" as const,
-    monthlyPrice: 299,
-    yearlyPrice: 2990,
-    highlighted: false,
-  },
-];
 
 export function LandingPricing() {
   const locale = useLocale();
@@ -140,24 +122,20 @@ export function LandingPricing() {
         </div>
 
         <div className="mt-7 grid min-w-0 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {plans.map((plan) => {
+          {billingPlans.map((plan) => {
             const displayedPrice =
-              isYearly
-                ? plan.yearlyPrice
-                : plan.monthlyPrice;
+              getPlanPrice({
+                plan,
+                billingPeriod,
+              });
 
             const yearlyMonthlyEquivalent =
-              plan.yearlyPrice > 0
-                ? Math.round(
-                    plan.yearlyPrice /
-                      12,
-                  )
-                : 0;
+              getYearlyMonthlyEquivalent(
+                plan,
+              );
 
             const yearlySaving =
-              plan.monthlyPrice *
-                12 -
-              plan.yearlyPrice;
+              getYearlySaving(plan);
 
             const features =
               t.raw(

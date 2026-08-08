@@ -9,6 +9,14 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  billingPlans,
+  getPlanPrice,
+  getYearlyMonthlyEquivalent,
+  getYearlySaving,
+  type BillingPeriod,
+  type BillingPlanKey,
+} from "@/features/billing/config/plans";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -17,14 +25,8 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-type BillingPeriod =
-  | "monthly"
-  | "yearly";
-
 type PlanKey =
-  | "free"
-  | "pro"
-  | "business";
+  BillingPlanKey;
 
 type PricingPlansProps = {
   locale: string;
@@ -63,30 +65,6 @@ type PricingPlansProps = {
     >;
   };
 };
-
-const plans = [
-  {
-    key: "free" as const,
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    highlighted: false,
-    current: true,
-  },
-  {
-    key: "pro" as const,
-    monthlyPrice: 99,
-    yearlyPrice: 990,
-    highlighted: true,
-    current: false,
-  },
-  {
-    key: "business" as const,
-    monthlyPrice: 299,
-    yearlyPrice: 2990,
-    highlighted: false,
-    current: false,
-  },
-];
 
 export function PricingPlans({
   locale,
@@ -166,28 +144,27 @@ export function PricingPlans({
       </div>
 
       <div className="grid gap-5 lg:grid-cols-3">
-        {plans.map((plan) => {
+        {billingPlans.map((plan) => {
           const isYearly =
             billingPeriod ===
             "yearly";
 
+          const isCurrent =
+            plan.key === "free";
+
           const displayedPrice =
-            isYearly
-              ? plan.yearlyPrice
-              : plan.monthlyPrice;
+            getPlanPrice({
+              plan,
+              billingPeriod,
+            });
 
           const yearlyMonthlyEquivalent =
-            plan.yearlyPrice > 0
-              ? Math.round(
-                  plan.yearlyPrice /
-                    12,
-                )
-              : 0;
+            getYearlyMonthlyEquivalent(
+              plan,
+            );
 
           const yearlySaving =
-            plan.monthlyPrice *
-              12 -
-            plan.yearlyPrice;
+            getYearlySaving(plan);
 
           return (
             <Card
@@ -297,12 +274,12 @@ export function PricingPlans({
                   disabled
                   className="mt-6 w-full"
                 >
-                  {plan.current
+                  {isCurrent
                     ? translations.current
                     : translations.upgrade}
                 </Button>
 
-                {!plan.current ? (
+                {!isCurrent ? (
                   <p className="mt-2 text-center text-xs text-muted-foreground">
                     {
                       translations.comingSoon
