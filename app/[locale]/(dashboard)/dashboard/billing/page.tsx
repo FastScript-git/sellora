@@ -10,6 +10,8 @@ import {
   Workflow,
 } from "lucide-react";
 
+import { PageHeader } from "@/components/dashboard/shared/page-header";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -383,21 +385,12 @@ export default async function BillingPage({
 
   return (
     <div className="min-w-0 space-y-8">
-      <header>
-        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          <CreditCard className="size-3.5" />
-
-          {copy.eyebrow}
-        </div>
-
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-          {copy.title}
-        </h1>
-
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-          {copy.description}
-        </p>
-      </header>
+      <PageHeader
+        icon={CreditCard}
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        description={copy.description}
+      />
 
       <Card className="overflow-hidden">
         <CardContent className="p-0">
