@@ -72,8 +72,6 @@ export default async function SettingsPage({
           description:
             employee.description ?? "",
           status: employee.status,
-          language: employee.language,
-          tone: employee.tone ?? "",
         }}
       />
     </div>

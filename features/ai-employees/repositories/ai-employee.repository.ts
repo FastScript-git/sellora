@@ -1,6 +1,9 @@
+import type { AIEmployeeLanguage } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type AIEmployeeInstructionsData = {
+  language: AIEmployeeLanguage;
+  tone: string | null;
   identity: string | null;
   goals: string | null;
   rules: string | null;
@@ -27,6 +30,7 @@ export async function updateAIEmployeeInstructionsRecord({
         not: "ARCHIVED",
       },
     },
+
     data,
   });
 

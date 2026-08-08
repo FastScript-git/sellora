@@ -5,10 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 
 import { updateAIEmployeeSettings } from "@/features/ai-employees/repositories/ai-employee-settings.repository";
-import {
-  AIEmployeeLanguage,
-  AIEmployeeStatus,
-} from "@/lib/generated/prisma/client";
+import { AIEmployeeStatus } from "@/lib/generated/prisma/client";
 import { getCurrentWorkspace } from "@/lib/current-workspace";
 
 const updateAIEmployeeSettingsSchema =
@@ -38,15 +35,6 @@ const updateAIEmployeeSettingsSchema =
     status: z.nativeEnum(
       AIEmployeeStatus,
     ),
-
-    language: z.nativeEnum(
-      AIEmployeeLanguage,
-    ),
-
-    tone: z
-      .string()
-      .trim()
-      .max(80),
 
     locale: z.enum(["en", "uk"]),
   });
@@ -113,8 +101,6 @@ export async function updateAIEmployeeSettingsAction(
     role,
     description,
     status,
-    language,
-    tone,
     locale,
   } = parsed.data;
 
@@ -131,8 +117,6 @@ export async function updateAIEmployeeSettingsAction(
         description:
           description || null,
         status,
-        language,
-        tone: tone || null,
       });
 
     if (result.count === 0) {

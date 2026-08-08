@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { AIEmployeeLanguage } from "@/lib/generated/prisma/client";
+
 const optionalInstructionField = z
   .string()
   .trim()
@@ -9,6 +11,15 @@ const optionalInstructionField = z
 export const updateInstructionsSchema = z.object({
   employeeId: z.string().trim().min(1, "Employee ID is required"),
   locale: z.enum(["en", "uk"]),
+
+  language: z.nativeEnum(AIEmployeeLanguage),
+
+  tone: z
+    .string()
+    .trim()
+    .max(80, "Tone must contain at most 80 characters")
+    .transform((value) => (value.length > 0 ? value : null)),
+
   identity: optionalInstructionField,
   goals: optionalInstructionField,
   rules: optionalInstructionField,

@@ -11,7 +11,13 @@ export type UpdateInstructionsActionState = {
   message: string | null;
   fieldErrors: Partial<
     Record<
-      "identity" | "goals" | "rules" | "responseStyle" | "restrictions",
+      | "language"
+      | "tone"
+      | "identity"
+      | "goals"
+      | "rules"
+      | "responseStyle"
+      | "restrictions",
       string
     >
   >;
@@ -24,6 +30,8 @@ export async function updateInstructionsAction(
   const parsed = updateInstructionsSchema.safeParse({
     employeeId: formData.get("employeeId"),
     locale: formData.get("locale"),
+    language: formData.get("language"),
+    tone: formData.get("tone"),
     identity: formData.get("identity"),
     goals: formData.get("goals"),
     rules: formData.get("rules"),
@@ -38,6 +46,8 @@ export async function updateInstructionsAction(
       const field = issue.path[0];
 
       if (
+        field === "language" ||
+        field === "tone" ||
         field === "identity" ||
         field === "goals" ||
         field === "rules" ||
@@ -62,6 +72,8 @@ export async function updateInstructionsAction(
       employeeId: parsed.data.employeeId,
       workspaceId: workspace.id,
       data: {
+        language: parsed.data.language,
+        tone: parsed.data.tone,
         identity: parsed.data.identity,
         goals: parsed.data.goals,
         rules: parsed.data.rules,
@@ -78,17 +90,24 @@ export async function updateInstructionsAction(
       `/${parsed.data.locale}/dashboard/employees/${parsed.data.employeeId}/instructions`,
     );
 
+    revalidatePath(
+      `/${parsed.data.locale}/dashboard/employees/${parsed.data.employeeId}/settings`,
+    );
+
     return {
       success: true,
-      message: "Instructions saved successfully.",
+      message: "AI Behavior saved successfully.",
       fieldErrors: {},
     };
   } catch (error) {
-    console.error("Failed to update AI Employee instructions:", error);
+    console.error(
+      "Failed to update AI Employee behavior:",
+      error,
+    );
 
     return {
       success: false,
-      message: "Unable to save instructions. Please try again.",
+      message: "Unable to save AI Behavior. Please try again.",
       fieldErrors: {},
     };
   }

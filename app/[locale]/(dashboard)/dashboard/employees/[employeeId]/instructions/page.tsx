@@ -65,6 +65,8 @@ export default async function InstructionsPage({
         employeeId={employee.id}
         locale={locale}
         initialValues={{
+          language: employee.language,
+          tone: employee.tone ?? "",
           identity: employee.identity ?? "",
           goals: employee.goals ?? "",
           rules: employee.rules ?? "",

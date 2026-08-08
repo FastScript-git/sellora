@@ -11,6 +11,7 @@ import {
 import {
   Ban,
   CheckCircle2,
+  Languages,
   Loader2,
   MessageSquareText,
   RotateCcw,
@@ -21,15 +22,19 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   updateInstructionsAction,
   type UpdateInstructionsActionState,
 } from "@/features/ai-employees/actions/update-instructions";
+import type { AIEmployeeLanguage } from "@/lib/generated/prisma/client";
 import { cn } from "@/lib/utils";
 
 type InstructionsFormValues = {
+  language: AIEmployeeLanguage;
+  tone: string;
   identity: string;
   goals: string;
   rules: string;
@@ -64,7 +69,12 @@ type InstructionsFormProps = {
 };
 
 type InstructionFieldProps = {
-  id: keyof InstructionsFormValues;
+  id:
+    | "identity"
+    | "goals"
+    | "rules"
+    | "responseStyle"
+    | "restrictions";
   icon: ReactNode;
   translation: InstructionTranslation;
   value: string;
@@ -88,6 +98,8 @@ function areValuesEqual(
   second: InstructionsFormValues,
 ) {
   return (
+    first.language === second.language &&
+    first.tone === second.tone &&
     first.identity === second.identity &&
     first.goals === second.goals &&
     first.rules === second.rules &&
@@ -106,20 +118,38 @@ export function InstructionsForm({
 
   const copy = isUkrainian
     ? {
+        language: "Мова",
+        languageDescription:
+          "Основна мова, якою AI Employee спілкується з клієнтами.",
+        tone: "Тон спілкування",
+        toneDescription:
+          "Визначте загальний стиль і характер відповідей.",
+        tonePlaceholder:
+          "Наприклад: професійний, дружній, лаконічний",
+        english: "English",
+        ukrainian: "Українська",
         unsaved: "Є незбережені зміни",
         unsavedDescription:
           "Збережіть налаштування перед переходом на іншу сторінку.",
         cancel: "Скасувати",
-        configured: "Заповнено",
-        empty: "Не заповнено",
+        configured: "заповнено",
       }
     : {
+        language: "Language",
+        languageDescription:
+          "The primary language used by this AI Employee when communicating with customers.",
+        tone: "Communication tone",
+        toneDescription:
+          "Define the overall style and character of responses.",
+        tonePlaceholder:
+          "For example: professional, friendly, concise",
+        english: "English",
+        ukrainian: "Ukrainian",
         unsaved: "You have unsaved changes",
         unsavedDescription:
           "Save the configuration before leaving this page.",
         cancel: "Cancel",
-        configured: "Configured",
-        empty: "Not configured",
+        configured: "configured",
       };
 
   const [values, setValues] =
@@ -155,15 +185,26 @@ export function InstructionsForm({
     [values, savedValues],
   );
 
-  const completedFields = Object.values(values).filter(
-    (value) => value.trim().length > 0,
-  ).length;
+  const instructionValues = [
+    values.identity,
+    values.goals,
+    values.rules,
+    values.responseStyle,
+    values.restrictions,
+  ];
+
+  const completedFields =
+    instructionValues.filter(
+      (value) => value.trim().length > 0,
+    ).length;
 
   const fieldErrors = state.fieldErrors ?? {};
 
-  function updateField(
-    field: keyof InstructionsFormValues,
-    value: string,
+  function updateField<
+    Key extends keyof InstructionsFormValues,
+  >(
+    field: Key,
+    value: InstructionsFormValues[Key],
   ) {
     setValues((currentValues) => ({
       ...currentValues,
@@ -197,13 +238,122 @@ export function InstructionsForm({
         value={locale}
       />
 
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="overflow-hidden rounded-xl border bg-card">
+          <header className="border-b px-4 py-3">
+            <div className="flex items-start gap-3">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-muted/40 text-muted-foreground">
+                <Languages className="size-4" />
+              </span>
+
+              <div>
+                <h2 className="text-sm font-semibold">
+                  {copy.language}
+                </h2>
+
+                <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                  {copy.languageDescription}
+                </p>
+              </div>
+            </div>
+          </header>
+
+          <div className="p-4">
+            <Label
+              htmlFor="language"
+              className="text-xs"
+            >
+              {copy.language}
+            </Label>
+
+            <select
+              id="language"
+              name="language"
+              value={values.language}
+              disabled={isPending}
+              onChange={(event) =>
+                updateField(
+                  "language",
+                  event.target
+                    .value as AIEmployeeLanguage,
+                )
+              }
+              className="mt-2 h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="EN">
+                {copy.english}
+              </option>
+
+              <option value="UK">
+                {copy.ukrainian}
+              </option>
+            </select>
+
+            {fieldErrors.language ? (
+              <p className="mt-2 text-xs text-destructive">
+                {fieldErrors.language}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-xl border bg-card">
+          <header className="border-b px-4 py-3">
+            <div className="flex items-start gap-3">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-muted/40 text-muted-foreground">
+                <MessageSquareText className="size-4" />
+              </span>
+
+              <div>
+                <h2 className="text-sm font-semibold">
+                  {copy.tone}
+                </h2>
+
+                <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                  {copy.toneDescription}
+                </p>
+              </div>
+            </div>
+          </header>
+
+          <div className="p-4">
+            <Label
+              htmlFor="tone"
+              className="text-xs"
+            >
+              {copy.tone}
+            </Label>
+
+            <Input
+              id="tone"
+              name="tone"
+              value={values.tone}
+              maxLength={80}
+              disabled={isPending}
+              placeholder={copy.tonePlaceholder}
+              className="mt-2"
+              onChange={(event) =>
+                updateField(
+                  "tone",
+                  event.target.value,
+                )
+              }
+            />
+
+            {fieldErrors.tone ? (
+              <p className="mt-2 text-xs text-destructive">
+                {fieldErrors.tone}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
       <section className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-medium">
             {completedFields}/5{" "}
-            {completedFields > 0
-              ? copy.configured
-              : copy.empty}
+            {copy.configured}
           </p>
 
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -213,7 +363,7 @@ export function InstructionsForm({
           </p>
         </div>
 
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           {isDirty ? (
             <Button
               type="button"
@@ -221,7 +371,6 @@ export function InstructionsForm({
               size="sm"
               onClick={cancelChanges}
               disabled={isPending}
-              className="w-full sm:w-auto"
             >
               <RotateCcw className="size-4" />
               {copy.cancel}
@@ -232,7 +381,6 @@ export function InstructionsForm({
             type="submit"
             size="sm"
             disabled={!isDirty || isPending}
-            className="w-full sm:w-auto"
           >
             {isPending ? (
               <>
@@ -305,9 +453,7 @@ export function InstructionsForm({
 
         <InstructionField
           id="responseStyle"
-          icon={
-            <MessageSquareText className="size-4" />
-          }
+          icon={<MessageSquareText className="size-4" />}
           translation={translations.responseStyle}
           value={values.responseStyle}
           error={fieldErrors.responseStyle}
@@ -332,38 +478,6 @@ export function InstructionsForm({
           }
         />
       </div>
-
-      {isDirty ? (
-        <div className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 xl:hidden">
-          <div className="flex items-center justify-between gap-3 rounded-xl border bg-background/95 px-4 py-3 shadow-xl backdrop-blur">
-            <div className="min-w-0">
-              <p className="break-words text-sm font-medium">
-                {copy.unsaved}
-              </p>
-
-              <p className="line-clamp-2 text-xs leading-5 text-muted-foreground">
-                {copy.unsavedDescription}
-              </p>
-            </div>
-
-            <Button
-              type="submit"
-              size="sm"
-              disabled={isPending}
-            >
-              {isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Save className="size-4" />
-              )}
-
-              {isPending
-                ? translations.saving
-                : translations.save}
-            </Button>
-          </div>
-        </div>
-      ) : null}
     </form>
   );
 }

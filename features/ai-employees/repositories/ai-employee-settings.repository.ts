@@ -1,7 +1,4 @@
-import type {
-  AIEmployeeLanguage,
-  AIEmployeeStatus,
-} from "@/lib/generated/prisma/client";
+import type { AIEmployeeStatus } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 type UpdateAIEmployeeSettingsParams = {
@@ -11,8 +8,6 @@ type UpdateAIEmployeeSettingsParams = {
   role: string;
   description: string | null;
   status: AIEmployeeStatus;
-  language: AIEmployeeLanguage;
-  tone: string | null;
 };
 
 export async function updateAIEmployeeSettings({
@@ -22,8 +17,6 @@ export async function updateAIEmployeeSettings({
   role,
   description,
   status,
-  language,
-  tone,
 }: UpdateAIEmployeeSettingsParams) {
   return prisma.aIEmployee.updateMany({
     where: {
@@ -39,8 +32,6 @@ export async function updateAIEmployeeSettings({
       role,
       description,
       status,
-      language,
-      tone,
     },
   });
 }
