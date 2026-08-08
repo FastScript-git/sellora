@@ -1,14 +1,14 @@
 "use client";
 
 import {
-  useEffect,
-  useState,
-} from "react";
-import {
   Menu,
   X,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,8 @@ export function MobileSidebar() {
     const target =
       event.target as HTMLElement;
 
-    const link = target.closest("a");
+    const link =
+      target.closest("a");
 
     if (link) {
       setIsOpen(false);
@@ -107,6 +108,7 @@ export function MobileSidebar() {
           >
             <Sidebar
               activePath={pathname}
+              collapsible={false}
               className="flex h-full w-full"
             />
 

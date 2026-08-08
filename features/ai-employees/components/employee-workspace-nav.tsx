@@ -1,31 +1,23 @@
 "use client";
 
-import Link from "next/link";
-import {
-  usePathname,
-  useRouter,
-} from "next/navigation";
 import {
   Activity,
   BarChart3,
   BookOpen,
   ChevronDown,
   MessageSquare,
-  MoreHorizontal,
   Radio,
   Settings,
   SlidersHorizontal,
   TestTube2,
   Wrench,
 } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  usePathname,
+  useRouter,
+} from "next/navigation";
+
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -33,55 +25,55 @@ const tabs = [
     key: "overview",
     segment: "",
     icon: Activity,
-    primary: true,
-  },
-  {
-    key: "instructions",
-    segment: "instructions",
-    icon: SlidersHorizontal,
-    primary: true,
-  },
-  {
-    key: "knowledge",
-    segment: "knowledge",
-    icon: BookOpen,
-    primary: true,
-  },
-  {
-    key: "channels",
-    segment: "channels",
-    icon: Radio,
-    primary: true,
-  },
-  {
-    key: "tools",
-    segment: "tools",
-    icon: Wrench,
-    primary: true,
+    section: "main",
   },
   {
     key: "testChat",
     segment: "test-chat",
     icon: TestTube2,
-    primary: true,
+    section: "main",
+  },
+  {
+    key: "instructions",
+    segment: "instructions",
+    icon: SlidersHorizontal,
+    section: "main",
+  },
+  {
+    key: "knowledge",
+    segment: "knowledge",
+    icon: BookOpen,
+    section: "main",
+  },
+  {
+    key: "tools",
+    segment: "tools",
+    icon: Wrench,
+    section: "main",
+  },
+  {
+    key: "channels",
+    segment: "channels",
+    icon: Radio,
+    section: "main",
   },
   {
     key: "conversations",
     segment: "conversations",
     icon: MessageSquare,
-    primary: false,
+    section: "main",
   },
   {
     key: "analytics",
     segment: "analytics",
     icon: BarChart3,
-    primary: false,
+    section: "main",
   },
   {
     key: "settings",
     segment: "settings",
     icon: Settings,
-    primary: false,
+    section: "settings",
   },
 ] as const;
 
@@ -126,18 +118,19 @@ function isTabActive({
 export function EmployeeWorkspaceNav({
   baseHref,
   navigationLabel,
-  moreLabel,
   labels,
 }: EmployeeWorkspaceNavProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const primaryTabs = tabs.filter(
-    (tab) => tab.primary,
+  const mainTabs = tabs.filter(
+    (tab) =>
+      tab.section === "main",
   );
 
-  const secondaryTabs = tabs.filter(
-    (tab) => !tab.primary,
+  const settingsTab = tabs.find(
+    (tab) =>
+      tab.section === "settings",
   );
 
   const activeTab =
@@ -154,22 +147,9 @@ export function EmployeeWorkspaceNav({
       });
     }) ?? tabs[0];
 
-  const secondaryTabActive =
-    secondaryTabs.some((tab) => {
-      const href = getTabHref(
-        baseHref,
-        tab,
-      );
-
-      return isTabActive({
-        pathname,
-        href,
-        segment: tab.segment,
-      });
-    });
-
   return (
     <div className="w-full min-w-0">
+      {/* Mobile */}
       <div className="md:hidden">
         <label
           htmlFor="employee-workspace-navigation"
@@ -183,11 +163,12 @@ export function EmployeeWorkspaceNav({
             id="employee-workspace-navigation"
             value={activeTab.key}
             onChange={(event) => {
-              const nextTab = tabs.find(
-                (tab) =>
-                  tab.key ===
-                  event.target.value,
-              );
+              const nextTab =
+                tabs.find(
+                  (tab) =>
+                    tab.key ===
+                    event.target.value,
+                );
 
               if (!nextTab) {
                 return;
@@ -219,42 +200,112 @@ export function EmployeeWorkspaceNav({
         </div>
       </div>
 
+      {/* Desktop */}
       <nav
         aria-label={navigationLabel}
-        className="hidden min-w-0 items-center overflow-hidden rounded-xl border bg-card/70 p-1 shadow-sm md:flex"
+        className="hidden min-w-0 items-center rounded-xl border bg-card/70 p-1 shadow-sm md:flex"
       >
-        <div
-          className="min-w-0 flex-1 overflow-x-auto overscroll-x-contain"
-          style={{
-            scrollbarWidth: "thin",
-          }}
-        >
-          <div className="flex w-max min-w-full items-center gap-1">
-            {primaryTabs.map((tab) => {
-              const Icon = tab.icon;
+        <div className="min-w-0 flex-1 overflow-x-auto overscroll-x-contain">
+          <div className="flex w-max min-w-full items-center gap-0.5">
+            {mainTabs.map(
+              (tab) => {
+                const Icon =
+                  tab.icon;
 
-              const href = getTabHref(
-                baseHref,
-                tab,
-              );
+                const href =
+                  getTabHref(
+                    baseHref,
+                    tab,
+                  );
 
-              const active = isTabActive({
-                pathname,
-                href,
-                segment: tab.segment,
-              });
+                const active =
+                  isTabActive({
+                    pathname,
+                    href,
+                    segment:
+                      tab.segment,
+                  });
+
+                return (
+                  <Link
+                    key={tab.key}
+                    href={href}
+                    aria-current={
+                      active
+                        ? "page"
+                        : undefined
+                    }
+                    className={cn(
+                      "group relative inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-2.5 text-[13px] font-medium transition-colors lg:px-3",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      active
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "size-3.5 shrink-0",
+                        active
+                          ? "text-primary"
+                          : "text-muted-foreground group-hover:text-foreground",
+                      )}
+                    />
+
+                    <span className="whitespace-nowrap">
+                      {
+                        labels[
+                          tab.key
+                        ]
+                      }
+                    </span>
+
+                    {active ? (
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-x-3 -bottom-1 h-px rounded-full bg-primary"
+                      />
+                    ) : null}
+                  </Link>
+                );
+              },
+            )}
+          </div>
+        </div>
+
+        {settingsTab ? (
+          <div className="ml-1 shrink-0 border-l pl-1">
+            {(() => {
+              const Icon =
+                settingsTab.icon;
+
+              const href =
+                getTabHref(
+                  baseHref,
+                  settingsTab,
+                );
+
+              const active =
+                isTabActive({
+                  pathname,
+                  href,
+                  segment:
+                    settingsTab.segment,
+                });
 
               return (
                 <Link
-                  key={tab.key}
                   href={href}
                   aria-current={
                     active
                       ? "page"
                       : undefined
                   }
+                  title={
+                    labels.settings
+                  }
                   className={cn(
-                    "group relative inline-flex h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors",
+                    "group relative flex h-9 items-center gap-2 rounded-lg px-2.5 text-[13px] font-medium transition-colors lg:px-3",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     active
                       ? "bg-background text-foreground shadow-sm"
@@ -263,106 +314,30 @@ export function EmployeeWorkspaceNav({
                 >
                   <Icon
                     className={cn(
-                      "size-4 shrink-0",
+                      "size-3.5 shrink-0",
                       active
                         ? "text-primary"
                         : "text-muted-foreground group-hover:text-foreground",
                     )}
                   />
 
-                  <span className="whitespace-nowrap">
-                    {labels[tab.key]}
+                  <span className="hidden whitespace-nowrap xl:inline">
+                    {
+                      labels.settings
+                    }
                   </span>
 
                   {active ? (
                     <span
                       aria-hidden="true"
-                      className="absolute inset-x-3 -bottom-1 h-px rounded-full bg-primary"
+                      className="absolute inset-x-2 -bottom-1 h-px rounded-full bg-primary"
                     />
                   ) : null}
                 </Link>
               );
-            })}
+            })()}
           </div>
-        </div>
-
-        <div className="ml-1 shrink-0 border-l bg-card/70 pl-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  type="button"
-                  variant={
-                    secondaryTabActive
-                      ? "secondary"
-                      : "ghost"
-                  }
-                  size="sm"
-                  className="h-10 gap-1.5 px-2.5 lg:px-3"
-                />
-              }
-            >
-              <MoreHorizontal className="size-4" />
-
-              <span className="hidden lg:inline">
-                {moreLabel}
-              </span>
-
-              <ChevronDown className="size-3.5 text-muted-foreground" />
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent
-              align="end"
-              className="min-w-56"
-            >
-              {secondaryTabs.map(
-                (tab) => {
-                  const Icon = tab.icon;
-
-                  const href =
-                    getTabHref(
-                      baseHref,
-                      tab,
-                    );
-
-                  const active =
-                    isTabActive({
-                      pathname,
-                      href,
-                      segment:
-                        tab.segment,
-                    });
-
-                  return (
-                    <DropdownMenuItem
-                      key={tab.key}
-                      render={
-                        <Link
-                          href={href}
-                          className={cn(
-                            "flex w-full items-center gap-2",
-                            active &&
-                              "font-medium text-primary",
-                          )}
-                        />
-                      }
-                    >
-                      <Icon className="size-4 shrink-0" />
-
-                      <span className="min-w-0 flex-1">
-                        {labels[tab.key]}
-                      </span>
-
-                      {active ? (
-                        <span className="ml-auto size-1.5 shrink-0 rounded-full bg-primary" />
-                      ) : null}
-                    </DropdownMenuItem>
-                  );
-                },
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        ) : null}
       </nav>
     </div>
   );

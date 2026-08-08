@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import {
   ArrowLeft,
   Bot,
 } from "lucide-react";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 type AIEmployeeLayoutProps = {
   children: ReactNode;
+
   params: Promise<{
     locale: string;
     employeeId: string;
@@ -24,8 +25,10 @@ export default async function AIEmployeeLayout({
   children,
   params,
 }: AIEmployeeLayoutProps) {
-  const { locale, employeeId } =
-    await params;
+  const {
+    locale,
+    employeeId,
+  } = await params;
 
   const t = await getTranslations(
     "aiEmployeeDetails",
@@ -34,10 +37,12 @@ export default async function AIEmployeeLayout({
   const workspace =
     await getCurrentWorkspace();
 
-  const employee = await getAIEmployee({
-    employeeId,
-    workspaceId: workspace.id,
-  });
+  const employee =
+    await getAIEmployee({
+      employeeId,
+      workspaceId:
+        workspace.id,
+    });
 
   if (!employee) {
     notFound();
@@ -45,6 +50,9 @@ export default async function AIEmployeeLayout({
 
   const employeeBaseHref =
     `/${locale}/dashboard/employees/${employee.id}`;
+
+  const isUkrainian =
+    locale === "uk";
 
   return (
     <div className="min-w-0 space-y-3">
@@ -72,11 +80,17 @@ export default async function AIEmployeeLayout({
               <span
                 className={cn(
                   "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium",
-                  employee.status === "ACTIVE" &&
+
+                  employee.status ===
+                    "ACTIVE" &&
                     "border-emerald-500/30 bg-emerald-500/10 text-emerald-500",
-                  employee.status === "DRAFT" &&
+
+                  employee.status ===
+                    "DRAFT" &&
                     "border-amber-500/30 bg-amber-500/10 text-amber-500",
-                  employee.status === "PAUSED" &&
+
+                  employee.status ===
+                    "PAUSED" &&
                     "border-orange-500/30 bg-orange-500/10 text-orange-500",
                 )}
               >
@@ -103,32 +117,49 @@ export default async function AIEmployeeLayout({
       </header>
 
       <EmployeeWorkspaceNav
-        baseHref={employeeBaseHref}
+        baseHref={
+          employeeBaseHref
+        }
         navigationLabel={t(
           "navigationLabel",
         )}
-        moreLabel={t("tabs.more")}
+        moreLabel={t(
+          "tabs.more",
+        )}
         labels={{
-          overview: t("tabs.overview"),
-          instructions: t(
-            "tabs.instructions",
+          overview: t(
+            "tabs.overview",
           ),
-          knowledge: t(
-            "tabs.knowledge",
-          ),
-          channels: t(
-            "tabs.channels",
-          ),
-          tools: t("tabs.tools"),
+
           testChat: t(
             "tabs.testChat",
           ),
+
+          instructions:
+            isUkrainian
+              ? "Поведінка AI"
+              : "AI Behavior",
+
+          knowledge: t(
+            "tabs.knowledge",
+          ),
+
+          tools: t(
+            "tabs.tools",
+          ),
+
+          channels: t(
+            "tabs.channels",
+          ),
+
           conversations: t(
             "tabs.conversations",
           ),
+
           analytics: t(
             "tabs.analytics",
           ),
+
           settings: t(
             "tabs.settings",
           ),
