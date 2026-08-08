@@ -6,7 +6,6 @@ type UpdateAIEmployeeSettingsParams = {
   workspaceId: string;
   name: string;
   role: string;
-  description: string | null;
   status: AIEmployeeStatus;
 };
 
@@ -15,7 +14,6 @@ export async function updateAIEmployeeSettings({
   workspaceId,
   name,
   role,
-  description,
   status,
 }: UpdateAIEmployeeSettingsParams) {
   return prisma.aIEmployee.updateMany({
@@ -30,7 +28,6 @@ export async function updateAIEmployeeSettings({
     data: {
       name,
       role,
-      description,
       status,
     },
   });

@@ -8,15 +8,10 @@ import {
 import { notFound } from "next/navigation";
 
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   EmployeeConfigurationCard,
   type EmployeeConfigurationItem,
 } from "@/features/ai-employees/components/employee-configuration-card";
+import { EmployeeDescriptionCard } from "@/features/ai-employees/components/employee-description-card";
 import { EmployeeReadinessCard } from "@/features/ai-employees/components/employee-readiness-card";
 import { getAIEmployee } from "@/features/ai-employees/get-ai-employee";
 import { EmployeeAnalyticsCards } from "@/features/analytics/components/employee-analytics-cards";
@@ -93,12 +88,6 @@ export default async function AIEmployeeOverviewPage({
         configurationDescription:
           "Основні параметри цього AI Employee.",
 
-        description:
-          "Опис",
-
-        noDescription:
-          "Опис цього AI Employee ще не додано.",
-
         language:
           "Мова",
 
@@ -161,12 +150,6 @@ export default async function AIEmployeeOverviewPage({
 
         configurationDescription:
           "Core settings for this AI Employee.",
-
-        description:
-          "Description",
-
-        noDescription:
-          "No description has been added for this AI Employee yet.",
 
         language:
           "Language",
@@ -395,22 +378,13 @@ export default async function AIEmployeeOverviewPage({
       </section>
 
       <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(420px,1.2fr)]">
-        <Card className="min-w-0">
-          <CardHeader>
-            <CardTitle className="text-base">
-              {copy.description}
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            <div className="min-h-36 rounded-xl border bg-muted/10 p-4">
-              <p className="whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">
-                {employee.description ||
-                  copy.noDescription}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmployeeDescriptionCard
+          employeeId={employee.id}
+          locale={locale}
+          initialDescription={
+            employee.description ?? ""
+          }
+        />
 
         <RecentConversationsTable
           conversations={

@@ -18,7 +18,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { archiveAIEmployeeAction } from "@/features/ai-employees/actions/archive-ai-employee";
 import { updateAIEmployeeSettingsAction } from "@/features/ai-employees/actions/update-ai-employee-settings";
 import type { AIEmployeeStatus } from "@/lib/generated/prisma/client";
@@ -26,7 +25,6 @@ import type { AIEmployeeStatus } from "@/lib/generated/prisma/client";
 type SettingsValues = {
   name: string;
   role: string;
-  description: string;
   status: AIEmployeeStatus;
 };
 
@@ -103,8 +101,6 @@ export function AIEmployeeSettingsForm({
           locale,
           name: values.name,
           role: values.role,
-          description:
-            values.description,
           status: values.status,
         });
 
@@ -244,37 +240,6 @@ export function AIEmployeeSettingsForm({
                 )
               }
             />
-          </div>
-
-          <div className="space-y-2 lg:col-span-2">
-            <Label htmlFor="employee-description">
-              {t(
-                "general.descriptionLabel",
-              )}
-            </Label>
-
-            <Textarea
-              id="employee-description"
-              value={values.description}
-              rows={5}
-              maxLength={1000}
-              disabled={isPending}
-              placeholder={t(
-                "general.descriptionPlaceholder",
-              )}
-              className="min-h-28 resize-y"
-              onChange={(event) =>
-                updateValue(
-                  "description",
-                  event.target.value,
-                )
-              }
-            />
-
-            <p className="text-right text-xs tabular-nums text-muted-foreground">
-              {values.description.length}
-              /1000
-            </p>
           </div>
 
           <div className="space-y-2 lg:max-w-sm">

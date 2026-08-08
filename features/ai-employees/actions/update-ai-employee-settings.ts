@@ -27,11 +27,6 @@ const updateAIEmployeeSettingsSchema =
       .min(2)
       .max(120),
 
-    description: z
-      .string()
-      .trim()
-      .max(1000),
-
     status: z.nativeEnum(
       AIEmployeeStatus,
     ),
@@ -99,7 +94,6 @@ export async function updateAIEmployeeSettingsAction(
     employeeId,
     name,
     role,
-    description,
     status,
     locale,
   } = parsed.data;
@@ -114,8 +108,6 @@ export async function updateAIEmployeeSettingsAction(
         workspaceId: workspace.id,
         name,
         role,
-        description:
-          description || null,
         status,
       });
 

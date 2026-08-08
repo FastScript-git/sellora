@@ -69,8 +69,6 @@ export default async function SettingsPage({
         initialValues={{
           name: employee.name,
           role: employee.role,
-          description:
-            employee.description ?? "",
           status: employee.status,
         }}
       />
