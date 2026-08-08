@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { processWidgetMessage } from "@/features/ai/services/process-widget-message";
+import { streamConversationResponse } from "@/features/ai/services/stream-conversation-response";
+import {
+  createAIStreamHeaders,
+  encodeAIStreamEvent,
+} from "@/features/ai/streaming/stream-events";
+import { getWidgetMessageCitations } from "@/features/widget/lib/widget-message-citations";
 import { prisma } from "@/lib/prisma";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type RouteContext = {
   params: Promise<{
@@ -38,6 +47,19 @@ type WidgetMessageResult = {
   message: WidgetMessage;
   isNewConversation: boolean;
 };
+
+function wantsStreamingResponse(
+  request: Request,
+) {
+  const accept =
+    request.headers.get("accept");
+
+  return (
+    accept?.includes(
+      "application/x-ndjson",
+    ) ?? false
+  );
+}
 
 function normalizeOptionalText(
   value: unknown,
@@ -442,6 +464,86 @@ export async function POST(
         },
       );
 
+    if (wantsStreamingResponse(request)) {
+      const stream =
+        new ReadableStream<Uint8Array>({
+          async start(controller) {
+            try {
+              controller.enqueue(
+                encodeAIStreamEvent({
+                  type: "conversation",
+                  conversationId:
+                    result.conversationId,
+                }),
+              );
+
+              controller.enqueue(
+                encodeAIStreamEvent({
+                  type: "user_message",
+                  message: {
+                    id: result.message.id,
+                    content:
+                      result.message.content,
+                    createdAt:
+                      result.message.createdAt.toISOString(),
+                  },
+                }),
+              );
+
+              await streamConversationResponse({
+                conversationId:
+                  result.conversationId,
+
+                userMessageId:
+                  result.message.id,
+
+                signal:
+                  request.signal,
+
+                onEvent: async (
+                  event,
+                ) => {
+                  controller.enqueue(
+                    encodeAIStreamEvent(
+                      event,
+                    ),
+                  );
+                },
+              });
+            } catch (error) {
+              console.error(
+                "Failed to stream website widget AI response:",
+                error,
+              );
+            } finally {
+              controller.close();
+            }
+          },
+
+          cancel() {
+            console.info(
+              "Website widget AI stream was cancelled:",
+              {
+                conversationId:
+                  result.conversationId,
+              },
+            );
+          },
+        });
+
+      return new Response(
+        stream,
+        {
+          status:
+            result.isNewConversation
+              ? 201
+              : 200,
+          headers:
+            createAIStreamHeaders(),
+        },
+      );
+    }
+
     const aiResult = await processWidgetMessage({
       workspaceId:
         channel.employee.workspaceId,
@@ -466,7 +568,17 @@ export async function POST(
           message: result.message,
 
           assistantMessage:
-            aiResult.assistantMessage,
+            aiResult.assistantMessage
+              ? {
+                  ...aiResult.assistantMessage,
+
+                  citations:
+                    getWidgetMessageCitations(
+                      aiResult.assistantMessage
+                        .metadata,
+                    ),
+                }
+              : null,
 
           isNewConversation:
             result.isNewConversation,

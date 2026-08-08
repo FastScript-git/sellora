@@ -5,17 +5,25 @@ import {
   Check,
   Copy,
   ExternalLink,
+  FileText,
   UserRound,
 } from "lucide-react";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+export type WidgetMessageCitation = {
+  sourceId: string;
+  sourceTitle: string;
+  citationNumbers: number[];
+};
+
 export type WidgetMessage = {
   id: string;
   role: "USER" | "ASSISTANT";
   content: string;
   createdAt: string;
+  citations?: WidgetMessageCitation[];
   deliveryStatus?:
     | "sending"
     | "sent"
@@ -193,6 +201,10 @@ export function WidgetChatMessage({
   const failedLabel = isUkrainian
     ? "Не надіслано"
     : "Not sent";
+
+  const sourcesLabel = isUkrainian
+    ? "Джерела"
+    : "Sources";
 
   async function handleCopy() {
     try {
@@ -527,6 +539,60 @@ export function WidgetChatMessage({
                 </ReactMarkdown>
               </div>
             )}
+
+            {!isUser &&
+            message.citations &&
+            message.citations.length > 0 ? (
+              <div
+                className={
+                  embedded
+                    ? "mt-3 border-t border-zinc-200 pt-3"
+                    : "mt-3 border-t pt-3"
+                }
+              >
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  {sourcesLabel}
+                </p>
+
+                <div className="flex min-w-0 flex-wrap gap-1.5">
+                  {message.citations.map(
+                    (citation) => (
+                      <span
+                        key={
+                          citation.sourceId
+                        }
+                        title={
+                          citation.sourceTitle
+                        }
+                        className={
+                          embedded
+                            ? "inline-flex max-w-full items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5 text-[10px] font-medium text-zinc-600"
+                            : "inline-flex max-w-full items-center gap-1.5 rounded-lg border bg-muted/30 px-2 py-1.5 text-[10px] font-medium text-muted-foreground"
+                        }
+                      >
+                        <FileText className="size-3 shrink-0" />
+
+                        <span className="shrink-0 tabular-nums">
+                          {citation
+                            .citationNumbers
+                            .map(
+                              (number) =>
+                                `[${number}]`,
+                            )
+                            .join(" ")}
+                        </span>
+
+                        <span className="min-w-0 truncate">
+                          {
+                            citation.sourceTitle
+                          }
+                        </span>
+                      </span>
+                    ),
+                  )}
+                </div>
+              </div>
+            ) : null}
 
             <div
               className={

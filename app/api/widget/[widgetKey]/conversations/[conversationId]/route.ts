@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getWidgetMessageCitations } from "@/features/widget/lib/widget-message-citations";
 import { prisma } from "@/lib/prisma";
 
 const MESSAGE_HISTORY_LIMIT = 100;
@@ -92,6 +93,7 @@ export async function GET(
               id: true,
               role: true,
               content: true,
+              metadata: true,
               createdAt: true,
             },
           },
@@ -135,7 +137,19 @@ export async function GET(
 
         channel: conversation.channel,
 
-        messages: conversation.messages.reverse(),
+        messages: conversation.messages
+          .reverse()
+          .map((message) => ({
+            id: message.id,
+            role: message.role,
+            content: message.content,
+            createdAt: message.createdAt,
+
+            citations:
+              getWidgetMessageCitations(
+                message.metadata,
+              ),
+          })),
       },
     });
   } catch (error) {

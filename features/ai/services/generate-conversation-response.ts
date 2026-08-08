@@ -51,6 +51,7 @@ export async function generateConversationResponse({
             id: true,
             role: true,
             content: true,
+            metadata: true,
             createdAt: true,
           },
         });
