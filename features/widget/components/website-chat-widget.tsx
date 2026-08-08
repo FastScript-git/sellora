@@ -16,6 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 
+import type { AIStreamEvent } from "@/features/ai/streaming/stream-events";
 import {
   WidgetChatMessage,
   type WidgetMessage,
@@ -28,28 +29,6 @@ type WebsiteChatWidgetProps = {
   employeeName: string;
   locale: string;
   embedded?: boolean;
-};
-
-type SendMessageResponse = {
-  data?: {
-    conversationId: string;
-    message: WidgetMessage;
-    assistantMessage: WidgetMessage | null;
-    isNewConversation: boolean;
-
-    channel: {
-      id: string;
-      name: string;
-    };
-
-    employee: {
-      id: string;
-      name: string;
-    };
-  };
-
-  error?: string;
-  warning?: string | null;
 };
 
 type LoadConversationResponse = {
@@ -95,6 +74,8 @@ export function WebsiteChatWidget({
     WidgetMessage[]
   >([]);
   const [isSending, setIsSending] = useState(false);
+  const [isStreamingResponse, setIsStreamingResponse] =
+    useState(false);
   const [isLoadingHistory, setIsLoadingHistory] =
     useState(true);
   const [error, setError] = useState<string>();
@@ -311,12 +292,19 @@ export function WebsiteChatWidget({
 
     setContent("");
     setIsSending(true);
+    setIsStreamingResponse(false);
     setError(undefined);
+
+    let streamingMessageId:
+      | string
+      | undefined;
 
     try {
       const savedConversationId =
         conversationIdRef.current ??
-        window.localStorage.getItem(storageKey) ??
+        window.localStorage.getItem(
+          storageKey,
+        ) ??
         undefined;
 
       const response = await fetch(
@@ -325,90 +313,409 @@ export function WebsiteChatWidget({
           method: "POST",
 
           headers: {
-            "Content-Type": "application/json",
+            Accept:
+              "application/x-ndjson",
+            "Content-Type":
+              "application/json",
           },
 
           body: JSON.stringify({
-            conversationId: savedConversationId,
-            content: normalizedContent,
+            conversationId:
+              savedConversationId,
+            content:
+              normalizedContent,
           }),
         },
       );
 
-      const responseBody =
-        (await response.json()) as SendMessageResponse;
+      if (!response.ok) {
+        const rawBody =
+          await response.text();
 
-      if (!response.ok || !responseBody.data) {
-        throw new Error(
-          responseBody.error ||
-            "The message could not be sent.",
-        );
-      }
+        let errorMessage =
+          "The message could not be sent.";
 
-      const {
-        conversationId,
-        message,
-        assistantMessage,
-      } = responseBody.data;
+        if (rawBody.trim()) {
+          try {
+            const parsed =
+              JSON.parse(
+                rawBody,
+              ) as {
+                error?: string;
+              };
 
-      conversationIdRef.current = conversationId;
-
-      window.localStorage.setItem(
-        storageKey,
-        conversationId,
-      );
-
-      setMessages((currentMessages) => {
-        const nextMessages =
-          currentMessages.map(
-            (currentMessage) =>
-              currentMessage.id ===
-              optimisticMessageId
-                ? {
-                    ...message,
-                    deliveryStatus:
-                      "sent" as const,
-                  }
-                : currentMessage,
-          );
-
-        const existingMessageIds = new Set(
-          nextMessages.map(
-            (currentMessage) =>
-              currentMessage.id,
-          ),
-        );
-
-        if (
-          assistantMessage &&
-          !existingMessageIds.has(
-            assistantMessage.id,
-          )
-        ) {
-          nextMessages.push({
-            ...assistantMessage,
-            deliveryStatus: "sent",
-          });
+            errorMessage =
+              parsed.error ??
+              errorMessage;
+          } catch {
+            errorMessage =
+              rawBody;
+          }
         }
 
-        return nextMessages;
-      });
+        throw new Error(
+          errorMessage,
+        );
+      }
 
-      if (responseBody.warning) {
-        setError(responseBody.warning);
+      if (!response.body) {
+        throw new Error(
+          "The streaming response is unavailable.",
+        );
+      }
+
+      const reader =
+        response.body.getReader();
+
+      const decoder =
+        new TextDecoder();
+
+      let buffer = "";
+
+      function mergeCitations(
+        citations: Extract<
+          AIStreamEvent,
+          {
+            type: "assistant_message";
+          }
+        >["citations"],
+      ) {
+        const sources =
+          new Map<
+            string,
+            {
+              sourceId: string;
+              sourceTitle: string;
+              citationNumbers: number[];
+            }
+          >();
+
+        for (const citation of citations) {
+          const existing =
+            sources.get(
+              citation.sourceId,
+            );
+
+          if (existing) {
+            for (
+              const number of
+              citation.citationNumbers
+            ) {
+              if (
+                !existing.citationNumbers.includes(
+                  number,
+                )
+              ) {
+                existing.citationNumbers.push(
+                  number,
+                );
+              }
+            }
+
+            continue;
+          }
+
+          sources.set(
+            citation.sourceId,
+            {
+              sourceId:
+                citation.sourceId,
+              sourceTitle:
+                citation.sourceTitle,
+              citationNumbers: [
+                ...citation.citationNumbers,
+              ],
+            },
+          );
+        }
+
+        return Array.from(
+          sources.values(),
+        );
+      }
+
+      function handleStreamEvent(
+        event: AIStreamEvent,
+      ) {
+        switch (event.type) {
+          case "conversation": {
+            conversationIdRef.current =
+              event.conversationId;
+
+            window.localStorage.setItem(
+              storageKey,
+              event.conversationId,
+            );
+
+            break;
+          }
+
+          case "user_message": {
+            setMessages(
+              (currentMessages) =>
+                currentMessages.map(
+                  (currentMessage) =>
+                    currentMessage.id ===
+                    optimisticMessageId
+                      ? {
+                          id:
+                            event.message.id,
+                          role:
+                            "USER",
+                          content:
+                            event.message
+                              .content,
+                          createdAt:
+                            event.message
+                              .createdAt,
+                          deliveryStatus:
+                            "sent" as const,
+                        }
+                      : currentMessage,
+                ),
+            );
+
+            break;
+          }
+
+          case "assistant_message_started": {
+            streamingMessageId =
+              event.messageId;
+
+            setIsStreamingResponse(
+              true,
+            );
+
+            setMessages(
+              (currentMessages) => {
+                if (
+                  currentMessages.some(
+                    (currentMessage) =>
+                      currentMessage.id ===
+                      event.messageId,
+                  )
+                ) {
+                  return currentMessages;
+                }
+
+                return [
+                  ...currentMessages,
+                  {
+                    id:
+                      event.messageId,
+                    role:
+                      "ASSISTANT",
+                    content: "",
+                    createdAt:
+                      event.createdAt,
+                    deliveryStatus:
+                      "sending",
+                  },
+                ];
+              },
+            );
+
+            break;
+          }
+
+          case "delta": {
+            streamingMessageId =
+              event.messageId;
+
+            setIsStreamingResponse(
+              true,
+            );
+
+            setMessages(
+              (currentMessages) =>
+                currentMessages.map(
+                  (currentMessage) =>
+                    currentMessage.id ===
+                    event.messageId
+                      ? {
+                          ...currentMessage,
+                          content:
+                            currentMessage.content +
+                            event.delta,
+                        }
+                      : currentMessage,
+                ),
+            );
+
+            break;
+          }
+
+          case "assistant_message": {
+            const temporaryId =
+              streamingMessageId;
+
+            const citations =
+              mergeCitations(
+                event.citations,
+              );
+
+            setMessages(
+              (currentMessages) => {
+                const nextMessage: WidgetMessage =
+                  {
+                    id:
+                      event.message.id,
+                    role:
+                      "ASSISTANT",
+                    content:
+                      event.message
+                        .content,
+                    createdAt:
+                      event.message
+                        .createdAt,
+                    citations,
+                    deliveryStatus:
+                      "sent",
+                  };
+
+                if (!temporaryId) {
+                  if (
+                    currentMessages.some(
+                      (
+                        currentMessage,
+                      ) =>
+                        currentMessage.id ===
+                        event.message.id,
+                    )
+                  ) {
+                    return currentMessages;
+                  }
+
+                  return [
+                    ...currentMessages,
+                    nextMessage,
+                  ];
+                }
+
+                return currentMessages.map(
+                  (currentMessage) =>
+                    currentMessage.id ===
+                    temporaryId
+                      ? nextMessage
+                      : currentMessage,
+                );
+              },
+            );
+
+            streamingMessageId =
+              event.message.id;
+
+            setIsStreamingResponse(
+              false,
+            );
+
+            break;
+          }
+
+          case "error": {
+            throw new Error(
+              event.error,
+            );
+          }
+
+          case "done": {
+            conversationIdRef.current =
+              event.conversationId;
+
+            window.localStorage.setItem(
+              storageKey,
+              event.conversationId,
+            );
+
+            setIsStreamingResponse(
+              false,
+            );
+
+            break;
+          }
+
+          case "debug": {
+            break;
+          }
+        }
+      }
+
+      while (true) {
+        const { value, done } =
+          await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(
+          value,
+          {
+            stream: true,
+          },
+        );
+
+        const lines =
+          buffer.split("\n");
+
+        buffer =
+          lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.trim()) {
+            continue;
+          }
+
+          const event =
+            JSON.parse(
+              line,
+            ) as AIStreamEvent;
+
+          handleStreamEvent(
+            event,
+          );
+        }
+      }
+
+      buffer += decoder.decode();
+
+      if (buffer.trim()) {
+        const event =
+          JSON.parse(
+            buffer,
+          ) as AIStreamEvent;
+
+        handleStreamEvent(
+          event,
+        );
       }
     } catch (sendError) {
-      setMessages((currentMessages) =>
-        currentMessages.map(
-          (currentMessage) =>
-            currentMessage.id ===
-            optimisticMessageId
-              ? {
-                  ...currentMessage,
-                  deliveryStatus: "failed",
-                }
-              : currentMessage,
-        ),
+      setMessages(
+        (currentMessages) =>
+          currentMessages
+            .map(
+              (currentMessage) =>
+                currentMessage.id ===
+                optimisticMessageId
+                  ? {
+                      ...currentMessage,
+                      deliveryStatus:
+                        "failed" as const,
+                    }
+                  : currentMessage,
+            )
+            .filter(
+              (currentMessage) =>
+                !(
+                  streamingMessageId &&
+                  currentMessage.id ===
+                    streamingMessageId &&
+                  currentMessage.role ===
+                    "ASSISTANT" &&
+                  !currentMessage.content
+                    .trim()
+                ),
+            ),
       );
 
       setError(
@@ -417,6 +724,7 @@ export function WebsiteChatWidget({
           : "The message could not be sent.",
       );
     } finally {
+      setIsStreamingResponse(false);
       setIsSending(false);
     }
   }
@@ -591,7 +899,8 @@ export function WebsiteChatWidget({
             />
           ))}
 
-          {isSending ? (
+          {isSending &&
+          !isStreamingResponse ? (
             <div className="flex justify-start">
               <div className="flex max-w-[82%] items-end gap-2">
                 <span

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 
+import {
+  processConversationPostResponseSideEffects,
+  processConversationPreResponseSideEffects,
+} from "@/features/ai/services/process-conversation-side-effects";
 import { processWidgetMessage } from "@/features/ai/services/process-widget-message";
 import { streamConversationResponse } from "@/features/ai/services/stream-conversation-response";
 import {
@@ -490,6 +494,16 @@ export async function POST(
                 }),
               );
 
+              await processConversationPreResponseSideEffects({
+                workspaceId:
+                  channel.employee.workspaceId,
+
+                contactId:
+                  result.contactId,
+
+                content,
+              });
+
               await streamConversationResponse({
                 conversationId:
                   result.conversationId,
@@ -509,6 +523,17 @@ export async function POST(
                     ),
                   );
                 },
+              });
+
+              await processConversationPostResponseSideEffects({
+                workspaceId:
+                  channel.employee.workspaceId,
+
+                contactId:
+                  result.contactId,
+
+                conversationId:
+                  result.conversationId,
               });
             } catch (error) {
               console.error(
